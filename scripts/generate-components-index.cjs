@@ -1,19 +1,4 @@
-function walk(dir, base = '', files = {}) {
-  if (!fs.existsSync(dir)) {
-    console.log(`Directory not found: ${dir}`);
-    return files;
-  }
-  fs.readdirSync(dir).forEach((file) => {
-    const abs = path.join(dir, file);
-    const rel = path.join(base, file);
-    if (fs.statSync(abs).isDirectory()) {
-      walk(abs, rel, files);
-    } else if (file.endsWith('.vue')) {
-      files[rel.replace(/\\/g, '/')] = abs;
-    }
-  });
-  return files;
-} // Génère src/generate/components.js avec tous les .vue (project/plugins > core)
+// Génère src/generate/components.js avec tous les .vue (project/plugins > core)
 const fs = require('fs');
 const path = require('path');
 
