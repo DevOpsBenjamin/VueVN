@@ -1,13 +1,13 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
-import { setupDevApi } from './dev-api.js';
-import { viteSingleFile } from 'vite-plugin-singlefile'; // correction import
+import { viteSingleFile } from 'vite-plugin-singlefile';
+import { setupDevApi } from './dev_src/index.js';
 
 export default defineConfig({
   plugins: [
     vue(),
-    viteSingleFile(), // correction ici
+    viteSingleFile(),
     {
       name: 'dev-api',
       configureServer(server) {

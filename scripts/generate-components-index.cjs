@@ -1,6 +1,30 @@
-// Génère src/generate/components.js avec tous les .vue (plugins > core, chemin réel)
+function walk(dir, base = '', files = {}) {
+  if (!fs.existsSync(dir)) {
+    console.log(`Directory not found: ${dir}`);
+    return files;
+  }
+  fs.readdirSync(dir).forEach((file) => {
+    const abs = path.join(dir, file);
+    const rel = path.join(base, file);
+    if (fs.statSync(abs).isDirectory()) {
+      walk(abs, rel, files);
+    } else if (file.endsWith('.vue')) {
+      files[rel.replace(/\\/g, '/')] = abs;
+    }
+  });
+  return files;
+} // Génère src/generate/components.js avec tous les .vue (project/plugins > core)
 const fs = require('fs');
 const path = require('path');
+
+// Get current project from environment
+const currentProject = process.env.VUEVN_PROJECT;
+if (!currentProject) {
+  console.error(
+    'No project specified. This script should be run via npm run dev/build'
+  );
+  process.exit(1);
+}
 
 function walk(dir, base = '', files = {}) {
   if (!fs.existsSync(dir)) return files;
@@ -16,29 +40,60 @@ function walk(dir, base = '', files = {}) {
   return files;
 }
 
-const coreFiles = walk(path.join(__dirname, '../src/engine/core'));
-const pluginFiles = walk(path.join(__dirname, '../src/engine/plugins'));
-// On fusionne, plugin prioritaire
-const allFiles = { ...coreFiles, ...pluginFiles, ...pluginFiles };
-Object.keys(pluginFiles).forEach(k => { allFiles[k] = pluginFiles[k]; });
+// Get files from engine and project plugins
+const engineFiles = walk(path.join(__dirname, '../src/engine'));
+const projectPluginFiles = walk(
+  path.join(__dirname, `../projects/${currentProject}/plugins`)
+);
+
+console.log(`Found ${Object.keys(engineFiles).length} engine component files`);
+console.log(
+  `Found ${
+    Object.keys(projectPluginFiles).length
+  } project plugin component files`
+);
+
+// Merge with project plugins taking priority
+const allFiles = { ...engineFiles, ...projectPluginFiles };
 
 let imports = '';
 let exportsBlock = 'export {\n';
+const usedNames = new Set();
+
 Object.entries(allFiles).forEach(([rel, abs]) => {
-  const varName = path.basename(rel, path.extname(rel));
-  // Chemin d'import relatif à src/generate
-  let importPath;
-  if (pluginFiles[rel]) {
-    importPath = `../engine/plugins/${rel}`;
-  } else {
-    importPath = `../engine/core/${rel}`;
+  let varName = path.basename(rel, path.extname(rel));
+
+  // Handle duplicate names
+  let finalVarName = varName;
+  let counter = 1;
+  while (usedNames.has(finalVarName)) {
+    finalVarName = `${varName}_${counter}`;
+    counter++;
   }
-  imports += `import ${varName} from '${importPath}';\n`;
-  exportsBlock += `  ${varName},\n`;
+  usedNames.add(finalVarName);
+
+  // Determine import path relative to src/generate
+  let importPath;
+  if (projectPluginFiles[rel]) {
+    // Project plugin file - need to go up 2 levels from src/generate
+    const relPath = path
+      .relative(path.join(__dirname, '../src/generate'), abs)
+      .replace(/\\/g, '/');
+    importPath = relPath.startsWith('.') ? relPath : './' + relPath;
+  } else {
+    // Engine file
+    importPath = `../engine/${rel}`;
+  }
+
+  imports += `import ${finalVarName} from '${importPath}';\n`;
+  exportsBlock += `  ${finalVarName},\n`;
 });
 exportsBlock += '}\n';
 
 const outDir = path.join(__dirname, '../src/generate');
-if (!fs.existsSync(outDir)) fs.mkdirSync(outDir);
-fs.writeFileSync(path.join(outDir, 'components.js'), imports + '\n' + exportsBlock);
-console.log('components.js generated!');
+if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+fs.writeFileSync(
+  path.join(outDir, 'components.js'),
+  imports + '\n' + exportsBlock
+);
+console.log(`components.js generated for project: ${currentProject}`);

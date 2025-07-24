@@ -1,19 +1,18 @@
 <template>
-  <ProjectSelector v-if="isDev && !editorState.project" />
-  <ProjectEditor v-else-if="isDev && editorState.project" />
-  <div v-else>
-    <Main />
-  </div>
+  <ProjectEditor v-if="isDev" />
+  <Main v-else />
 </template>
 
 <script setup>
+import { defineAsyncComponent } from 'vue';
 import { Main } from '@/generate/components';
-import ProjectSelector from '@/editor/ProjectSelector.vue';
-import ProjectEditor from '@/editor/ProjectEditor.vue';
-import { useEditorState } from '@/editor/stores/editorState';
 
 const isDev = import.meta.env.DEV;
-const editorState = useEditorState();
+
+// Dynamic import for editor (only loaded in dev)
+const ProjectEditor = isDev
+  ? defineAsyncComponent(() => import('@/editor/ProjectEditor.vue'))
+  : null;
 </script>
 
 <style>
@@ -28,7 +27,8 @@ body {
   padding: 0;
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   height: 100vh;
   width: 100vw;
   overflow: hidden;

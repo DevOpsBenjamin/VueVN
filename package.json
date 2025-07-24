@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "generate": "node scripts/generate.cjs",
-    "dev": "concurrently -k -n GEN,VITE -c green,cyan \"node scripts/generate.cjs --watch\" \"vite\"",
-    "build": "node scripts/generate.cjs && vite build",
+    "add-project": "node scripts/add-project.cjs",
+    "dev": "node scripts/dev.cjs",
+    "build": "node scripts/build.cjs",
     "preview": "vite preview"
   },
   "dependencies": {
