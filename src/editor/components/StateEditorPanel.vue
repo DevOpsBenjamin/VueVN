@@ -1,11 +1,13 @@
 <template>
   <div
-    class="flex flex-row h-full p-4 space-x-6 bg-gray-950 text-xs text-white"
+    class="flex flex-row h-full p-2 space-x-6 bg-gray-950 text-xs text-white"
   >
     <!-- Engine State Editor -->
-    <div class="flex flex-col flex-1 border border-gray-800 rounded">
+    <div
+      class="flex flex-col flex-1 border border-gray-800 rounded overflow-hidden"
+    >
       <div
-        class="flex items-center justify-between px-2 py-1 bg-gray-900 border-b border-gray-800"
+        class="flex-none flex items-center justify-between px-2 py-1 bg-gray-900 border-b border-gray-800"
       >
         <div class="text-green-400 font-bold">Engine State</div>
         <button
@@ -15,17 +17,15 @@
           Save Engine State
         </button>
       </div>
-      <div
-        ref="engineEditorContainer"
-        class="flex-1"
-        style="min-height: 0"
-      ></div>
+      <div ref="engineEditorContainer" class="flex-1 min-h-0"></div>
     </div>
 
     <!-- Game State Editor -->
-    <div class="flex flex-col flex-1 border border-gray-800 rounded">
+    <div
+      class="flex flex-col flex-1 border border-gray-800 rounded overflow-hidden"
+    >
       <div
-        class="flex items-center justify-between px-2 py-1 bg-gray-900 border-b border-gray-800"
+        class="flex-none flex items-center justify-between px-2 py-1 bg-gray-900 border-b border-gray-800"
       >
         <div class="text-blue-400 font-bold">Game State</div>
         <button
@@ -35,7 +35,7 @@
           Save Game State
         </button>
       </div>
-      <div ref="gameEditorContainer" class="flex-1" style="min-height: 0"></div>
+      <div ref="gameEditorContainer" class="flex-1 min-h-0"></div>
     </div>
   </div>
 </template>
@@ -43,13 +43,14 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 
+// Editor container refs
 const engineEditorContainer = ref(null);
 const gameEditorContainer = ref(null);
 
 let engineEditorInstance = null;
 let gameEditorInstance = null;
 
-// Your states (simulate the imports)
+// Simulated composables
 import {
   engineState as useEngineState,
   gameState as useGameState,
@@ -58,6 +59,7 @@ import {
 const engineState = useEngineState();
 const gameState = useGameState();
 
+// Load Monaco Editor
 function loadMonaco() {
   return new Promise((resolve) => {
     if (window.monaco) return resolve();
@@ -94,10 +96,10 @@ async function createEditor(container, initialValue, language = 'json') {
   });
 }
 
+// Keep JSON in sync with state
 const engineJson = ref('');
 const gameJson = ref('');
 
-// Update editor content if underlying state changes (sync one-way)
 watch(
   () => JSON.stringify(engineState, null, 2),
   (newVal) => {
@@ -142,6 +144,7 @@ onBeforeUnmount(() => {
   if (gameEditorInstance) gameEditorInstance.dispose();
 });
 
+// Patch state from editor content
 function applyEngineState() {
   try {
     const value = engineEditorInstance.getValue();
@@ -150,7 +153,7 @@ function applyEngineState() {
       engineState.$patch(updated);
       alert('Engine State updated successfully!');
     }
-  } catch (e) {
+  } catch {
     alert('EngineState JSON is invalid!');
   }
 }
@@ -163,19 +166,8 @@ function applyGameState() {
       gameState.$patch(updated);
       alert('Game State updated successfully!');
     }
-  } catch (e) {
+  } catch {
     alert('GameState JSON is invalid!');
   }
 }
 </script>
-
-<style scoped>
-.flex-1 {
-  display: flex;
-  flex-direction: column;
-}
-.flex-1 > div {
-  flex-grow: 1;
-  min-height: 0;
-}
-</style>
