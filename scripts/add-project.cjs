@@ -70,35 +70,24 @@ console.log(`📄 Created: projects/${projectName}/config.json`);
 
 // 2. Custom game state
 const gameStateContent = `import { defineStore } from 'pinia';
+import { BASE_GAME_STATE } from 'generated/stores/baseGameState';
 
-export default defineStore('gameState', {
+const useGameState = defineStore('gameState', {
   state: () => ({
-    // Player information
-    player: { 
-      name: 'Player'
-    },
-    
-    // Current game location
-    location: 'start',
-    
-    // Game flags (for conditions)
-    flags: {},
-    
-    // Add your custom state here
-    // examples:
-    // chapter: 1,
-    // inventory: [],
-    // relationships: {},
+    // 🚨 PROTECTED - Required by engine, do not remove/rename
+    ...BASE_GAME_STATE,
+
+    // ✅ SAFE TO MODIFY - Your custom fields below
+    myCustomField: '',
+    myCustomArray: [],
   }),
-  
+
   actions: {
-    // Add your custom actions here
-    resetGame() {
-      this.$reset();
-      this.location = 'start';
-    }
-  }
+    // Your actions
+  },
 });
+
+export default useGameState;
 `;
 
 fs.writeFileSync(

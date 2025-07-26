@@ -1,45 +1,52 @@
 <template>
   <Transition name="fade">
-    <div 
-      v-if="engineState.in_menu" 
+    <div
+      v-if="engineState.state === ENGINE_STATES.MENU"
       class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-50 transition-opacity duration-300"
-      :class="{ 'opacity-100': engineState.in_menu, 'opacity-0': !engineState.in_menu }"
+      :class="{
+        'opacity-100': engineState.in_menu,
+        'opacity-0': !engineState.in_menu,
+      }"
     >
-      <div class="flex flex-col gap-4 bg-gray-900 bg-opacity-90 p-8 rounded-lg border border-gray-800 min-w-[250px] shadow-xl">
-        <span class="text-green-400 font-mono text-2xl text-center mb-2 tracking-wider">
+      <div
+        class="flex flex-col gap-4 bg-gray-900 bg-opacity-90 p-8 rounded-lg border border-gray-800 min-w-[250px] shadow-xl"
+      >
+        <span
+          class="text-green-400 font-mono text-2xl text-center mb-2 tracking-wider"
+        >
           MENU
         </span>
-        
-        <button 
+
+        <button
           class="px-6 py-3 bg-green-700 hover:bg-green-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
           @click="newGame"
         >
           New Game
         </button>
-        
-        <button 
+
+        <button
           v-if="engineState.initialized"
           class="px-6 py-3 bg-blue-700 hover:bg-blue-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
           @click="continueGame"
         >
           Continue
         </button>
-        
-        <button 
+
+        <button
           class="px-6 py-3 bg-yellow-700 hover:bg-yellow-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
           @click="loadGame"
         >
           Load
         </button>
-        
-        <button 
+
+        <button
           class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
           @click="openSettings"
         >
           Settings
         </button>
-        
-        <button 
+
+        <button
           v-if="engineState.initialized"
           class="px-6 py-3 bg-purple-700 hover:bg-purple-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
           @click="saveGame"
@@ -54,16 +61,16 @@
 <script setup>
 import { engineState as useEngineState } from '@/generate/engine';
 import { computed } from 'vue';
+import { ENGINE_STATES } from '../stores/engineStateEnum';
 
 const engineState = useEngineState();
 
 function newGame() {
-  engineState.initialized = true;
-  engineState.in_menu = false;
+  engineState.state = ENGINE_STATES.LOADING;
 }
 
 function continueGame() {
-  engineState.in_menu = false;
+  // Implement continue game logic
 }
 
 function loadGame() {
