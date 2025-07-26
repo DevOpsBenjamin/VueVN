@@ -22,9 +22,15 @@
         <!-- Monaco Editor -->
         <MonacoEditor />
       </div>
-      <div class="h-1/3 border-t border-gray-800 bg-gray-950">
-        <!-- State Inspector (Pinia game state modifiable) -->
-        <StateInspector />
+      <div class="h-1/3 border-t border-gray-800 bg-gray-950 flex flex-row">
+        <!-- State Inspector Left -->
+        <div class="flex-1 border-r border-gray-800">
+          <GameStateInspector />
+        </div>
+        <!-- State Inspector Right -->
+        <div class="flex-1">
+          <EngineStateInspector />
+        </div>
       </div>
     </div>
     <!-- Preview runtime flottant -->
@@ -35,7 +41,8 @@
 <script setup>
 import { computed } from 'vue';
 import MonacoEditor from '@/editor/components/MonacoEditor.vue';
-import StateInspector from '@/editor/components/StateInspector.vue';
+import GameStateInspector from '@/editor/components/GameStateInspector.vue';
+import EngineStateInspector from '@/editor/components/EngineStateInspector.vue';
 import FloatingGame from '@/editor/components/FloatingGame.vue';
 import { useEditorState } from '@/editor/stores/editorState';
 const editorState = useEditorState();

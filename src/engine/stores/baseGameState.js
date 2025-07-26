@@ -1,7 +1,6 @@
 const BASE_GAME_STATE = {
   player: { name: '' },
-  npc: {},
-  location,
+  location: 'start',
   flags: [],
 };
 
