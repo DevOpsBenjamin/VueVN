@@ -19,35 +19,18 @@
 </template>
 
 <script setup>
+import { loadMonaco } from '@/editor/utils/monacoLoader.js';
 import { onMounted, ref, onBeforeUnmount } from 'vue';
 let editorInstance = null;
 const editorContainer = ref(null);
-const isDev = import.meta.env.DEV;
 
 onMounted(async () => {
-  if (!isDev) return;
-  // Charger Monaco via CDN si pas déjà présent
-  if (!window.monaco) {
-    await new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src =
-        'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js';
-      script.onload = resolve;
-      document.body.appendChild(script);
-    });
-    window.require.config({
-      paths: {
-        vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs',
-      },
-    });
-  }
-  window.require(['vs/editor/editor.main'], () => {
-    editorInstance = window.monaco.editor.create(editorContainer.value, {
-      value: '// Commence à écrire ton event ici\n',
-      language: 'javascript',
-      theme: 'vs-dark',
-      automaticLayout: true,
-    });
+  await loadMonaco();
+  editorInstance = window.monaco.editor.create(editorContainer.value, {
+    value: '// Commence à écrire ton event ici\n\nTEMPALTE FUTUR\n',
+    language: 'javascript',
+    theme: 'vs-dark',
+    automaticLayout: true,
   });
 });
 

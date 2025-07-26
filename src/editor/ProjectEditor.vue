@@ -22,15 +22,8 @@
         <!-- Monaco Editor -->
         <MonacoEditor />
       </div>
-      <div class="h-1/3 border-t border-gray-800 bg-gray-950 flex flex-row">
-        <!-- State Inspector Left -->
-        <div class="flex-1 border-r border-gray-800">
-          <GameStateInspector />
-        </div>
-        <!-- State Inspector Right -->
-        <div class="flex-1">
-          <EngineStateInspector />
-        </div>
+      <div class="h-1/3 border-t border-gray-800 bg-gray-950">
+        <StateEditorPanel />
       </div>
     </div>
     <!-- Preview runtime flottant -->
@@ -39,15 +32,20 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
+import { loadMonaco } from '@/editor/utils/monacoLoader.js';
 import MonacoEditor from '@/editor/components/MonacoEditor.vue';
-import GameStateInspector from '@/editor/components/GameStateInspector.vue';
-import EngineStateInspector from '@/editor/components/EngineStateInspector.vue';
+import StateEditorPanel from '@/editor/components/StateEditorPanel.vue';
 import FloatingGame from '@/editor/components/FloatingGame.vue';
 import { useEditorState } from '@/editor/stores/editorState';
 const editorState = useEditorState();
 const previewVisible = computed(() => editorState.previewVisible);
+
 function showPreview() {
   editorState.previewVisible = true;
 }
+
+onMounted(async () => {
+  await loadMonaco();
+});
 </script>
