@@ -12,11 +12,14 @@ const NPC_BASE = {
 };
 
 // Helper function to create a new NPC with defaults
-export function createNPC(overrides = {}) {
+function createNPC(overrides = {}) {
   return {
     ...NPC_BASE,
     ...overrides,
   };
 }
 
-export default BASE_GAME_STATE;
+export default {
+  createNPC,
+  BASE_GAME_STATE,
+};

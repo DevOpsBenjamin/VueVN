@@ -70,7 +70,9 @@ console.log(`📄 Created: projects/${projectName}/config.json`);
 
 // 2. Custom game state
 const gameStateContent = `import { defineStore } from 'pinia';
-import { BASE_GAME_STATE, createNPC } from 'generated/stores/baseGameState';
+
+import { baseGameState } from '@/generate/engine';
+const { BASE_GAME_STATE, createNPC } = baseGameState;
 
 const useGameState = defineStore('gameState', {
   state: () => ({
@@ -81,6 +83,7 @@ const useGameState = defineStore('gameState', {
     npc_1: createNPC({
       name: 'NPC',
       relation: 0,
+      trust: 0,
     }),
 
     // ✅ SAFE TO MODIFY - Your custom fields below
