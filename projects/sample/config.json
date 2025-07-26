@@ -1,0 +1,10 @@
+{
+  "name": "sample",
+  "version": "1.0.0",
+  "description": "A VueVN visual novel project",
+  "author": "",
+  "settings": {
+    "defaultLocation": "start",
+    "gameTitle": "sample"
+  }
+}
