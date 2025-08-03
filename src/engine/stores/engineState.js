@@ -13,12 +13,11 @@ const useEngineState = defineStore('engineState', () => {
   const currentEvent = ref(null);
   const currentStep = ref(0);
 
-  function resetGame() {
+  function resetState() {
     background.value = null;
     foreground.value = null;
     dialogue.value = null;
     initialized.value = true;
-    state.value = ENGINE_STATES.MENU;
     currentEvent.value = null;
     currentStep.value = 0;
   }
@@ -32,7 +31,7 @@ const useEngineState = defineStore('engineState', () => {
     initialized,
     background,
     dialogue,
-    resetGame,
+    resetState,
   };
 });
 export default useEngineState;

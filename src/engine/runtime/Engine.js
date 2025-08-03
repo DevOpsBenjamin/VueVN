@@ -1,5 +1,14 @@
+// Custom error for VN event interruption
+class VNInterruptError extends Error {
+  constructor(message = 'VN event interrupted') {
+    super(message);
+    this.name = 'VNInterruptError';
+  }
+}
 // Import generated event index (adjust path as needed)
 import { events as eventIndex } from '@/generate/events';
+import { engineStateEnum as ENGINE_STATES } from '@/generate/engine';
+
 /**
  * @typedef {Object} Engine
  * @property {function(string): Promise<void>} showText
@@ -12,6 +21,42 @@ import { events as eventIndex } from '@/generate/events';
  */
 
 class Engine {
+  // #region Engine API for events and UI
+
+  /** * Set the background image for the current scene
+   * @param {string} imagePath - Path to the background image
+   * */
+  setBackground(imagePath) {
+    console.debug('Setting background image:', imagePath);
+    this.engineState.background = imagePath;
+  }
+
+  /** * Set the foreground image (e.g., character sprite)
+   * @param {string} imagePath - Path to the foreground image
+   * */
+  setForeground(imagePath) {
+    console.debug('Setting foreground image:', imagePath);
+    this.engineState.foreground = imagePath;
+  }
+
+  /**
+   * Show text and await user to continue (space/click/right), or menu (escape)
+   * Stores resolver for menu integration
+   */
+  async showText(text, from = 'engine') {
+    // Set engine state for UI
+    this.engineState.dialogue = {
+      from: from,
+      text: text,
+    };
+    return new Promise((resolve) => {
+      this.awaiterResult = resolve;
+    });
+  }
+  // #endregion
+
+  // #region internal engine core
+
   /**
    * Get the singleton engine instance from window, or undefined if not set
    */
@@ -27,45 +72,104 @@ class Engine {
   constructor(gameState, engineState) {
     this.gameState = gameState;
     this.engineState = engineState;
+    this.awaiterResult = null;
     // Expose for debug/cheat
     if (typeof window !== 'undefined') {
-      // Expose pinia store for people wanting to cheat
-      window.VueVN = this.gameState;
-      // Expose engine instance globally
-      window.__VN_ENGINE__ = this;
+      if (!window.__VN_ENGINE__) {
+        console.debug('Initializing VN Engine instance');
+        window.VueVN = this.gameState;
+        window.__VN_ENGINE__ = this;
+        this.initVNInputHandlers();
+      }
     }
   }
 
+  initVNInputHandlers() {
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.engineState.state = 'MENU';
+        // Do not resolve
+      } else if (e.key === 'Space' || e.key === 'ArrowRight') {
+        this.resolveAwaiter('continue');
+      } else {
+        // Optionally: handle other keys (e.g., left arrow for back)
+        console.debug(`Unhandled key: ${e.key}`);
+      }
+    });
+    window.addEventListener('click', (e) => {
+      if (e.clientX > window.innerWidth / 2) {
+        this.resolveAwaiter('continue');
+      } else {
+        // Optionally: this.resolveAwaiter('back');
+      }
+    });
+  }
+
   startNewGame() {
-    this.engineState.resetGame();
+    this.cancelAwaiter();
+    // Interrupt any pending event
+    this.engineState.state = ENGINE_STATES.LOADING;
+    this.engineState.resetState();
     this.gameState.resetGame();
     this.createEventsCopy();
     this.updateEvents();
     this.engineState.state = 'RUNNING';
   }
 
-  //Events local cache for optimization of event checking
-  createEventsCopy() {
-    // Deep copy all events per location into notChecked
-    this.eventCache = {};
-    for (const location in eventIndex) {
-      this.eventCache[location] = {
-        notReady: [...eventIndex[location]],
-        unlocked: [],
-        locked: [],
-      };
+  // resolve awaiter from anywhere in the engine
+  resolveAwaiter(result) {
+    if (this.awaiterResult) {
+      console.debug('Resolving awaiter with result:', result);
+      this.awaiterResult(result);
+      this.cleanAwaiter();
+    } else {
+      console.debug('No awaiter to resolve');
     }
   }
 
-  async run() {
-    console.log('Starting VN engine...', this.engineState.state);
-    // Wait for engine state to be RUNNING (e.g., after New Game)
-    while (this.engineState.state !== 'RUNNING') {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+  // cancel awaiter from anywhere in the engine
+  cancelAwaiter() {
+    if (this.awaiterResult) {
+      console.debug('Cancelling awaiter');
+      this.awaiterResult(Promise.reject(new VNInterruptError()));
+      this.cleanAwaiter();
+    } else {
+      console.debug('No awaiter to cancel');
     }
-    console.log('Starting Game engine...', this.engineState.state);
-    // Boucle principale du VN
+  }
+
+  // cancel awaiter from anywhere in the engine
+  cleanAwaiter() {
+    this.awaiterResult = null;
+    this.engineState.dialogue = null; // Clear dialogue after resolving
+    this.engineState.choices = null; // Clear choices
+  }
+
+  async run() {
+    // INFINITE LOOP: Run the game loop until interrupted
+    console.log('Starting Engine...');
     while (true) {
+      try {
+        // Run the main game loop
+        await this.runGameLoop();
+      } catch (err) {
+        if (err instanceof VNInterruptError) {
+          console.warn('VN event interrupted, returning to menu or resetting.');
+        } else {
+          console.error('Engine error:', err);
+        }
+      }
+      // Wait for state to become RUNNING again (e.g., after new game)
+      while (this.engineState.state !== 'RUNNING') {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+  }
+
+  async runGameLoop() {
+    console.log('Starting Game engine...', this.engineState.state);
+    // Boucle principale du VN tant que RUNNING
+    while (this.engineState.state === 'RUNNING') {
       // 1. Charger les events valides pour la location courante
       const { immediateEvent, drawableEvents } = await this.getEvents();
       console.debug(
@@ -73,12 +177,34 @@ class Engine {
           immediateEvent ? immediateEvent.id : 'none'
         }, drawableEvents=${drawableEvents.length}`
       );
-
       if (immediateEvent) {
         // 2. Exécuter le premier event valide (auto-trigger)
         console.debug('Executing immediate event:', immediateEvent.id);
-        await immediateEvent.execute(this, this.gameState);
-        await new Promise((resolve) => setTimeout(resolve, 20000));
+        try {
+          await immediateEvent.execute(this, this.gameState);
+        } catch (err) {
+          if (err instanceof VNInterruptError) {
+            throw err;
+          }
+          // Lock the event so it won't run again
+          const location = this.gameState.location;
+          const cache = this.eventCache[location];
+          if (cache) {
+            // Remove from unlocked
+            cache.unlocked = cache.unlocked.filter(
+              (ev) => ev !== immediateEvent
+            );
+            cache.locked.push(immediateEvent);
+          }
+          // Alert the user
+          window.alert(
+            `An error occurred in event '${
+              immediateEvent.id
+            }'.\nThis event will be skipped.\nPlease report this to the game creator.\n\nError: ${
+              err && err.message ? err.message : err
+            }`
+          );
+        }
       } else {
         /*
         // 3. Afficher les events "drawables" (choix, etc.)
@@ -91,16 +217,33 @@ class Engine {
         await this.waitForPlayerAction();
         */
       }
+      console.log("Petit sleep pour debug l'engine...");
+      // Attendre un peu avant de vérifier à nouveau les events
+      await new Promise((resolve) => setTimeout(resolve, 20000));
+    }
+  }
+  // #endregion
+
+  // #region events helpers
+
+  /**
+   * Create a deep copy of all events per location
+   * This is used to reset the event cache when starting a new game
+   */
+  createEventsCopy() {
+    // Deep copy all events per location into notChecked
+    this.eventCache = {};
+    for (const location in eventIndex) {
+      this.eventCache[location] = {
+        notReady: [...eventIndex[location]],
+        unlocked: [],
+        locked: [],
+      };
     }
   }
 
-  setForeground(imagePath) {
-    console.debug('Setting foreground image:', imagePath);
-    this.engineState.foreground = imagePath;
-  }
-
   /**
-   * Charge dynamiquement les events de la location courante, sépare immédiats/drawables
+   * calculate and return the events for the current location
    * @returns {Promise<{immediateEvent: object|null, drawableEvents: object[]}>}
    */
   async getEvents() {
@@ -126,73 +269,7 @@ class Engine {
     return { immediateEvent: null, drawableEvents };
   }
 
-  /**
-   * Show text and await user to continue (space/click/right), or menu (escape)
-   * Stores resolver for menu integration
-   */
-  async showText(text) {
-    // Set engine state for UI
-    this.engineState.messageShow = true;
-    this.engineState.currentText = text;
-    return new Promise((resolve) => {
-      this._resumeAwait = resolve;
-      const onKey = (e) => {
-        if (e.key === 'Escape') {
-          this.engineState.state = 'MENU';
-          // Do not resolve, menu will resume
-        } else if (
-          e.key === ' ' ||
-          e.key === 'Enter' ||
-          e.key === 'ArrowRight'
-        ) {
-          cleanup();
-          resolve('continue');
-        }
-      };
-      const onClick = (e) => {
-        // Right side = continue, left = back (optional)
-        if (e.clientX > window.innerWidth / 2) {
-          cleanup();
-          resolve('continue');
-        } else {
-          // Optionally: resolve('back')
-        }
-      };
-      function cleanup() {
-        window.removeEventListener('keydown', onKey);
-        window.removeEventListener('click', onClick);
-        if (this._resumeAwait === resolve) this._resumeAwait = null;
-      }
-      window.addEventListener('keydown', onKey);
-      window.addEventListener('click', onClick);
-    });
-  }
-
-  // Helpers à implémenter selon ton archi
-  async waitForIdle() {
-    // Ex: attendre que messageShow/choiceShow soit false
-    while (this.engineState.messageShow || this.engineState.choiceShow) {
-      await new Promise((r) => setTimeout(r, 50));
-    }
-  }
-
-  async getAvailableEvents() {
-    // Ex: charger dynamiquement tous les events de la location courante
-    // Ici, retourne un tableau d'events valides (mock pour l'exemple)
-    return [];
-  }
-
-  async waitForPlayerAction() {
-    // Ex: attendre un clic ou une action utilisateur
-    await new Promise((resolve) => {
-      const handler = () => {
-        window.removeEventListener('click', handler);
-        resolve();
-      };
-      window.addEventListener('click', handler);
-    });
-  }
-
+  //Engine events optimization to not re-check all events every time
   updateEvents(location) {
     console.debug('Updating events for location:', location || 'all');
 
@@ -228,6 +305,7 @@ class Engine {
       );
     }
   }
+  // #endregion
 }
 
 export default Engine;
