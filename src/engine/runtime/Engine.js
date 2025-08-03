@@ -10,32 +10,35 @@
  */
 
 class Engine {
+  /**
+   * Get the singleton engine instance from window, or undefined if not set
+   */
+  static getInstance() {
+    return typeof window !== 'undefined' ? window.__VN_ENGINE__ : undefined;
+  }
+
+  /**
+   * Create a new engine instance
+   * @param {object} gameState - Pinia store for game state
+   * @param {object} engineState - Pinia store for engine state
+   */
   constructor(gameState, engineState) {
     this.gameState = gameState;
     this.engineState = engineState;
     // Expose for debug/cheat
     if (typeof window !== 'undefined') {
+      // Expose pinia store for people wanting to cheat
       window.VueVN = this.gameState;
+      // Expose engine instance globally
+      window.__VN_ENGINE__ = this;
     }
   }
 
   async run() {
-    // Boucle principale du VN
+    // Boucle principale du VN (placeholder)
     while (true) {
-      // 1. Rien à faire, attendre une action du joueur (clic, etc.)
-      await this.waitForPlayerAction();
-      // 2. Charger les events valides pour la location courante
-      const { immediateEvent, drawableEvents } = await this.getEvents();
-      if (immediateEvent) {
-        // 3. Exécuter le premier event valide (auto-trigger)
-        await immediateEvent.execute(this, this.gameState);
-      } else {
-        for (const drawableEvent of drawableEvents) {
-          if (drawableEvent.draw) {
-            await drawableEvent.draw(this, this.gameState);
-          }
-        }
-      }
+      // Placeholder: wait 1 second per loop
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 

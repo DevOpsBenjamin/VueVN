@@ -60,13 +60,15 @@
 </template>
 
 <script setup>
-import { engineState as useEngineState } from '@/generate/engine';
+import { engineState as useEngineState, Engine } from '@/generate/engine';
 import { ENGINE_STATES } from '../stores/engineStateEnum';
 
 const engineState = useEngineState();
 
 function newGame() {
   engineState.state = ENGINE_STATES.LOADING;
+  const engine = Engine.getInstance();
+  engine.startNewGame();
 }
 
 function continueGame() {

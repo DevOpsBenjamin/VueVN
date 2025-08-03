@@ -11,15 +11,14 @@
 
 <script setup>
 import { onMounted } from 'vue';
-import { Engine as EngineCore, gameState as useGameState, engineState as useEngineState } from '@/generate/engine';
+import {
+  Engine as EngineCore,
+  gameState as useGameState,
+  engineState as useEngineState,
+} from '@/generate/engine';
 
 const gameState = useGameState();
 const engineState = useEngineState();
-
-onMounted(async () => {
-  const engine = new EngineCore(gameState, engineState);
-  engine.run();
-});
 </script>
 
 <style scoped>
