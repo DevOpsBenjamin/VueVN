@@ -17,7 +17,16 @@ const useGameState = defineStore('gameState', {
   }),
 
   actions: {
-    // Your actions
+    resetGame() {
+      // Reset all base fields
+      Object.assign(this, {
+        ...BASE_GAME_STATE,
+        npc_1,
+        myCustomField: '',
+        myCustomArray: [],
+      });
+    },
+    // Your other actions
   },
 });
 

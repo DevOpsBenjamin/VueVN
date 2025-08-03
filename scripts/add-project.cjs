@@ -68,23 +68,39 @@ fs.writeFileSync(
 );
 console.log(`📄 Created: projects/${projectName}/config.json`);
 
+// 2. Custom npcSample
+const npcSampleContent = `import { baseGameState } from '@/generate/engine';
+const { createNPC } = baseGameState;
+
+const npc_1 = createNPC({
+  name: 'NPC 1',
+  relation: 0,
+  trust: 0,
+  // LONG as heck definition continues here...
+});
+
+export default npc_1;
+`;
+
+fs.writeFileSync(
+  path.join(projectPath, 'plugins', 'npc', 'npc_1.js'),
+  npcSampleContent
+);
+console.log(`📄 Created: projects/${projectName}/plugins/npc/npc_1.js`);
+
 // 2. Custom game state
 const gameStateContent = `import { defineStore } from 'pinia';
 
-import { baseGameState } from '@/generate/engine';
-const { BASE_GAME_STATE, createNPC } = baseGameState;
+import { baseGameState, npc_1 } from '@/generate/engine';
+const { BASE_GAME_STATE } = baseGameState;
 
 const useGameState = defineStore('gameState', {
   state: () => ({
     // 🚨 PROTECTED - Required by engine, do not remove/rename
     ...BASE_GAME_STATE,
 
-    //Sample NPC DEFINITION
-    npc_1: createNPC({
-      name: 'NPC',
-      relation: 0,
-      trust: 0,
-    }),
+    //Sample EXTERNAL NPC
+    npc_1,
 
     // ✅ SAFE TO MODIFY - Your custom fields below
     myCustomField: '',
@@ -92,7 +108,16 @@ const useGameState = defineStore('gameState', {
   }),
 
   actions: {
-    // Your actions
+    resetGame() {
+      // Reset all base fields
+      Object.assign(this, {
+        ...BASE_GAME_STATE,
+        npc_1,
+        myCustomField: '',
+        myCustomArray: [],
+      });
+    },
+    // Your other actions
   },
 });
 

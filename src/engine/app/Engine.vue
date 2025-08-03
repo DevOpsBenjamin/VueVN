@@ -1,24 +1,24 @@
 <template>
   <div class="engine-content">
-    <!-- Game content will be rendered here -->
-    <div class="w-full h-full flex items-center justify-center">
-      <slot>
-        <span class="text-green-400 font-mono text-lg">Game running</span>
-      </slot>
-    </div>
+    <!-- Layered VN components -->
+    <Background />
+    <Drawing />
+    <LocationOverlay />
+    <Foreground />
+    <Dialogue />
+    <Choice />
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
 import {
-  Engine as EngineCore,
-  gameState as useGameState,
-  engineState as useEngineState,
-} from '@/generate/engine';
-
-const gameState = useGameState();
-const engineState = useEngineState();
+  Background,
+  LocationOverlay,
+  Drawing,
+  Foreground,
+  Dialogue,
+  Choice,
+} from '@/generate/components';
 </script>
 
 <style scoped>
