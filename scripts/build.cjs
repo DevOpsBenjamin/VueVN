@@ -3,6 +3,7 @@
 const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const fsExtra = require('fs-extra');
 
 const projectName = process.argv[2];
 
@@ -30,6 +31,17 @@ try {
 
   // Build with Vite
   execSync('vite build', { stdio: 'inherit', env });
+
+  // Copy assets to dist/assets (inline logic)
+  const src = path.join(__dirname, '..', 'projects', projectName, 'assets');
+  const dest = path.join(__dirname, '..', 'dist', 'assets');
+  try {
+    fsExtra.copySync(src, dest, { overwrite: true });
+    console.log(`✅ Copied assets for ${projectName} to dist/assets`);
+  } catch (e) {
+    console.error('❌ Failed to copy assets:', e);
+    process.exit(1);
+  }
 
   console.log(`✅ Build complete for: ${projectName}`);
 } catch (error) {
