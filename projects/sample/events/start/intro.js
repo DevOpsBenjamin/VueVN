@@ -8,8 +8,8 @@ export default {
   locked: (state) => state.flags.introSeen,
 
   async execute(engine, state) {
-    // Set background
-    engine.setBackground('/assets/images/background/intro/hall.jpg');
+    // Set foreground
+    engine.setForeground('assets/images/background/intro/hall.png');
 
     // Show some text
     await engine.showText('Welcome to sample!');

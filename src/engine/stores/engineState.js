@@ -4,6 +4,7 @@ import { ENGINE_STATES } from './engineStateEnum';
 
 const useEngineState = defineStore('engineState', () => {
   const background = ref(null);
+  const foreground = ref(null);
   const dialogue = ref(null);
   const initialized = ref(false);
   const state = ref(ENGINE_STATES.MENU);
@@ -14,6 +15,7 @@ const useEngineState = defineStore('engineState', () => {
 
   function resetGame() {
     background.value = null;
+    foreground.value = null;
     dialogue.value = null;
     initialized.value = true;
     state.value = ENGINE_STATES.MENU;

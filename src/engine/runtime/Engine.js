@@ -94,6 +94,11 @@ class Engine {
     }
   }
 
+  setForeground(imagePath) {
+    console.debug('Setting foreground image:', imagePath);
+    this.engineState.foreground = imagePath;
+  }
+
   /**
    * Charge dynamiquement les events de la location courante, sépare immédiats/drawables
    * @returns {Promise<{immediateEvent: object|null, drawableEvents: object[]}>}
