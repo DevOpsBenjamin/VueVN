@@ -178,33 +178,9 @@ class Engine {
         }, drawableEvents=${drawableEvents.length}`
       );
       if (immediateEvent) {
-        // 2. Exécuter le premier event valide (auto-trigger)
-        console.debug('Executing immediate event:', immediateEvent.id);
-        try {
-          await immediateEvent.execute(this, this.gameState);
-        } catch (err) {
-          if (err instanceof VNInterruptError) {
-            throw err;
-          }
-          // Lock the event so it won't run again
-          const location = this.gameState.location;
-          const cache = this.eventCache[location];
-          if (cache) {
-            // Remove from unlocked
-            cache.unlocked = cache.unlocked.filter(
-              (ev) => ev !== immediateEvent
-            );
-            cache.locked.push(immediateEvent);
-          }
-          // Alert the user
-          window.alert(
-            `An error occurred in event '${
-              immediateEvent.id
-            }'.\nThis event will be skipped.\nPlease report this to the game creator.\n\nError: ${
-              err && err.message ? err.message : err
-            }`
-          );
-        }
+        this.engineState.currentEvent = immediateEvent.id;
+        this.engineState.currentStep = 0;
+        this.handleEvent(immediateEvent);
       } else {
         /*
         // 3. Afficher les events "drawables" (choix, etc.)
@@ -230,6 +206,34 @@ class Engine {
    * Create a deep copy of all events per location
    * This is used to reset the event cache when starting a new game
    */
+  async handleImmediateEvent(immediateEvent) {
+    // 2. Exécuter le premier event valide (auto-trigger)
+    console.debug('Executing immediate event:', immediateEvent.id);
+    try {
+      await immediateEvent.execute(this, this.gameState);
+    } catch (err) {
+      if (err instanceof VNInterruptError) {
+        throw err;
+      }
+      // Lock the event so it won't run again
+      const location = this.gameState.location;
+      const cache = this.eventCache[location];
+      if (cache) {
+        // Remove from unlocked
+        cache.unlocked = cache.unlocked.filter((ev) => ev !== immediateEvent);
+        cache.locked.push(immediateEvent);
+      }
+      // Alert the user
+      window.alert(
+        `An error occurred in event '${
+          immediateEvent.id
+        }'.\nThis event will be skipped.\nPlease report this to the game creator.\n\nError: ${
+          err && err.message ? err.message : err
+        }`
+      );
+    }
+  }
+
   createEventsCopy() {
     // Deep copy all events per location into notChecked
     this.eventCache = {};
