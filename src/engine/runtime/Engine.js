@@ -77,7 +77,11 @@ class Engine {
   initVNInputHandlers() {
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        this.engineState.state = 'MENU';
+        if (this.engineState.state === 'RUNNING') {
+          this.engineState.state = 'MENU';
+        } else {
+          this.engineState.state = 'RUNNING'; // Resume if already in menu
+        }
         // Do not resolve
       } else if (e.key === 'Space' || e.key === 'ArrowRight') {
         this.resolveAwaiter('continue');
