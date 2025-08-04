@@ -1,5 +1,5 @@
 import { events as eventIndex } from '@/generate/events'; // Import generated event index (adjust path as needed)
-import { VNInterruptError } from '@/generate/engine';
+import { VNInterruptError } from '@/generate/runtime';
 
 const handleImmediateEvent = async (engine, immediateEvent) => {
   console.debug('Executing immediate event:', immediateEvent.id);

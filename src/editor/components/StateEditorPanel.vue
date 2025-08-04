@@ -54,7 +54,7 @@ let gameEditorInstance = null;
 import {
   engineState as useEngineState,
   gameState as useGameState,
-} from '@/generate/engine';
+} from '@/generate/stores';
 
 const engineState = useEngineState();
 const gameState = useGameState();

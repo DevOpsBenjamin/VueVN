@@ -11,7 +11,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import { engineState as useEngineState } from '@/generate/engine';
+import { engineState as useEngineState } from '@/generate/stores';
 const engineState = useEngineState();
 const background = computed(() => engineState.background);
 </script>

@@ -25,55 +25,80 @@ function walk(dir, base = '', files = {}) {
   return files;
 }
 
-// Get files from engine and project plugins
-const engineFiles = walk(path.join(__dirname, '../src/engine'));
-const projectPluginFiles = walk(
-  path.join(__dirname, `../projects/${currentProject}/plugins`)
-);
+// Helper: recursively walk a directory, collecting .js files, skipping any 'events' folder
+function walkJsFiles(dir, base = '', files = {}) {
+  if (!fs.existsSync(dir)) return files;
+  fs.readdirSync(dir).forEach((file) => {
+    const abs = path.join(dir, file);
+    const rel = path.join(base, file);
+    if (fs.statSync(abs).isDirectory()) {
+      if (file === 'events') return; // skip events folder
+      walkJsFiles(abs, rel, files);
+    } else if (file.endsWith('.js')) {
+      files[rel.replace(/\\/g, '/')] = abs;
+    }
+  });
+  return files;
+}
 
-console.log(`Found ${Object.keys(engineFiles).length} engine JS files`);
-console.log(
-  `Found ${Object.keys(projectPluginFiles).length} project plugin JS files`
-);
+// Scan engine and project folders
+const engineRoot = path.join(__dirname, '../src/engine');
+const projectRoot = path.join(__dirname, `../projects/${currentProject}`);
+const engineFiles = walkJsFiles(engineRoot);
+const projectFiles = walkJsFiles(projectRoot);
 
-// Merge with project plugins taking priority
-const allFiles = { ...engineFiles, ...projectPluginFiles };
+// Collect all unique relPaths from both engine and project
+const allRelPaths = new Set([
+  ...Object.keys(engineFiles),
+  ...Object.keys(projectFiles),
+]);
 
-let imports = '';
-let exportsBlock = 'export {\n';
-const usedNames = new Set();
-
-Object.entries(allFiles).forEach(([rel, abs]) => {
-  let varName = path.basename(rel, path.extname(rel));
-
-  // Handle duplicate names
-  let finalVarName = varName;
-  let counter = 1;
-  while (usedNames.has(finalVarName)) {
-    finalVarName = `${varName}_${counter}`;
-    counter++;
-  }
-  usedNames.add(finalVarName);
-
-  // Determine import path relative to src/generate
-  let importPath;
-  if (projectPluginFiles[rel]) {
-    // Project plugin file - need to go up 2 levels from src/generate
-    const relPath = path
-      .relative(path.join(__dirname, '../src/generate'), abs)
-      .replace(/\\/g, '/');
-    importPath = relPath.startsWith('.') ? relPath : './' + relPath;
-  } else {
-    // Engine file
-    importPath = `../engine/${rel}`;
-  }
-
-  imports += `import ${finalVarName} from '${importPath}';\n`;
-  exportsBlock += `  ${finalVarName},\n`;
-});
-exportsBlock += '}\n';
+// Group relPaths by top-level folder (e.g., runtime/Engine.js => runtime)
+const groups = {};
+for (const relPath of allRelPaths) {
+  const [topLevel] = relPath.split('/');
+  if (!groups[topLevel]) groups[topLevel] = [];
+  groups[topLevel].push(relPath);
+}
 
 const outDir = path.join(__dirname, '../src/generate');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-fs.writeFileSync(path.join(outDir, 'engine.js'), imports + '\n' + exportsBlock);
-console.log(`engine.js generated for project: ${currentProject}`);
+
+Object.entries(groups).forEach(([group, relPaths]) => {
+  let imports = '';
+  let exportsBlock = 'export {\n';
+  const usedNames = new Set();
+  relPaths.forEach((rel) => {
+    let varName = path.basename(rel, path.extname(rel));
+    // Handle duplicate names
+    let finalVarName = varName;
+    let counter = 1;
+    while (usedNames.has(finalVarName)) {
+      finalVarName = `${varName}_${counter}`;
+      counter++;
+    }
+    usedNames.add(finalVarName);
+
+    // Prefer project file if exists, else engine
+    let abs, importPath;
+    if (projectFiles[rel]) {
+      abs = projectFiles[rel];
+      // Path relative to outDir
+      const relPath = path.relative(outDir, abs).replace(/\\/g, '/');
+      importPath = relPath.startsWith('.') ? relPath : './' + relPath;
+    } else {
+      abs = engineFiles[rel];
+      // Path relative to outDir
+      const relPath = path.relative(outDir, abs).replace(/\\/g, '/');
+      importPath = relPath.startsWith('.') ? relPath : './' + relPath;
+    }
+    imports += `import ${finalVarName} from '${importPath}';\n`;
+    exportsBlock += `  ${finalVarName},\n`;
+  });
+  exportsBlock += '}\n';
+  fs.writeFileSync(
+    path.join(outDir, `${group}.js`),
+    imports + '\n' + exportsBlock
+  );
+  console.log(`${group}.js generated for project: ${currentProject}`);
+});

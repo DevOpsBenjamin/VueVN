@@ -13,8 +13,10 @@
 </template>
 
 <script setup>
-import { engineState as useEngineState } from '@/generate/engine';
-import { ENGINE_STATES } from '../stores/engineStateEnum';
+import {
+  engineState as useEngineState,
+  engineStateEnum as ENGINE_STATES,
+} from '@/generate/stores';
 
 const engineState = useEngineState();
 </script>

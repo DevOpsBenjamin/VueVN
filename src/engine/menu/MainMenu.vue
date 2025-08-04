@@ -62,9 +62,9 @@
 <script setup>
 import {
   engineState as useEngineState,
-  Engine,
   engineStateEnum as ENGINE_STATES,
-} from '@/generate/engine';
+} from '@/generate/stores';
+import { Engine } from '@/generate/runtime';
 const engineState = useEngineState();
 
 function newGame() {

@@ -7,11 +7,11 @@
 <script setup>
 import { onMounted } from 'vue';
 import { MainMenu, Engine, Loading } from '@/generate/components';
+import { Engine as EngineCore } from '@/generate/runtime';
 import {
   engineState as useEngineState,
-  Engine as EngineCore,
   gameState as useGameState,
-} from '@/generate/engine';
+} from '@/generate/stores';
 
 const engineState = useEngineState();
 const gameState = useGameState();

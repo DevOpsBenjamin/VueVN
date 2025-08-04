@@ -1,11 +1,6 @@
 // Import generated event index (adjust path as needed)
-import {
-  engineStateEnum as ENGINE_STATES,
-  EngineEvents,
-  EngineAPI,
-  VNInterruptError,
-} from '@/generate/engine';
-
+import { EngineEvents, EngineAPI, VNInterruptError } from '@/generate/runtime';
+import { engineStateEnum as ENGINE_STATES } from '@/generate/stores';
 /**
  * @typedef {Object} Engine
  * @property {function(string): Promise<void>} showText

@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { engineState as useEngineState } from '@/generate/engine';
+import { engineState as useEngineState } from '@/generate/stores';
 const engineState = useEngineState();
 </script>
 
