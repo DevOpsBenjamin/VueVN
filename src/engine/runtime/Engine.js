@@ -5,6 +5,7 @@ import {
   EngineSave,
   VNInterruptError,
 } from '@/generate/runtime';
+import html2canvas from 'html2canvas';
 import { engineStateEnum as ENGINE_STATES } from '@/generate/stores';
 /**
  * @typedef {Object} Engine
@@ -38,6 +39,7 @@ class Engine {
     return EngineSave.loadGame(this, slot);
   }
   saveGame(slot) {
+    console.log(`ENGINE CALL: Saving game to slot ${slot}`);
     EngineSave.saveGame(this, slot);
   }
   // #endregion
@@ -60,6 +62,7 @@ class Engine {
     this.gameState = gameState;
     this.engineState = engineState;
     this.awaiterResult = null;
+    this.lastScreenshot = null;
     // Expose for debug/cheat
     if (typeof window !== 'undefined') {
       if (!window.__VN_ENGINE__) {
@@ -74,13 +77,24 @@ class Engine {
     this.targetStep = 0;
   }
 
+  async captureGameScreenshot() {
+    const gameEl = document.getElementById('game-root'); // or your main VN container
+    if (!gameEl) return null;
+    const canvas = await html2canvas(gameEl);
+    return canvas.toDataURL('image/png');
+  }
+
   initVNInputHandlers() {
-    window.addEventListener('keydown', (e) => {
+    window.addEventListener('keydown', async (e) => {
       if (e.key === 'Escape') {
-        if (this.engineState.state === 'RUNNING') {
-          this.engineState.state = 'MENU';
+        if (
+          this.engineState.initialized &&
+          this.engineState.state === ENGINE_STATES.MENU
+        ) {
+          this.engineState.state = ENGINE_STATES.RUNNING; // Resume if already in menu
         } else {
-          this.engineState.state = 'RUNNING'; // Resume if already in menu
+          this.lastScreenshot = await this.captureGameScreenshot();
+          this.engineState.state = ENGINE_STATES.MENU;
         }
         // Do not resolve
       } else if (e.key === 'Space' || e.key === 'ArrowRight') {

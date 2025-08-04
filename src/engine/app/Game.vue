@@ -1,4 +1,5 @@
 <template>
+  <SaveLoadMenu />
   <MainMenu />
   <Loading />
   <Engine />
@@ -6,7 +7,7 @@
 
 <script setup>
 import { onMounted } from 'vue';
-import { MainMenu, Engine, Loading } from '@/generate/components';
+import { SaveLoadMenu, MainMenu, Engine, Loading } from '@/generate/components';
 import { Engine as EngineCore } from '@/generate/runtime';
 import {
   engineState as useEngineState,

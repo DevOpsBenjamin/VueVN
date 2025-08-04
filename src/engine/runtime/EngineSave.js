@@ -9,6 +9,7 @@ const startNewGame = (engine) => {
   engine.gameState.resetGame();
   engine.createEventsCopy();
   engine.updateEvents();
+  engine.engineState.initialized = true;
   engine.engineState.state = 'RUNNING';
 };
 
@@ -25,6 +26,7 @@ const loadGame = async (engine, slot) => {
   Object.assign(engine.engineState, data.engineState);
   engine.createEventsCopy();
   engine.updateEvents();
+  engine.engineState.initialized = true;
   await startEventReplay(engine);
   engine.engineState.state = 'RUNNING';
 };
@@ -44,8 +46,12 @@ const startEventReplay = async (engine) => {
   }
 };
 
-const saveGame = (engine, slot) => {
+const saveGame = (engine, slot, name) => {
+  console.log(`ENGINESAVE CALL: Saving game to slot ${slot}`);
   const data = {
+    name: name || `Save ${slot}`,
+    timestamp: new Date().toISOString(),
+    screenshot: engine.lastScreenshot,
     gameState: JSON.parse(JSON.stringify(engine.gameState)),
     engineState: JSON.parse(JSON.stringify(engine.engineState)),
   };

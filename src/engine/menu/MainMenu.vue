@@ -34,6 +34,14 @@
         </button>
 
         <button
+          v-if="engineState.initialized"
+          class="px-6 py-3 bg-purple-700 hover:bg-purple-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
+          @click="saveGame"
+        >
+          Save
+        </button>
+
+        <button
           class="px-6 py-3 bg-yellow-700 hover:bg-yellow-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
           @click="loadGame"
         >
@@ -45,14 +53,6 @@
           @click="openSettings"
         >
           Settings
-        </button>
-
-        <button
-          v-if="engineState.initialized"
-          class="px-6 py-3 bg-purple-700 hover:bg-purple-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="saveGame"
-        >
-          Save
         </button>
       </div>
     </div>
@@ -77,7 +77,7 @@ function continueGame() {
 }
 
 function loadGame() {
-  // Implement load game logic
+  engineState.state = ENGINE_STATES.LOAD;
 }
 
 function openSettings() {
@@ -85,7 +85,7 @@ function openSettings() {
 }
 
 function saveGame() {
-  // Implement save game logic
+  engineState.state = ENGINE_STATES.SAVE;
 }
 
 const menuBgStyle = {
