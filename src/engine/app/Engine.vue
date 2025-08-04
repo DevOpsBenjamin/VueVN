@@ -1,5 +1,5 @@
 <template>
-  <div class="engine-content">
+  <div id="game-root" class="engine-content">
     <!-- Layered VN components -->
     <Background />
     <Drawing />

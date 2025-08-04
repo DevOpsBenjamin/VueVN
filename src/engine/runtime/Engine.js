@@ -91,7 +91,7 @@ class Engine {
           this.engineState.initialized &&
           this.engineState.state === ENGINE_STATES.MENU
         ) {
-          this.engineState.state = ENGINE_STATES.RUNNING; // Resume if already in menu
+          this.engineState.state = ENGINE_STATES.RUNNING;
         } else {
           this.lastScreenshot = await this.captureGameScreenshot();
           this.engineState.state = ENGINE_STATES.MENU;
@@ -106,7 +106,11 @@ class Engine {
     });
     window.addEventListener('click', (e) => {
       if (e.clientX > window.innerWidth / 2) {
-        this.resolveAwaiter('continue');
+        if (this.engineState.state === ENGINE_STATES.RUNNING) {
+          this.resolveAwaiter('continue');
+        } else {
+          console.debug('Click ignored, not in RUNNING state');
+        }
       } else {
         // Optionally: this.resolveAwaiter('back');
       }
@@ -197,6 +201,10 @@ class Engine {
     }
   }
   // #endregion
+
+  findEventById(eventId) {
+    return null;
+  }
 
   // #region events helpers
   async handleEvent(immediateEvent) {

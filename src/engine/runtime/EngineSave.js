@@ -28,7 +28,7 @@ const loadGame = async (engine, slot) => {
   engine.updateEvents();
   engine.engineState.initialized = true;
   await startEventReplay(engine);
-  engine.engineState.state = 'RUNNING';
+  engine.engineState.state = ENGINE_STATES.RUNNING;
 };
 
 const startEventReplay = async (engine) => {
@@ -39,11 +39,12 @@ const startEventReplay = async (engine) => {
   engine.replayMode = true;
   engine.targetStep = engine.engineState.currentStep;
   engine.engineState.currentStep = 0;
-  const event = findEventById(engine.engineState.currentEvent);
+  const event = engine.findEventById(engine.engineState.currentEvent);
   if (event) {
     console.debug('Starting event replay for:', event.id);
     await engine.handleEvent(event);
   }
+  engine.engineState.state = ENGINE_STATES.RUNNING;
 };
 
 const saveGame = (engine, slot, name) => {

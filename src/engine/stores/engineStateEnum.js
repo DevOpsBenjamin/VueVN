@@ -2,6 +2,7 @@
 
 export const ENGINE_STATES = {
   LOADING: 'LOADING',
+  RUNNING: 'RUNNING',
   MENU: 'MENU',
   IDLE: 'IDLE',
   EVENT: 'EVENT',
