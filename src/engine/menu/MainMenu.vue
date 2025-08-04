@@ -73,7 +73,7 @@ function newGame() {
 }
 
 function continueGame() {
-  // Implement continue game logic
+  engineState.state = ENGINE_STATES.RUNNING;
 }
 
 function loadGame() {

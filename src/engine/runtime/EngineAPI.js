@@ -19,9 +19,9 @@ const setForeground = (engine, imagePath) => {
  * Stores resolver for menu integration
  */
 const showText = async (engine, text, from = 'engine') => {
+  engine.engineState.currentStep++;
   // If in replay mode, auto-resolve if we haven't reached the target step yet
   if (engine.replayMode && engine.engineState.currentStep < engine.targetStep) {
-    engine.engineState.currentStep++;
     return; // auto-resolve
   }
 

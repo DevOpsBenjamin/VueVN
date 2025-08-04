@@ -42,12 +42,11 @@ console.log(
 const allFiles = { ...engineFiles, ...projectPluginFiles };
 
 let imports = '';
-let exportsBlock = 'export {\n';
 const usedNames = new Set();
+const exportNames = [];
 
 Object.entries(allFiles).forEach(([rel, abs]) => {
   let varName = path.basename(rel, path.extname(rel));
-
   // Handle duplicate names
   let finalVarName = varName;
   let counter = 1;
@@ -71,14 +70,20 @@ Object.entries(allFiles).forEach(([rel, abs]) => {
   }
 
   imports += `import ${finalVarName} from '${importPath}';\n`;
-  exportsBlock += `  ${finalVarName},\n`;
+  exportNames.push(finalVarName);
 });
-exportsBlock += '}\n';
 
 const outDir = path.join(__dirname, '../src/generate');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+const projectIdDecl = `const PROJECT_ID = '${currentProject}';\n`;
+let exportsBlock = 'export {\n  PROJECT_ID,';
+for (const name of exportNames) {
+  exportsBlock += `\n  ${name},`;
+}
+exportsBlock += '\n}\n';
+
 fs.writeFileSync(
   path.join(outDir, 'components.js'),
-  imports + '\n' + exportsBlock
+  imports + '\n' + projectIdDecl + '\n' + exportsBlock
 );
 console.log(`components.js generated for project: ${currentProject}`);

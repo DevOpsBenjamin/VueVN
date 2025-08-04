@@ -1,10 +1,10 @@
 import { events as eventIndex } from '@/generate/events'; // Import generated event index (adjust path as needed)
 import { VNInterruptError } from '@/generate/runtime';
 
-const handleImmediateEvent = async (engine, immediateEvent) => {
-  console.debug('Executing immediate event:', immediateEvent.id);
+const handleEvent = async (engine, event) => {
+  console.debug('Executing immediate event:', event.id);
   try {
-    await immediateEvent.execute(engine, engine.gameState);
+    await event.execute(engine, engine.gameState);
   } catch (err) {
     if (err instanceof VNInterruptError) {
       throw err;
@@ -14,13 +14,13 @@ const handleImmediateEvent = async (engine, immediateEvent) => {
     const cache = engine.eventCache[location];
     if (cache) {
       // Remove from unlocked
-      cache.unlocked = cache.unlocked.filter((ev) => ev !== immediateEvent);
-      cache.locked.push(immediateEvent);
+      cache.unlocked = cache.unlocked.filter((ev) => ev !== event);
+      cache.locked.push(event);
     }
     // Alert the user
     window.alert(
       `An error occurred in event '${
-        immediateEvent.id
+        event.id
       }'.\nThis event will be skipped.\nPlease report this to the game creator.\n\nError: ${
         err && err.message ? err.message : err
       }`
@@ -108,7 +108,7 @@ const updateEvents = (engine, location) => {
 };
 
 export default {
-  handleImmediateEvent,
+  handleEvent,
   createEventsCopy,
   getEvents,
   updateEvents,

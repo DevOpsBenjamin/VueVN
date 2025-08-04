@@ -1,5 +1,10 @@
 // Import generated event index (adjust path as needed)
-import { EngineEvents, EngineAPI, VNInterruptError } from '@/generate/runtime';
+import {
+  EngineEvents,
+  EngineAPI,
+  EngineSave,
+  VNInterruptError,
+} from '@/generate/runtime';
 import { engineStateEnum as ENGINE_STATES } from '@/generate/stores';
 /**
  * @typedef {Object} Engine
@@ -22,6 +27,18 @@ class Engine {
   }
   async showText(text, from = 'engine') {
     await EngineAPI.showText(this, text, from);
+  }
+  // #endregion
+
+  // #region SAVE engine
+  startNewGame() {
+    EngineSave.startNewGame(this);
+  }
+  loadGame(slot) {
+    return EngineSave.loadGame(this, slot);
+  }
+  saveGame(slot) {
+    EngineSave.saveGame(this, slot);
   }
   // #endregion
 
@@ -76,17 +93,6 @@ class Engine {
         // Optionally: this.resolveAwaiter('back');
       }
     });
-  }
-
-  startNewGame() {
-    this.cancelAwaiter();
-    // Interrupt any pending event
-    this.engineState.state = ENGINE_STATES.LOADING;
-    this.engineState.resetState();
-    this.gameState.resetGame();
-    this.createEventsCopy();
-    this.updateEvents();
-    this.engineState.state = 'RUNNING';
   }
 
   // resolve awaiter from anywhere in the engine
@@ -154,7 +160,7 @@ class Engine {
       if (immediateEvent) {
         this.engineState.currentEvent = immediateEvent.id;
         this.engineState.currentStep = 0;
-        await this.handleImmediateEvent(immediateEvent);
+        await this.handleEvent(immediateEvent);
       } else {
         /*
         // 3. Afficher les events "drawables" (choix, etc.)
@@ -175,8 +181,8 @@ class Engine {
   // #endregion
 
   // #region events helpers
-  async handleImmediateEvent(immediateEvent) {
-    await EngineEvents.handleImmediateEvent(this, immediateEvent);
+  async handleEvent(immediateEvent) {
+    await EngineEvents.handleEvent(this, immediateEvent);
   }
 
   createEventsCopy() {

@@ -15,13 +15,13 @@ import { Game } from '@/generate/components';
 const wrapperStyle = computed(() => ({
   '--aspect-ratio': '2 / 1',
   'background-color': '#1a1a1a', // Dark background for the engine area
-  'position': 'relative',
-  'overflow': 'hidden',
-  'width': '100%',
-  'height': '100%',
+  position: 'relative',
+  overflow: 'hidden',
+  width: '100%',
+  height: '100%',
   'max-width': '100%',
-  'margin': '0 auto',
-  'aspect-ratio': 'var(--aspect-ratio)'
+  margin: '0 auto',
+  'aspect-ratio': 'var(--aspect-ratio)',
 }));
 </script>
 
