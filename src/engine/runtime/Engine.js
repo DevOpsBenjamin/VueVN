@@ -1,13 +1,10 @@
-// Custom error for VN event interruption
-class VNInterruptError extends Error {
-  constructor(message = 'VN event interrupted') {
-    super(message);
-    this.name = 'VNInterruptError';
-  }
-}
 // Import generated event index (adjust path as needed)
-import { events as eventIndex } from '@/generate/events';
-import { engineStateEnum as ENGINE_STATES } from '@/generate/engine';
+import {
+  engineStateEnum as ENGINE_STATES,
+  EngineEvents,
+  EngineAPI,
+  VNInterruptError,
+} from '@/generate/engine';
 
 /**
  * @typedef {Object} Engine
@@ -22,36 +19,14 @@ import { engineStateEnum as ENGINE_STATES } from '@/generate/engine';
 
 class Engine {
   // #region Engine API for events and UI
-
-  /** * Set the background image for the current scene
-   * @param {string} imagePath - Path to the background image
-   * */
   setBackground(imagePath) {
-    console.debug('Setting background image:', imagePath);
-    this.engineState.background = imagePath;
+    EngineAPI.setBackground(this, imagePath);
   }
-
-  /** * Set the foreground image (e.g., character sprite)
-   * @param {string} imagePath - Path to the foreground image
-   * */
   setForeground(imagePath) {
-    console.debug('Setting foreground image:', imagePath);
-    this.engineState.foreground = imagePath;
+    EngineAPI.setForeground(this, imagePath);
   }
-
-  /**
-   * Show text and await user to continue (space/click/right), or menu (escape)
-   * Stores resolver for menu integration
-   */
   async showText(text, from = 'engine') {
-    // Set engine state for UI
-    this.engineState.dialogue = {
-      from: from,
-      text: text,
-    };
-    return new Promise((resolve) => {
-      this.awaiterResult = resolve;
-    });
+    await EngineAPI.showText(this, text, from);
   }
   // #endregion
 
@@ -82,6 +57,9 @@ class Engine {
         this.initVNInputHandlers();
       }
     }
+    //REPLAY VAR
+    this.replayMode = false;
+    this.targetStep = 0;
   }
 
   initVNInputHandlers() {
@@ -157,6 +135,7 @@ class Engine {
           console.warn('VN event interrupted, returning to menu or resetting.');
         } else {
           console.error('Engine error:', err);
+          await new Promise((resolve) => setTimeout(resolve, 10000));
         }
       }
       // Wait for state to become RUNNING again (e.g., after new game)
@@ -180,7 +159,7 @@ class Engine {
       if (immediateEvent) {
         this.engineState.currentEvent = immediateEvent.id;
         this.engineState.currentStep = 0;
-        this.handleEvent(immediateEvent);
+        await this.handleImmediateEvent(immediateEvent);
       } else {
         /*
         // 3. Afficher les events "drawables" (choix, etc.)
@@ -201,113 +180,21 @@ class Engine {
   // #endregion
 
   // #region events helpers
-
-  /**
-   * Create a deep copy of all events per location
-   * This is used to reset the event cache when starting a new game
-   */
   async handleImmediateEvent(immediateEvent) {
-    // 2. Exécuter le premier event valide (auto-trigger)
-    console.debug('Executing immediate event:', immediateEvent.id);
-    try {
-      await immediateEvent.execute(this, this.gameState);
-    } catch (err) {
-      if (err instanceof VNInterruptError) {
-        throw err;
-      }
-      // Lock the event so it won't run again
-      const location = this.gameState.location;
-      const cache = this.eventCache[location];
-      if (cache) {
-        // Remove from unlocked
-        cache.unlocked = cache.unlocked.filter((ev) => ev !== immediateEvent);
-        cache.locked.push(immediateEvent);
-      }
-      // Alert the user
-      window.alert(
-        `An error occurred in event '${
-          immediateEvent.id
-        }'.\nThis event will be skipped.\nPlease report this to the game creator.\n\nError: ${
-          err && err.message ? err.message : err
-        }`
-      );
-    }
+    await EngineEvents.handleImmediateEvent(this, immediateEvent);
   }
 
   createEventsCopy() {
-    // Deep copy all events per location into notChecked
-    this.eventCache = {};
-    for (const location in eventIndex) {
-      this.eventCache[location] = {
-        notReady: [...eventIndex[location]],
-        unlocked: [],
-        locked: [],
-      };
-    }
+    EngineEvents.createEventsCopy(this);
   }
 
-  /**
-   * calculate and return the events for the current location
-   * @returns {Promise<{immediateEvent: object|null, drawableEvents: object[]}>}
-   */
   async getEvents() {
-    console.debug('Loading events for location:', this.gameState.location);
-    const location = this.gameState.location;
-    const eventList = this.eventCache[location].unlocked || [];
-    console.debug(`Found ${eventList.length} events for location: ${location}`);
-    const drawableEvents = [];
-    for (const event of eventList) {
-      if (
-        typeof event.conditions === 'function' &&
-        event.conditions(this.gameState)
-      ) {
-        if (typeof event.draw !== 'function') {
-          console.debug(`Event ${event.id} is immediate, executing directly`);
-          return { immediateEvent: event, drawableEvents: [] };
-        } else {
-          drawableEvents.push(event);
-        }
-      }
-    }
-    // No immediate event, return all drawable events
-    return { immediateEvent: null, drawableEvents };
+    return await EngineEvents.getEvents(this);
   }
 
   //Engine events optimization to not re-check all events every time
   updateEvents(location) {
-    console.debug('Updating events for location:', location || 'all');
-
-    // If location is provided, only update that location; else update all
-    const locations = location ? [location] : Object.keys(this.eventCache);
-    for (const loc of locations) {
-      const cache = this.eventCache[loc];
-      if (!cache) {
-        continue;
-      }
-      const stillNotReady = [];
-      for (const event of cache.notReady) {
-        if (
-          typeof event.locked === 'function' &&
-          event.locked(this.gameState)
-        ) {
-          cache.locked.push(event);
-        } else if (
-          typeof event.unlocked === 'function' &&
-          event.unlocked(this.gameState)
-        ) {
-          cache.unlocked.push(event);
-        } else {
-          stillNotReady.push(event);
-        }
-      }
-      cache.notReady = stillNotReady;
-      console.debug(
-        `Events updated for location:${loc},
-        Unlocked: ${cache.unlocked.length}, 
-        Locked: ${cache.locked.length}, 
-        Not Ready: ${cache.notReady.length}`
-      );
-    }
+    EngineEvents.updateEvents(this, location);
   }
   // #endregion
 }
