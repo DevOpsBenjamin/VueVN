@@ -52,7 +52,6 @@ export const saveGame = (engine: Engine, slot: string, name?: string): void => {
   const data = {
     name: name || `Save ${slot}`,
     timestamp: new Date().toISOString(),
-    screenshot: engine.lastScreenshot,
     gameState: JSON.parse(JSON.stringify(engine.gameState.$state)),
     engineState: JSON.parse(JSON.stringify(engine.engineState.$state)),
   };

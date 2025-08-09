@@ -4,7 +4,6 @@ import {
   EngineSave,
   VNInterruptError,
 } from "@/generate/runtime";
-import html2canvas from "html2canvas";
 import { engineStateEnum as ENGINE_STATES } from "@/generate/stores";
 import type { GameState, EngineState, VNEvent } from "./types";
 
@@ -12,7 +11,6 @@ class Engine {
   gameState: GameState;
   engineState: EngineState;
   awaiterResult: ((value: any) => void) | null;
-  lastScreenshot: string | null;
   replayMode: boolean;
   targetStep: number;
   eventCache: Record<
@@ -24,7 +22,6 @@ class Engine {
     this.gameState = gameState;
     this.engineState = engineState;
     this.awaiterResult = null;
-    this.lastScreenshot = null;
     this.replayMode = false;
     this.targetStep = 0;
     this.eventCache = {};
@@ -81,23 +78,8 @@ class Engine {
   }
   // #endregion
 
-  async captureGameScreenshot(): Promise<string | null> {
-    const gameEl = document.getElementById("game-root");
-    if (!gameEl) return null;
-    try {
-      const canvas = await html2canvas(gameEl, {
-        useCORS: true,
-        ignoreElements: (el) => el.tagName === "CANVAS",
-      });
-      return canvas.toDataURL("image/png");
-    } catch (err) {
-      console.error("Failed to capture screenshot", err);
-      return null;
-    }
-  }
-
   initVNInputHandlers(): void {
-    window.addEventListener("keydown", async (e) => {
+    window.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         if (
           this.engineState.initialized &&
@@ -105,7 +87,6 @@ class Engine {
         ) {
           this.engineState.state = ENGINE_STATES.RUNNING;
         } else {
-          this.lastScreenshot = await this.captureGameScreenshot();
           this.engineState.state = ENGINE_STATES.MENU;
         }
       } else if (e.key === "Space" || e.key === "ArrowRight") {
