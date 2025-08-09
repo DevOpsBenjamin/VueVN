@@ -17,4 +17,4 @@ npm run dev my-novel
 npm run build my-novel
 ```
 
-See the [Project Wiki](wiki/) for full installation, project structure, and event documentation.
+See the [Project Wiki](https://github.com/DevOpsBenjamin/VueVN/wiki) for full installation, project structure, and event documentation.
