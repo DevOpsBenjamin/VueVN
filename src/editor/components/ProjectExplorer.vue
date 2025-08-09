@@ -8,7 +8,7 @@
     </button>
     <BaseTree
       v-if="tree.length"
-      :value="tree"
+      :model-value="tree"
       :text-key="'name'"
       :children-key="'children'"
       :indent="12"
