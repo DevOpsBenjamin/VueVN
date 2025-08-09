@@ -173,6 +173,16 @@ class Engine {
   }
 
   findEventById(eventId: string): VNEvent | null {
+    for (const location in this.eventCache) {
+      const cache = this.eventCache[location];
+      for (const list of ["unlocked", "locked", "notReady"] as const) {
+        const found = cache[list].find((ev) => ev.id === eventId);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    console.warn(`Event with id '${eventId}' not found`);
     return null;
   }
 
