@@ -84,8 +84,16 @@ class Engine {
   async captureGameScreenshot(): Promise<string | null> {
     const gameEl = document.getElementById("game-root");
     if (!gameEl) return null;
-    const canvas = await html2canvas(gameEl);
-    return canvas.toDataURL("image/png");
+    try {
+      const canvas = await html2canvas(gameEl, {
+        useCORS: true,
+        ignoreElements: (el) => el.tagName === "CANVAS",
+      });
+      return canvas.toDataURL("image/png");
+    } catch (err) {
+      console.error("Failed to capture screenshot", err);
+      return null;
+    }
   }
 
   initVNInputHandlers(): void {
