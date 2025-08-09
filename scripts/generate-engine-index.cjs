@@ -1,4 +1,4 @@
-// Génère src/generate/engine.js avec tous les .js du moteur (project/plugins > core)
+// Génère src/generate/engine.js avec tous les .js du moteur (project files > core)
 const fs = require('fs');
 const path = require('path');
 

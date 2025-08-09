@@ -4,10 +4,14 @@ A visual novel created with VueVN.
 
 ## Project Structure
 
-- `plugins/` - Custom components and stores that override the engine defaults
 - `events/` - Game events organized by location
 - `assets/` - Images, sounds, and other media files
+- `stores/` - Custom game state overrides (NPCs, flags, etc.)
 - `config.json` - Project configuration
+
+This sample includes an intro event in `events/start/intro.js`, a follow-up event
+in `events/bedroom/wake-up.js`, and a sample NPC defined in
+`stores/baseGameState.js`.
 
 ## Development
 
@@ -34,8 +38,8 @@ export default {
 };
 ```
 
-## Customizing Components
+## Customizing the Engine
 
-Override any core component by creating a file with the same path in `plugins/`:
+Override any core component by creating a file in your project with the same path as in the engine.
 
-Example: To customize the main menu, create `plugins/menu/MainMenu.vue`.
+Example: To customize the main menu, create `menu/MainMenu.vue`.

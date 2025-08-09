@@ -32,6 +32,6 @@ export default {
     state.flags.introSeen = true;
 
     // Change location (this will trigger new events)
-    state.location = 'chapter1';
+    state.location = 'bedroom';
   },
 };
