@@ -41,7 +41,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { loadMonaco } from "@/editor/utils/monacoLoader.js";
 
 // Editor container refs
 const engineEditorContainer = ref(null);
@@ -54,51 +55,25 @@ let gameEditorInstance = null;
 import {
   engineState as useEngineState,
   gameState as useGameState,
-} from '@/generate/stores';
+} from "@/generate/stores";
 
 const engineState = useEngineState();
 const gameState = useGameState();
 
-// Load Monaco Editor
-function loadMonaco() {
-  return new Promise((resolve) => {
-    if (window.monaco) return resolve();
-
-    const script = document.createElement('script');
-    script.src =
-      'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js';
-    script.onload = () => {
-      window.require.config({
-        paths: {
-          vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs',
-        },
-      });
-      resolve();
-    };
-    document.body.appendChild(script);
-  });
-}
-
-async function createEditor(container, initialValue, language = 'json') {
+async function createEditor(container, initialValue, language = "json") {
   await loadMonaco();
-
-  return new Promise((resolve) => {
-    window.require(['vs/editor/editor.main'], () => {
-      const editor = window.monaco.editor.create(container, {
-        value: initialValue,
-        language,
-        theme: 'vs-dark',
-        automaticLayout: true,
-        minimap: { enabled: false },
-      });
-      resolve(editor);
-    });
+  return window.monaco.editor.create(container, {
+    value: initialValue,
+    language,
+    theme: "vs-dark",
+    automaticLayout: true,
+    minimap: { enabled: false },
   });
 }
 
 // Keep JSON in sync with state
-const engineJson = ref('');
-const gameJson = ref('');
+const engineJson = ref("");
+const gameJson = ref("");
 
 watch(
   () => JSON.stringify(engineState, null, 2),
@@ -111,7 +86,7 @@ watch(
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 watch(
@@ -125,17 +100,17 @@ watch(
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 onMounted(async () => {
   engineEditorInstance = await createEditor(
     engineEditorContainer.value,
-    JSON.stringify(engineState, null, 2)
+    JSON.stringify(engineState, null, 2),
   );
   gameEditorInstance = await createEditor(
     gameEditorContainer.value,
-    JSON.stringify(gameState, null, 2)
+    JSON.stringify(gameState, null, 2),
   );
 });
 
@@ -149,12 +124,12 @@ function applyEngineState() {
   try {
     const value = engineEditorInstance.getValue();
     const updated = JSON.parse(value);
-    if (typeof updated === 'object' && updated !== null) {
+    if (typeof updated === "object" && updated !== null) {
       engineState.$patch(updated);
-      alert('Engine State updated successfully!');
+      alert("Engine State updated successfully!");
     }
   } catch {
-    alert('EngineState JSON is invalid!');
+    alert("EngineState JSON is invalid!");
   }
 }
 
@@ -162,12 +137,12 @@ function applyGameState() {
   try {
     const value = gameEditorInstance.getValue();
     const updated = JSON.parse(value);
-    if (typeof updated === 'object' && updated !== null) {
+    if (typeof updated === "object" && updated !== null) {
       gameState.$patch(updated);
-      alert('Game State updated successfully!');
+      alert("Game State updated successfully!");
     }
   } catch {
-    alert('GameState JSON is invalid!');
+    alert("GameState JSON is invalid!");
   }
 }
 </script>
