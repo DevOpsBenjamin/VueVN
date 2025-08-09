@@ -20,7 +20,7 @@
         class="bg-gray-900 text-white rounded-lg w-full max-w-3xl p-4 flex flex-col items-center"
       >
         <h2 class="text-xl font-bold mb-4 text-center">
-          {{ mode === 'save' ? 'Save Game' : 'Load Game' }}
+          {{ mode === "save" ? "Save Game" : "Load Game" }}
         </h2>
         <div class="grid grid-cols-4 grid-rows-2 gap-4 mb-6">
           <div
@@ -28,16 +28,6 @@
             :key="slot"
             class="bg-gray-800 rounded shadow p-2 flex flex-col items-center"
           >
-            <div
-              class="w-full h-24 bg-gray-700 flex items-center justify-center mb-2 rounded"
-            >
-              <img
-                v-if="saves[slot] && saves[slot].screenshot"
-                :src="saves[slot].screenshot"
-                class="object-cover w-full h-full rounded"
-              />
-              <span v-else class="text-gray-400">No Screenshot</span>
-            </div>
             <div class="w-full text-center mb-1">
               <span class="font-semibold">
                 {{ saves[slot]?.name || `Slot ${slot}` }}
@@ -99,13 +89,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from "vue";
 import {
   engineState as useEngineState,
   engineStateEnum as ENGINE_STATES,
-} from '@/generate/stores';
+} from "@/generate/stores";
 const engineState = useEngineState();
-import { PROJECT_ID } from '@/generate/components';
+import { PROJECT_ID } from "@/generate/components";
 
 const slotsPerPage = 8;
 const maxSlots = 24;
@@ -114,20 +104,20 @@ const saves = ref({});
 const saveNames = ref({});
 
 const mode = computed(() => {
-  if (engineState.state === ENGINE_STATES.SAVE) return 'save';
-  if (engineState.state === ENGINE_STATES.LOAD) return 'load';
-  return 'save'; // fallback
+  if (engineState.state === ENGINE_STATES.SAVE) return "save";
+  if (engineState.state === ENGINE_STATES.LOAD) return "load";
+  return "save"; // fallback
 });
 
 const visibleSlots = computed(() => {
   const start = page.value * slotsPerPage + 1;
   return Array.from({ length: slotsPerPage }, (_, i) => start + i).filter(
-    (n) => n <= maxSlots
+    (n) => n <= maxSlots,
   );
 });
 
 function formatDate(timestamp) {
-  if (!timestamp) return '';
+  if (!timestamp) return "";
   return new Date(timestamp).toLocaleString();
 }
 
@@ -139,10 +129,10 @@ function loadSaves() {
       try {
         const data = JSON.parse(raw);
         saves.value[i] = data;
-        saveNames.value[i] = data.name || '';
+        saveNames.value[i] = data.name || "";
       } catch {}
     } else {
-      saveNames.value[i] = '';
+      saveNames.value[i] = "";
     }
   }
 }
@@ -170,8 +160,8 @@ onMounted(loadSaves);
 
 const menuBgStyle = {
   backgroundImage: "url('assets/images/background/menu.png')",
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
+  backgroundSize: "cover",
+  backgroundPosition: "center",
 };
 </script>
 

@@ -24,7 +24,6 @@
     "chokidar-cli": "^3.0.0",
     "concurrently": "^9.2.0",
     "fs-extra": "^11.3.0",
-    "html2canvas": "^1.4.1",
     "monaco-editor-vue3": "^0.1.10",
     "serve-static": "^2.2.0",
     "typescript": "^5.9.2",
