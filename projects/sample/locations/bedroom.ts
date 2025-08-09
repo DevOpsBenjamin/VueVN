@@ -1,9 +1,4 @@
-export interface Location {
-  id: string;
-  name: string;
-  background: string;
-  [key: string]: any;
-}
+import type { Location } from "@/engine/runtime/types";
 
 const bedroom: Location = {
   id: "bedroom",

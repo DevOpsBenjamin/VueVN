@@ -33,3 +33,18 @@ export interface VNEvent {
   draw?: (engine: Engine, state: GameState) => void;
   execute: (engine: Engine, state: GameState) => Promise<void>;
 }
+
+export interface Location {
+  id: string;
+  name: string;
+  background: string;
+  [key: string]: any;
+}
+
+export interface NPC {
+  name: string;
+  flags: Record<string, any>;
+  [key: string]: any;
+}
+
+export type VNStore = Record<string, any>;

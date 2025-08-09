@@ -1,9 +1,9 @@
-import eventTypes from "@/editor/types/event.d.ts?raw";
+import runtimeTypes from "@/engine/runtime/types.ts?raw";
 
 export function registerEventTypes() {
   if (!window.monaco) return;
   window.monaco.languages.typescript.typescriptDefaults.addExtraLib(
-    eventTypes,
-    "ts:event.d.ts",
+    runtimeTypes,
+    "ts:runtime/types.ts",
   );
 }
