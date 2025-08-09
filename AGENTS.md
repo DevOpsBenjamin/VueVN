@@ -34,6 +34,8 @@ These instructions apply to the entire repository.
 - The wiki is tracked as a Git submodule that the agent cannot push to.
 - To propose changes:
   - Pull the wiki repository if needed.
-  - Copy its contents to a folder named `_wiki` in the repo root.
+  - Copy only the file(s) you plan to change into a folder named `_wiki`
+    in the repo root. Avoid copying the entire wiki so the diff stays
+    focused on the edits.
   - Make all edits inside `_wiki` and commit those files.
   - A human will later sync the changes back to the actual wiki.
