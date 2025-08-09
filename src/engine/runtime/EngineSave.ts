@@ -53,8 +53,8 @@ export const saveGame = (engine: Engine, slot: string, name?: string): void => {
     name: name || `Save ${slot}`,
     timestamp: new Date().toISOString(),
     screenshot: engine.lastScreenshot,
-    gameState: JSON.parse(JSON.stringify(engine.gameState)),
-    engineState: JSON.parse(JSON.stringify(engine.engineState)),
+    gameState: JSON.parse(JSON.stringify(engine.gameState.$state)),
+    engineState: JSON.parse(JSON.stringify(engine.engineState.$state)),
   };
 
   localStorage.setItem(`Save_${PROJECT_ID}_${slot}`, JSON.stringify(data));
