@@ -5,13 +5,25 @@
     <div
       class="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700"
     >
-      <span class="font-mono text-green-400 text-sm">Event Editor</span>
-      <button
-        class="text-xs px-2 py-1 bg-green-700 hover:bg-green-600 rounded text-white"
-        @click="save"
-      >
-        Save
-      </button>
+      <span class="font-mono text-green-400 text-sm">{{
+        currentFileName
+      }}</span>
+      <div class="space-x-2">
+        <button
+          class="text-xs px-2 py-1 bg-blue-700 hover:bg-blue-600 rounded text-white disabled:opacity-50"
+          :disabled="!currentFile"
+          @click="run"
+        >
+          Preview
+        </button>
+        <button
+          class="text-xs px-2 py-1 bg-green-700 hover:bg-green-600 rounded text-white disabled:opacity-50"
+          :disabled="!currentFile"
+          @click="save"
+        >
+          Save
+        </button>
+      </div>
     </div>
     <div class="flex-1 relative">
       <div ref="editorContainer" class="absolute inset-0" />
@@ -20,60 +32,56 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, onBeforeUnmount, watch } from "vue";
+import { onMounted, ref, watch, computed } from "vue";
 import { loadMonaco } from "@/editor/utils/monacoLoader.js";
 import { registerEventTypes } from "@/editor/utils/eventTypes";
-import { useEventsStore } from "@/editor/stores/events";
-import { storeToRefs } from "pinia";
+import { verifyEvent } from "@/editor/utils/verifyEvent";
+import { useEditorState } from "@/editor/stores/editorState";
 
-const eventsStore = useEventsStore();
-const { currentEvent } = storeToRefs(eventsStore);
-
-let editorInstance: any = null;
 const editorContainer = ref<HTMLDivElement | null>(null);
+let editorInstance: any = null;
+
+const editorState = useEditorState();
+const currentFile = computed(() => editorState.currentFile);
+const currentFileName = computed(
+  () => currentFile.value?.split("/").pop() ?? "No file selected",
+);
+
+async function loadFile(path: string) {
+  const res = await fetch(`/api/file?path=${encodeURIComponent(path)}`);
+  const data = await res.json();
+  editorInstance?.setValue(data.content);
+}
 
 function save() {
-  if (!editorInstance) return;
-  eventsStore.updateCurrentEventCode(editorInstance.getValue());
-  eventsStore.saveCurrentEvent();
+  if (!editorInstance || !currentFile.value) return;
+  const code = editorInstance.getValue();
+  if (!verifyEvent(code)) return;
+  fetch("/api/file", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: currentFile.value, content: code }),
+  });
+}
+
+function run() {
+  if (!currentFile.value) return;
+  editorState.previewVisible = true;
+  console.debug("Run event", currentFile.value);
 }
 
 onMounted(async () => {
   await loadMonaco();
   registerEventTypes();
   editorInstance = window.monaco.editor.create(editorContainer.value!, {
-    value: currentEvent.value?.code || "",
+    value: "",
     language: "typescript",
     theme: "vs-dark",
     automaticLayout: true,
   });
-
-  editorInstance.onDidChangeModelContent(() => {
-    eventsStore.updateCurrentEventCode(editorInstance.getValue());
-  });
-
-  watch(
-    currentEvent,
-    (evt) => {
-      const value = evt?.code || "";
-      if (editorInstance.getValue() !== value) {
-        editorInstance.setValue(value);
-      }
-    },
-    { immediate: true },
-  );
 });
 
-onBeforeUnmount(() => {
-  if (editorInstance) editorInstance.dispose();
+watch(currentFile, (file) => {
+  if (file) loadFile(file);
 });
 </script>
-
-<style scoped>
-.h-full {
-  height: 100%;
-}
-.w-full {
-  width: 100%;
-}
-</style>

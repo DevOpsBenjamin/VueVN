@@ -1,26 +1,60 @@
 <template>
-  <div class="flex-1 overflow-y-auto">
+  <div class="flex-1 overflow-y-auto text-xs">
+    <button
+      class="w-full text-left px-2 py-1 hover:bg-gray-800"
+      @click="createEvent"
+    >
+      + Add Event
+    </button>
     <ul>
-      <li v-for="evt in events" :key="evt.name">
-        <button
-          class="w-full text-left px-2 py-1 hover:bg-gray-800"
-          @click="select(evt.name)"
-        >
-          {{ evt.name }}
-        </button>
-      </li>
+      <FileNode
+        v-for="item in rootFiles"
+        :key="item.path"
+        :node="item"
+        :selected="editorState.currentFile"
+        @select="openFile"
+      />
     </ul>
   </div>
 </template>
 
 <script setup lang="ts">
-import { storeToRefs } from "pinia";
-import { useEventsStore } from "@/editor/stores/events";
+import { ref, onMounted } from "vue";
+import FileNode, { type FileItem } from "./FileNode.vue";
+import { useEditorState } from "@/editor/stores/editorState";
 
-const eventsStore = useEventsStore();
-const { events } = storeToRefs(eventsStore);
+const rootFiles = ref<FileItem[]>([]);
+const editorState = useEditorState();
 
-function select(name: string) {
-  eventsStore.selectEvent(name);
+async function loadRoot() {
+  const res = await fetch("/api/files");
+  rootFiles.value = await res.json();
+}
+
+onMounted(loadRoot);
+
+function openFile(path: string) {
+  editorState.selectFile(path);
+}
+
+async function createEvent() {
+  const name = prompt("Event file path", "events/new-event.ts");
+  if (!name) return;
+
+  const templatesRes = await fetch("/api/project/templates");
+  const templates = await templatesRes.json();
+
+  await fetch("/api/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      path: name,
+      type: "file",
+      template: templates.event,
+    }),
+  });
+
+  await loadRoot();
+  openFile(name);
 }
 </script>
