@@ -8,7 +8,7 @@
       <span class="font-mono text-green-400 text-sm">{{
         currentFileName
       }}</span>
-      <div class="space-x-2">
+      <div class="space-x-2 flex items-center">
         <button
           class="text-xs px-2 py-1 bg-blue-700 hover:bg-blue-600 rounded text-white disabled:opacity-50"
           :disabled="!currentFile"
@@ -18,11 +18,13 @@
         </button>
         <button
           class="text-xs px-2 py-1 bg-green-700 hover:bg-green-600 rounded text-white disabled:opacity-50"
-          :disabled="!currentFile"
+          :disabled="!currentFile || saving"
           @click="save"
         >
-          Save
+          <span v-if="saving">Saving...</span>
+          <span v-else>Save</span>
         </button>
+        <span v-if="saveMessage" class="text-green-400">{{ saveMessage }}</span>
       </div>
     </div>
     <div class="flex-1 relative">
@@ -46,6 +48,8 @@ const currentFile = computed(() => editorState.currentFile);
 const currentFileName = computed(
   () => currentFile.value?.split("/").pop() ?? "No file selected",
 );
+const saving = ref(false);
+const saveMessage = ref("");
 
 async function loadFile(path: string) {
   const res = await fetch(`/api/file?path=${encodeURIComponent(path)}`);
@@ -53,15 +57,23 @@ async function loadFile(path: string) {
   editorInstance?.setValue(data.content);
 }
 
-function save() {
+async function save() {
   if (!editorInstance || !currentFile.value) return;
   const code = editorInstance.getValue();
-  if (!verifyEvent(code)) return;
-  fetch("/api/file", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: currentFile.value, content: code }),
-  });
+  const valid = await verifyEvent(code);
+  if (!valid) return;
+  saving.value = true;
+  try {
+    await fetch("/api/file", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: currentFile.value, content: code }),
+    });
+    saveMessage.value = "Saved";
+    setTimeout(() => (saveMessage.value = ""), 2000);
+  } finally {
+    saving.value = false;
+  }
 }
 
 function run() {

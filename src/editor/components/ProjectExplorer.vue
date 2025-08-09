@@ -29,9 +29,24 @@ const editorState = useEditorState();
 async function loadRoot() {
   const res = await fetch("/api/files");
   rootFiles.value = await res.json();
+  const first = await findFirstFile();
+  if (first) openFile(first.path);
 }
 
 onMounted(loadRoot);
+
+async function findFirstFile(dir = ""): Promise<FileItem | null> {
+  const res = await fetch(`/api/files?path=${encodeURIComponent(dir)}`);
+  const items: FileItem[] = await res.json();
+  for (const item of items) {
+    if (item.type === "file") return item;
+    if (item.type === "directory") {
+      const found = await findFirstFile(item.path);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 function openFile(path: string) {
   editorState.selectFile(path);
