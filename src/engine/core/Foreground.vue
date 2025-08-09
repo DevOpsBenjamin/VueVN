@@ -8,13 +8,12 @@
       :src="engineState.foreground"
       class="object-contain w-full h-full"
       alt="Foreground"
-      crossorigin="anonymous"
     />
   </div>
 </template>
 
 <script setup>
-import { engineState as useEngineState } from "@/generate/stores";
+import { engineState as useEngineState } from '@/generate/stores';
 const engineState = useEngineState();
 </script>
 
