@@ -1,8 +1,4 @@
-export interface NPC {
-  name: string;
-  flags: Record<string, any>;
-  [key: string]: any;
-}
+import type { NPC } from "@/engine/runtime/types";
 
 export const NPC_BASE: NPC = {
   name: "",
