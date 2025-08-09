@@ -1,9 +1,9 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
-import { ENGINE_STATES } from "./engineStateEnum";
-import type { Dialogue, EngineState } from "../runtime/types";
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import { ENGINE_STATES } from './engineStateEnum';
+import type { Dialogue, EngineState } from '../runtime/types';
 
-const useEngineState = defineStore("engineState", () => {
+const useEngineState = defineStore('engineState', () => {
   const background = ref<string | null>(null);
   const foreground = ref<string | null>(null);
   const dialogue = ref<Dialogue | null>(null);
@@ -15,6 +15,7 @@ const useEngineState = defineStore("engineState", () => {
   const choices = ref<Array<{ text: string; id: string }> | null>(null);
 
   function resetState(): void {
+    console.debug('Resetting engine state');
     background.value = null;
     foreground.value = null;
     dialogue.value = null;

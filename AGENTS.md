@@ -28,3 +28,12 @@ These instructions apply to the entire repository.
 - Summarize the changes and how they were tested (e.g., `npm run build sample`).
 - Note any relevant issues or tasks.
 - Mention if you added or updated any scripts or sub-projects under `projects/`.
+
+## Wiki Updates
+
+- The wiki is tracked as a Git submodule that the agent cannot push to.
+- To propose changes:
+  - Pull the wiki repository if needed.
+  - Copy its contents to a folder named `_wiki` in the repo root.
+  - Make all edits inside `_wiki` and commit those files.
+  - A human will later sync the changes back to the actual wiki.
