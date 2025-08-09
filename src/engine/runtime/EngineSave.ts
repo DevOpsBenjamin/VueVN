@@ -22,8 +22,8 @@ export const loadGame = async (engine: Engine, slot: string): Promise<void> => {
   const data = JSON.parse(raw);
   engine.engineState.resetState();
   engine.gameState.resetGame();
-  Object.assign(engine.gameState, data.gameState);
-  Object.assign(engine.engineState, data.engineState);
+  Object.assign(engine.gameState.$state, data.gameState);
+  Object.assign(engine.engineState.$state, data.engineState);
   engine.createEventsCopy();
   engine.updateEvents();
   engine.engineState.initialized = true;
