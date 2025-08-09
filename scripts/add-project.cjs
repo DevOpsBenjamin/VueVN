@@ -41,6 +41,8 @@ const dirs = [
   path.join(projectPath, 'assets', 'images'),
   path.join(projectPath, 'assets', 'sounds'),
   path.join(projectPath, 'stores'),
+  path.join(projectPath, 'npcs'),
+  path.join(projectPath, 'locations'),
 ];
 
 dirs.forEach((dir) => {
@@ -128,45 +130,67 @@ fs.writeFileSync(
   path.join(projectPath, 'events', 'bedroom', 'wake-up.js'),
   bedroomEventContent
 );
-console.log(
-  `📄 Created: projects/${projectName}/events/bedroom/wake-up.js`
-);
+console.log(`📄 Created: projects/${projectName}/events/bedroom/wake-up.js`);
 
-// 4. Base game state with sample NPC
-const baseStateContent = `const NPC_BASE = {
-  name: '',
-  flags: {},
-};
+// 4. Sample NPC
+const sampleNPCContent = `import { baseGameState } from '@/generate/stores';
+const { createNPC } = baseGameState;
 
-function createNPC(overrides = {}) {
-  return {
-    ...NPC_BASE,
-    ...overrides,
-  };
-}
+const npc_1 = createNPC({
+  name: 'NPC 1',
+  relation: 0,
+  trust: 0,
+  // LONG as heck definition continues here...
+});
 
-const BASE_GAME_STATE = {
-  player: { name: '' },
-  location: 'start',
-  flags: { introSeen: false },
-  npcs: {
-    npc: createNPC({ name: 'Sample NPC' }),
+export default npc_1;
+`;
+
+fs.writeFileSync(path.join(projectPath, 'npcs', 'npc_1.js'), sampleNPCContent);
+console.log(`📄 Created: projects/${projectName}/npcs/npc_1.js`);
+
+// 5. Base game state with sample NPC
+const gameStateContent = `import { defineStore } from 'pinia';
+
+import { baseGameState } from '@/generate/stores';
+import { npc_1 } from '@/generate/npc';
+const { BASE_GAME_STATE } = baseGameState;
+
+const useGameState = defineStore('gameState', {
+  state: () => ({
+    // 🚨 PROTECTED - Required by engine, do not remove/rename
+    ...BASE_GAME_STATE,
+
+    //Sample EXTERNAL NPC
+    npc_1,
+
+    // ✅ SAFE TO MODIFY - Your custom fields below
+    myCustomField: '',
+    myCustomArray: [],
+  }),
+
+  actions: {
+    resetGame() {
+      // Reset all base fields
+      Object.assign(this, {
+        ...BASE_GAME_STATE,
+        npc_1,
+        myCustomField: '',
+        myCustomArray: [],
+      });
+    },
+    // Your other actions
   },
-};
+});
 
-export default {
-  createNPC,
-  BASE_GAME_STATE,
-};
+export default useGameState;
 `;
 
 fs.writeFileSync(
-  path.join(projectPath, 'stores', 'baseGameState.js'),
-  baseStateContent
+  path.join(projectPath, 'stores', 'gameState.js'),
+  gameStateContent
 );
-console.log(
-  `📄 Created: projects/${projectName}/stores/baseGameState.js`
-);
+console.log(`📄 Created: projects/${projectName}/stores/gameState.js`);
 
 // 5. README for the project
 const readmeContent = `# ${projectName}

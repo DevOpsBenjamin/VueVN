@@ -1,7 +1,7 @@
 const bedroom = {
   id: 'bedroom',
   name: 'Bedroom',
-  background: '/img/bedroom.jpg',
+  background: 'assets/images/background/bedroom/morning.png',
   // ...other metadata
 };
 
