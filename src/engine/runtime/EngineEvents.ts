@@ -1,39 +1,34 @@
-import { events as eventIndex } from '@/generate/events'; // Import generated event index (adjust path as needed)
-import { VNInterruptError } from '@/generate/runtime';
+import { events as eventIndex } from "@/generate/events";
+import { VNInterruptError } from "@/generate/runtime";
+import type Engine from "./Engine";
+import type { VNEvent } from "./types";
 
-const handleEvent = async (engine, event) => {
-  console.debug('Executing immediate event:', event.id);
+const handleEvent = async (engine: Engine, event: VNEvent): Promise<void> => {
+  console.debug("Executing immediate event:", event.id);
   try {
     await event.execute(engine, engine.gameState);
   } catch (err) {
     if (err instanceof VNInterruptError) {
       throw err;
     }
-    // Lock the event so it won't run again
     const location = engine.gameState.location;
     const cache = engine.eventCache[location];
     if (cache) {
-      // Remove from unlocked
       cache.unlocked = cache.unlocked.filter((ev) => ev !== event);
       cache.locked.push(event);
     }
-    // Alert the user
     window.alert(
       `An error occurred in event '${
         event.id
       }'.\nThis event will be skipped.\nPlease report this to the game creator.\n\nError: ${
-        err && err.message ? err.message : err
-      }`
+        (err as Error).message
+      }`,
     );
   }
 };
 
-/**
- * Create a deep copy of all events per location
- * This is used to reset the event cache when starting a new game
- */
-const createEventsCopy = (engine) => {
-  engine.eventCache = {};
+const createEventsCopy = (engine: Engine): void => {
+  engine.eventCache = {} as any;
   for (const location in eventIndex) {
     engine.eventCache[location] = {
       notReady: [...eventIndex[location]],
@@ -43,22 +38,23 @@ const createEventsCopy = (engine) => {
   }
 };
 
-/**
- * calculate and return the events for the current location
- * @returns {Promise<{immediateEvent: object|null, drawableEvents: object[]}>}
- */
-const getEvents = async (engine) => {
-  console.debug('Loading events for location:', engine.gameState.location);
+export interface EventLookup {
+  immediateEvent: VNEvent | null;
+  drawableEvents: VNEvent[];
+}
+
+const getEvents = async (engine: Engine): Promise<EventLookup> => {
+  console.debug("Loading events for location:", engine.gameState.location);
   const location = engine.gameState.location;
   const eventList = engine.eventCache[location].unlocked || [];
   console.debug(`Found ${eventList.length} events for location: ${location}`);
-  const drawableEvents = [];
+  const drawableEvents: VNEvent[] = [];
   for (const event of eventList) {
     if (
-      typeof event.conditions === 'function' &&
+      typeof event.conditions === "function" &&
       event.conditions(engine.gameState)
     ) {
-      if (typeof event.draw !== 'function') {
+      if (typeof event.draw !== "function") {
         console.debug(`Event ${event.id} is immediate, executing directly`);
         return { immediateEvent: event, drawableEvents: [] };
       } else {
@@ -66,32 +62,22 @@ const getEvents = async (engine) => {
       }
     }
   }
-  // No immediate event, return all drawable events
   return { immediateEvent: null, drawableEvents };
 };
 
-//Engine events optimization to not re-check all events every time
-const updateEvents = (engine, location) => {
-  console.debug('Updating events for location:', location || 'all');
-
-  // If location is provided, only update that location; else update all
+const updateEvents = (engine: Engine, location?: string): void => {
+  console.debug("Updating events for location:", location || "all");
   const locations = location ? [location] : Object.keys(engine.eventCache);
   for (const loc of locations) {
     const cache = engine.eventCache[loc];
     if (!cache) {
       continue;
     }
-    const stillNotReady = [];
-    for (const event of cache.notReady) {
-      if (
-        typeof event.locked === 'function' &&
-        event.locked(engine.gameState)
-      ) {
+    const stillNotReady: VNEvent[] = [];
+    for (const event of cache.notReady as VNEvent[]) {
+      if (event.locked && event.locked(engine.gameState)) {
         cache.locked.push(event);
-      } else if (
-        typeof event.unlocked === 'function' &&
-        event.unlocked(engine.gameState)
-      ) {
+      } else if (event.unlocked && event.unlocked(engine.gameState)) {
         cache.unlocked.push(event);
       } else {
         stillNotReady.push(event);
@@ -100,9 +86,9 @@ const updateEvents = (engine, location) => {
     cache.notReady = stillNotReady;
     console.debug(
       `Events updated for location:${loc},
-        Unlocked: ${cache.unlocked.length}, 
-        Locked: ${cache.locked.length}, 
-        Not Ready: ${cache.notReady.length}`
+        Unlocked: ${cache.unlocked.length},
+        Locked: ${cache.locked.length},
+        Not Ready: ${cache.notReady.length}`,
     );
   }
 };

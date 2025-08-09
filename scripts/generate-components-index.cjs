@@ -1,49 +1,49 @@
-// Génère src/generate/components.js avec tous les .vue (project files > core)
-const fs = require('fs');
-const path = require('path');
+// Génère src/generate/components.ts avec tous les .vue (project files > core)
+const fs = require("fs");
+const path = require("path");
 
 // Get current project from environment
 const currentProject = process.env.VUEVN_PROJECT;
 if (!currentProject) {
   console.error(
-    'No project specified. This script should be run via npm run dev/build'
+    "No project specified. This script should be run via npm run dev/build",
   );
   process.exit(1);
 }
 
-function walkVueFiles(dir, base = '', files = {}, skipEvents = false) {
+function walkVueFiles(dir, base = "", files = {}, skipEvents = false) {
   if (!fs.existsSync(dir)) return files;
   fs.readdirSync(dir).forEach((file) => {
     const abs = path.join(dir, file);
     const rel = path.join(base, file);
     if (fs.statSync(abs).isDirectory()) {
-      if (skipEvents && file === 'events') return;
+      if (skipEvents && file === "events") return;
       walkVueFiles(abs, rel, files, skipEvents);
-    } else if (file.endsWith('.vue')) {
-      files[rel.replace(/\\/g, '/')] = abs;
+    } else if (file.endsWith(".vue")) {
+      files[rel.replace(/\\/g, "/")] = abs;
     }
   });
   return files;
 }
 
 // Get files from engine and project
-const engineFiles = walkVueFiles(path.join(__dirname, '../src/engine'));
+const engineFiles = walkVueFiles(path.join(__dirname, "../src/engine"));
 const projectFiles = walkVueFiles(
   path.join(__dirname, `../projects/${currentProject}`),
-  '',
+  "",
   {},
-  true
+  true,
 );
 
 console.log(`Found ${Object.keys(engineFiles).length} engine component files`);
 console.log(
-  `Found ${Object.keys(projectFiles).length} project component files`
+  `Found ${Object.keys(projectFiles).length} project component files`,
 );
 
 // Merge with project files taking priority
 const allFiles = { ...engineFiles, ...projectFiles };
 
-let imports = '';
+let imports = "";
 const usedNames = new Set();
 const exportNames = [];
 
@@ -63,9 +63,9 @@ Object.entries(allFiles).forEach(([rel, abs]) => {
   if (projectFiles[rel]) {
     // Project file - need to go up 2 levels from src/generate
     const relPath = path
-      .relative(path.join(__dirname, '../src/generate'), abs)
-      .replace(/\\/g, '/');
-    importPath = relPath.startsWith('.') ? relPath : './' + relPath;
+      .relative(path.join(__dirname, "../src/generate"), abs)
+      .replace(/\\/g, "/");
+    importPath = relPath.startsWith(".") ? relPath : "./" + relPath;
   } else {
     // Engine file
     importPath = `../engine/${rel}`;
@@ -75,17 +75,17 @@ Object.entries(allFiles).forEach(([rel, abs]) => {
   exportNames.push(finalVarName);
 });
 
-const outDir = path.join(__dirname, '../src/generate');
+const outDir = path.join(__dirname, "../src/generate");
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 const projectIdDecl = `const PROJECT_ID = '${currentProject}';\n`;
-let exportsBlock = 'export {\n  PROJECT_ID,';
+let exportsBlock = "export {\n  PROJECT_ID,";
 for (const name of exportNames) {
   exportsBlock += `\n  ${name},`;
 }
-exportsBlock += '\n}\n';
+exportsBlock += "\n}\n";
 
 fs.writeFileSync(
-  path.join(outDir, 'components.js'),
-  imports + '\n' + projectIdDecl + '\n' + exportsBlock
+  path.join(outDir, "components.ts"),
+  imports + "\n" + projectIdDecl + "\n" + exportsBlock,
 );
-console.log(`components.js generated for project: ${currentProject}`);
+console.log(`components.ts generated for project: ${currentProject}`);
