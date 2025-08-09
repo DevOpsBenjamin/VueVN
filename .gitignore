@@ -26,6 +26,8 @@ dist-ssr
 src/generate/
 
 projects/*
+# FOR GPT
+!projects/AGENTS.md
 #CoreDevProject for testing feature and provide some sample
 !projects/sample/
 !projects/sample/**
