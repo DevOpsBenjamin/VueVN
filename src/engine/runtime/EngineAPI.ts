@@ -16,8 +16,11 @@ export const showText = async (
   from = "engine",
 ): Promise<void> => {
   engine.engineState.currentStep++;
-  if (engine.replayMode && engine.engineState.currentStep < engine.targetStep) {
-    return;
+  if (engine.replayMode) {
+    if (engine.engineState.currentStep < engine.targetStep) {
+      return;
+    }
+    engine.replayMode = false;
   }
 
   engine.engineState.dialogue = {

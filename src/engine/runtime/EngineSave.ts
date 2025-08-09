@@ -44,6 +44,7 @@ const startEventReplay = async (engine: Engine): Promise<void> => {
     console.debug("Starting event replay for:", event.id);
     await engine.handleEvent(event);
   }
+  engine.replayMode = false;
   engine.engineState.state = ENGINE_STATES.RUNNING;
 };
 
