@@ -22,7 +22,7 @@ export function setupProjectRoutes(middlewares, { currentProject }) {
         // Get project statistics
         const stats = {
           events: countFiles(path.join(projectPath, 'events'), '.js'),
-          plugins: countFiles(path.join(projectPath, 'plugins'), '.js', '.vue'),
+          plugins: countPluginFiles(projectPath),
           assets: {
             images: countFiles(
               path.join(projectPath, 'assets/images'),
@@ -118,6 +118,27 @@ function countFiles(dir, ...extensions) {
     if (stat.isDirectory()) {
       count += countFiles(fullPath, ...extensions);
     } else if (extensions.some((ext) => item.endsWith(ext))) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+function countPluginFiles(dir) {
+  if (!fs.existsSync(dir)) return 0;
+
+  let count = 0;
+  const items = fs.readdirSync(dir);
+
+  for (const item of items) {
+    if (['events', 'assets'].includes(item)) continue;
+    const fullPath = path.join(dir, item);
+    const stat = fs.statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      count += countPluginFiles(fullPath);
+    } else if (item.endsWith('.js') || item.endsWith('.vue')) {
       count++;
     }
   }

@@ -24,6 +24,6 @@ dist-ssr
 *.sw?
 
 src/generate/
-projects/
-#CoreDevProject for testing feature and provide some sample
-!projects/sample/**  
+projects/*
+!projects/sample/
+!projects/sample/**

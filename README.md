@@ -37,14 +37,12 @@ src/
 
 projects/                # All VN projects
 └── [project-name]/
-    ├── plugins/         # Project-specific overrides
-    │   ├── stores/      # Custom game state
-    │   ├── menu/        # Custom menus
-    │   └── ...          # Any core override
     ├── events/          # Game events by location
     │   └── [location]/
     │       └── event.js
     ├── assets/          # Images, sounds, etc.
+    ├── stores/          # Custom game state (optional)
+    ├── menu/            # Custom menus (optional)
     └── config.json      # Project configuration
 ```
 
@@ -97,14 +95,14 @@ The production build will only include the game runtime, making it lightweight a
 
 ### Plugin System
 
-The plugin system allows you to override any core component. Simply create a file in your project's `plugins/` directory with the same path structure as in `engine/core/`.
+The plugin system allows you to override any core component. Simply create a file in your project with the same path structure as in `engine/core/`.
 
-Priority: `projects/[name]/plugins/ > engine/core/`
+Priority: `projects/[name] > engine/core/`
 
 Example - Custom game state:
 
 ```javascript
-// projects/my-game/plugins/stores/gameState.js
+// projects/my-game/stores/gameState.js
 import { defineStore } from 'pinia';
 
 export default defineStore('gameState', {

@@ -1,4 +1,4 @@
-// Génère src/generate/components.js avec tous les .vue (project/plugins > core)
+// Génère src/generate/components.js avec tous les .vue (project files > core)
 const fs = require('fs');
 const path = require('path');
 
@@ -11,13 +11,14 @@ if (!currentProject) {
   process.exit(1);
 }
 
-function walk(dir, base = '', files = {}) {
+function walkVueFiles(dir, base = '', files = {}, skipEvents = false) {
   if (!fs.existsSync(dir)) return files;
   fs.readdirSync(dir).forEach((file) => {
     const abs = path.join(dir, file);
     const rel = path.join(base, file);
     if (fs.statSync(abs).isDirectory()) {
-      walk(abs, rel, files);
+      if (skipEvents && file === 'events') return;
+      walkVueFiles(abs, rel, files, skipEvents);
     } else if (file.endsWith('.vue')) {
       files[rel.replace(/\\/g, '/')] = abs;
     }
@@ -25,21 +26,22 @@ function walk(dir, base = '', files = {}) {
   return files;
 }
 
-// Get files from engine and project plugins
-const engineFiles = walk(path.join(__dirname, '../src/engine'));
-const projectPluginFiles = walk(
-  path.join(__dirname, `../projects/${currentProject}/plugins`)
+// Get files from engine and project
+const engineFiles = walkVueFiles(path.join(__dirname, '../src/engine'));
+const projectFiles = walkVueFiles(
+  path.join(__dirname, `../projects/${currentProject}`),
+  '',
+  {},
+  true
 );
 
 console.log(`Found ${Object.keys(engineFiles).length} engine component files`);
 console.log(
-  `Found ${
-    Object.keys(projectPluginFiles).length
-  } project plugin component files`
+  `Found ${Object.keys(projectFiles).length} project component files`
 );
 
-// Merge with project plugins taking priority
-const allFiles = { ...engineFiles, ...projectPluginFiles };
+// Merge with project files taking priority
+const allFiles = { ...engineFiles, ...projectFiles };
 
 let imports = '';
 const usedNames = new Set();
@@ -58,8 +60,8 @@ Object.entries(allFiles).forEach(([rel, abs]) => {
 
   // Determine import path relative to src/generate
   let importPath;
-  if (projectPluginFiles[rel]) {
-    // Project plugin file - need to go up 2 levels from src/generate
+  if (projectFiles[rel]) {
+    // Project file - need to go up 2 levels from src/generate
     const relPath = path
       .relative(path.join(__dirname, '../src/generate'), abs)
       .replace(/\\/g, '/');
