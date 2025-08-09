@@ -1,57 +1,58 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.join(__dirname, '..');
+// Ensure file operations target the repository root instead of dev_src
+const rootDir = path.join(__dirname, "..", "..");
 
 export function setupFileRoutes(middlewares, { currentProject }) {
-  const projectPath = path.join(rootDir, 'projects', currentProject);
+  const projectPath = path.join(rootDir, "projects", currentProject);
 
   // List files in directory
-  middlewares.use('/api/files', (req, res, next) => {
-    if (req.method === 'GET') {
+  middlewares.use("/api/files", (req, res, next) => {
+    if (req.method === "GET") {
       const url = new URL(req.url, `http://${req.headers.host}`);
-      const requestPath = url.searchParams.get('path') || '';
+      const requestPath = url.searchParams.get("path") || "";
       const fullPath = path.join(projectPath, requestPath);
 
       try {
         if (!fullPath.startsWith(projectPath)) {
           res.statusCode = 403;
-          res.end('Access denied');
+          res.end("Access denied");
           return;
         }
 
         if (fs.statSync(fullPath).isDirectory()) {
           const items = fs
             .readdirSync(fullPath)
-            .filter((name) => !name.startsWith('.')) // Hide hidden files
+            .filter((name) => !name.startsWith(".")) // Hide hidden files
             .map((name) => {
               const itemPath = path.join(fullPath, name);
               const stats = fs.statSync(itemPath);
               return {
                 name,
-                type: stats.isDirectory() ? 'directory' : 'file',
-                path: path.join(requestPath, name).replace(/\\/g, '/'),
+                type: stats.isDirectory() ? "directory" : "file",
+                path: path.join(requestPath, name).replace(/\\/g, "/"),
                 size: stats.size,
                 modified: stats.mtime,
               };
             })
             .sort((a, b) => {
               // Directories first, then files
-              if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
+              if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
               return a.name.localeCompare(b.name);
             });
 
-          res.setHeader('Content-Type', 'application/json');
+          res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(items));
         } else {
           res.statusCode = 400;
-          res.end('Not a directory');
+          res.end("Not a directory");
         }
       } catch (err) {
         res.statusCode = 404;
-        res.end('Path not found');
+        res.end("Path not found");
       }
       return;
     }
@@ -59,13 +60,13 @@ export function setupFileRoutes(middlewares, { currentProject }) {
   });
 
   // Read file content
-  middlewares.use('/api/file', (req, res, next) => {
-    if (req.method === 'GET') {
+  middlewares.use("/api/file", (req, res, next) => {
+    if (req.method === "GET") {
       const url = new URL(req.url, `http://${req.headers.host}`);
-      const filePath = url.searchParams.get('path');
+      const filePath = url.searchParams.get("path");
       if (!filePath) {
         res.statusCode = 400;
-        res.end('No path specified');
+        res.end("No path specified");
         return;
       }
 
@@ -73,49 +74,43 @@ export function setupFileRoutes(middlewares, { currentProject }) {
 
       if (!fullPath.startsWith(projectPath)) {
         res.statusCode = 403;
-        res.end('Access denied');
+        res.end("Access denied");
         return;
       }
 
       try {
-        const content = fs.readFileSync(fullPath, 'utf-8');
+        const content = fs.readFileSync(fullPath, "utf-8");
         const stats = fs.statSync(fullPath);
 
-        res.setHeader('Content-Type', 'application/json');
+        res.setHeader("Content-Type", "application/json");
         res.end(
           JSON.stringify({
             content,
             path: filePath,
             modified: stats.mtime,
             size: stats.size,
-          })
+          }),
         );
       } catch (err) {
         res.statusCode = 404;
-        res.end('File not found');
+        res.end("File not found");
       }
       return;
     }
 
     // Save file
-    if (req.method === 'POST') {
-      let body = '';
-      req.on('data', (chunk) => (body += chunk));
-      req.on('end', () => {
+    if (req.method === "POST") {
+      let body = "";
+      req.on("data", (chunk) => (body += chunk));
+      req.on("end", () => {
         try {
           const { path: filePath, content } = JSON.parse(body);
           const fullPath = path.join(projectPath, filePath);
 
           if (!fullPath.startsWith(projectPath)) {
             res.statusCode = 403;
-            res.end('Access denied');
+            res.end("Access denied");
             return;
-          }
-
-          // Backup original file
-          if (fs.existsSync(fullPath)) {
-            const backupPath = `${fullPath}.backup`;
-            fs.copyFileSync(fullPath, backupPath);
           }
 
           // Create directory if needed
@@ -124,15 +119,15 @@ export function setupFileRoutes(middlewares, { currentProject }) {
             fs.mkdirSync(dir, { recursive: true });
           }
 
-          fs.writeFileSync(fullPath, content, 'utf-8');
+          fs.writeFileSync(fullPath, content, "utf-8");
 
-          res.setHeader('Content-Type', 'application/json');
+          res.setHeader("Content-Type", "application/json");
           res.end(
             JSON.stringify({
               success: true,
               path: filePath,
-              size: Buffer.byteLength(content, 'utf-8'),
-            })
+              size: Buffer.byteLength(content, "utf-8"),
+            }),
           );
         } catch (err) {
           res.statusCode = 500;
@@ -146,28 +141,28 @@ export function setupFileRoutes(middlewares, { currentProject }) {
   });
 
   // Create new file/folder
-  middlewares.use('/api/create', (req, res, next) => {
-    if (req.method === 'POST') {
-      let body = '';
-      req.on('data', (chunk) => (body += chunk));
-      req.on('end', () => {
+  middlewares.use("/api/create", (req, res, next) => {
+    if (req.method === "POST") {
+      let body = "";
+      req.on("data", (chunk) => (body += chunk));
+      req.on("end", () => {
         try {
           const { path: itemPath, type, template } = JSON.parse(body);
           const fullPath = path.join(projectPath, itemPath);
 
           if (!fullPath.startsWith(projectPath)) {
             res.statusCode = 403;
-            res.end('Access denied');
+            res.end("Access denied");
             return;
           }
 
           if (fs.existsSync(fullPath)) {
             res.statusCode = 409;
-            res.end('Already exists');
+            res.end("Already exists");
             return;
           }
 
-          if (type === 'directory') {
+          if (type === "directory") {
             fs.mkdirSync(fullPath, { recursive: true });
           } else {
             const dir = path.dirname(fullPath);
@@ -176,11 +171,11 @@ export function setupFileRoutes(middlewares, { currentProject }) {
             }
 
             // Use template if provided
-            const content = template || '';
-            fs.writeFileSync(fullPath, content, 'utf-8');
+            const content = template || "";
+            fs.writeFileSync(fullPath, content, "utf-8");
           }
 
-          res.setHeader('Content-Type', 'application/json');
+          res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ success: true, path: itemPath }));
         } catch (err) {
           res.statusCode = 500;
@@ -193,13 +188,13 @@ export function setupFileRoutes(middlewares, { currentProject }) {
   });
 
   // Delete file/folder
-  middlewares.use('/api/delete', (req, res, next) => {
-    if (req.method === 'DELETE') {
+  middlewares.use("/api/delete", (req, res, next) => {
+    if (req.method === "DELETE") {
       const url = new URL(req.url, `http://${req.headers.host}`);
-      const itemPath = url.searchParams.get('path');
+      const itemPath = url.searchParams.get("path");
       if (!itemPath) {
         res.statusCode = 400;
-        res.end('No path specified');
+        res.end("No path specified");
         return;
       }
 
@@ -207,7 +202,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
 
       if (!fullPath.startsWith(projectPath)) {
         res.statusCode = 403;
-        res.end('Access denied');
+        res.end("Access denied");
         return;
       }
 
@@ -217,7 +212,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
         } else {
           fs.unlinkSync(fullPath);
         }
-        res.setHeader('Content-Type', 'application/json');
+        res.setHeader("Content-Type", "application/json");
         res.end(JSON.stringify({ success: true }));
       } catch (err) {
         res.statusCode = 500;
@@ -229,11 +224,11 @@ export function setupFileRoutes(middlewares, { currentProject }) {
   });
 
   // Rename/move file
-  middlewares.use('/api/rename', (req, res, next) => {
-    if (req.method === 'POST') {
-      let body = '';
-      req.on('data', (chunk) => (body += chunk));
-      req.on('end', () => {
+  middlewares.use("/api/rename", (req, res, next) => {
+    if (req.method === "POST") {
+      let body = "";
+      req.on("data", (chunk) => (body += chunk));
+      req.on("end", () => {
         try {
           const { oldPath, newPath } = JSON.parse(body);
           const fullOldPath = path.join(projectPath, oldPath);
@@ -244,7 +239,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
             !fullNewPath.startsWith(projectPath)
           ) {
             res.statusCode = 403;
-            res.end('Access denied');
+            res.end("Access denied");
             return;
           }
 
@@ -256,7 +251,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
 
           fs.renameSync(fullOldPath, fullNewPath);
 
-          res.setHeader('Content-Type', 'application/json');
+          res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ success: true }));
         } catch (err) {
           res.statusCode = 500;
