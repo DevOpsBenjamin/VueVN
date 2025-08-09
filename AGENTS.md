@@ -6,7 +6,7 @@ These instructions apply to the entire repository.
 
 ## Setup & Development
 
-- Use Node.js ≥18 (match the version used in CI or `.nvmrc` if present).
+- Use Node.js 22 LTS (match the version used in CI or `.nvmrc` if present).
 - Install dependencies with `npm install`.
 - Run `npm run build sample` to ensure the project builds without errors before committing.
 

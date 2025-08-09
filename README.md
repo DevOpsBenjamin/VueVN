@@ -50,7 +50,7 @@ projects/                # All VN projects
 
 ### Prerequisites
 
-- Node.js (v16 or later recommended)
+- Node.js 22 LTS (required by Vite 7)
 - npm or yarn
 
 ### Installation
@@ -103,12 +103,12 @@ Example - Custom game state:
 
 ```javascript
 // projects/my-game/stores/gameState.js
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
 
-export default defineStore('gameState', {
+export default defineStore("gameState", {
   state: () => ({
     player: {
-      name: '',
+      name: "",
       health: 100,
       inventory: [],
     },
@@ -125,11 +125,11 @@ Events are organized by location in the `events/` directory:
 ```javascript
 // projects/my-game/events/bedroom/wake-up.js
 export default {
-  id: 'wake_up',
-  name: 'Wake Up Event',
+  id: "wake_up",
+  name: "Wake Up Event",
   conditions: (state) => state.chapter === 1 && !state.flags.wokeUp,
   async execute(engine, state) {
-    await engine.showText('You slowly open your eyes...');
+    await engine.showText("You slowly open your eyes...");
     state.flags.wokeUp = true;
   },
 };
