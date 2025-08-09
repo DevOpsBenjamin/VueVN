@@ -14,7 +14,7 @@
           Show Preview
         </button>
       </div>
-      <!-- TODO: TreeView des fichiers/locations/events du projet -->
+      <ProjectExplorer />
     </div>
     <!-- Centre : Monaco Editor + State Inspector -->
     <div class="flex-1 flex flex-col">
@@ -32,12 +32,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
-import { loadMonaco } from '@/editor/utils/monacoLoader.js';
-import MonacoEditor from '@/editor/components/MonacoEditor.vue';
-import StateEditorPanel from '@/editor/components/StateEditorPanel.vue';
-import FloatingGame from '@/editor/components/FloatingGame.vue';
-import { useEditorState } from '@/editor/stores/editorState';
+import { computed, onMounted } from "vue";
+import { loadMonaco } from "@/editor/utils/monacoLoader.js";
+import MonacoEditor from "@/editor/components/MonacoEditor.vue";
+import StateEditorPanel from "@/editor/components/StateEditorPanel.vue";
+import FloatingGame from "@/editor/components/FloatingGame.vue";
+import ProjectExplorer from "@/editor/components/ProjectExplorer.vue";
+import { useEditorState } from "@/editor/stores/editorState";
 const editorState = useEditorState();
 const previewVisible = computed(() => editorState.previewVisible);
 
