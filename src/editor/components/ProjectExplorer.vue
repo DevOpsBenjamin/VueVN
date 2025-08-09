@@ -12,7 +12,6 @@
       :text-key="'name'"
       :children-key="'children'"
       :indent="12"
-      default-open
     >
       <template #default="{ stat }">
         <div
@@ -49,6 +48,7 @@ interface FileItem {
 
 const tree = ref<FileItem[]>([]);
 const editorState = useEditorState();
+const EDITABLE_FILE_RE = /\.(ts|vue)$/i;
 
 async function loadDir(dir = ""): Promise<FileItem[]> {
   const res = await fetch(`/api/files?path=${encodeURIComponent(dir)}`);
@@ -63,13 +63,15 @@ async function loadDir(dir = ""): Promise<FileItem[]> {
 
 onMounted(async () => {
   tree.value = await loadDir();
-  const first = findFirstFile(tree.value);
-  if (first) editorState.selectFile(first.path);
+  if (!editorState.currentFile) {
+    const first = findFirstFile(tree.value);
+    if (first) editorState.selectFile(first.path);
+  }
 });
 
 function findFirstFile(nodes: FileItem[]): FileItem | null {
   for (const node of nodes) {
-    if (node.type === "file" && /\.(ts|vue)$/i.test(node.name)) {
+    if (node.type === "file" && EDITABLE_FILE_RE.test(node.name)) {
       return node;
     }
     if (node.children) {
@@ -81,7 +83,9 @@ function findFirstFile(nodes: FileItem[]): FileItem | null {
 }
 
 function handleNode(node: FileItem) {
-  if (node.type === "file") editorState.selectFile(node.path);
+  if (node.type === "file" && EDITABLE_FILE_RE.test(node.name)) {
+    editorState.selectFile(node.path);
+  }
 }
 
 async function createEvent() {
