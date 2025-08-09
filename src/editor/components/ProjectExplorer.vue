@@ -69,7 +69,9 @@ onMounted(async () => {
 
 function findFirstFile(nodes: FileItem[]): FileItem | null {
   for (const node of nodes) {
-    if (node.type === "file") return node;
+    if (node.type === "file" && /\.(ts|vue)$/i.test(node.name)) {
+      return node;
+    }
     if (node.children) {
       const found = findFirstFile(node.children);
       if (found) return found;
