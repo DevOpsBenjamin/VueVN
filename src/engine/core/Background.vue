@@ -5,13 +5,14 @@
       :src="background"
       class="object-cover w-full h-full"
       alt="Background"
+      crossorigin="anonymous"
     />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { engineState as useEngineState } from '@/generate/stores';
+import { computed } from "vue";
+import { engineState as useEngineState } from "@/generate/stores";
 const engineState = useEngineState();
 const background = computed(() => engineState.background);
 </script>
