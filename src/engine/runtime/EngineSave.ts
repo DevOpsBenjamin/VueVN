@@ -1,29 +1,29 @@
-import { PROJECT_ID } from '@/generate/components';
-import { engineStateEnum as ENGINE_STATES } from '@/generate/stores';
+import { PROJECT_ID } from "@/generate/components";
+import { engineStateEnum as ENGINE_STATES } from "@/generate/stores";
+import type Engine from "./Engine";
 
-const startNewGame = (engine) => {
+export const startNewGame = (engine: Engine): void => {
   engine.cancelAwaiter();
-  // Interrupt any pending event
   engine.engineState.state = ENGINE_STATES.LOADING;
   engine.engineState.resetState();
   engine.gameState.resetGame();
   engine.createEventsCopy();
   engine.updateEvents();
   engine.engineState.initialized = true;
-  engine.engineState.state = 'RUNNING';
+  engine.engineState.state = "RUNNING";
 };
 
-const loadGame = async (engine, slot) => {
+export const loadGame = async (engine: Engine, slot: string): Promise<void> => {
   engine.cancelAwaiter();
   const raw = localStorage.getItem(`Save_${PROJECT_ID}_${slot}`);
   if (!raw) {
-    throw new Error('No save found');
+    throw new Error("No save found");
   }
   const data = JSON.parse(raw);
   engine.engineState.resetState();
   engine.gameState.resetGame();
-  Object.assign(engine.gameState, data.gameState);
-  Object.assign(engine.engineState, data.engineState);
+  Object.assign(engine.gameState.$state, data.gameState);
+  Object.assign(engine.engineState.$state, data.engineState);
   engine.createEventsCopy();
   engine.updateEvents();
   engine.engineState.initialized = true;
@@ -31,9 +31,9 @@ const loadGame = async (engine, slot) => {
   engine.engineState.state = ENGINE_STATES.RUNNING;
 };
 
-const startEventReplay = async (engine) => {
+const startEventReplay = async (engine: Engine): Promise<void> => {
   if (!engine.engineState.currentEvent) {
-    console.warn('No current event to replay');
+    console.warn("No current event to replay");
     return;
   }
   engine.replayMode = true;
@@ -41,20 +41,20 @@ const startEventReplay = async (engine) => {
   engine.engineState.currentStep = 0;
   const event = engine.findEventById(engine.engineState.currentEvent);
   if (event) {
-    console.debug('Starting event replay for:', event.id);
+    console.debug("Starting event replay for:", event.id);
     await engine.handleEvent(event);
   }
   engine.engineState.state = ENGINE_STATES.RUNNING;
 };
 
-const saveGame = (engine, slot, name) => {
+export const saveGame = (engine: Engine, slot: string, name?: string): void => {
   console.log(`ENGINESAVE CALL: Saving game to slot ${slot}`);
   const data = {
     name: name || `Save ${slot}`,
     timestamp: new Date().toISOString(),
     screenshot: engine.lastScreenshot,
-    gameState: JSON.parse(JSON.stringify(engine.gameState)),
-    engineState: JSON.parse(JSON.stringify(engine.engineState)),
+    gameState: JSON.parse(JSON.stringify(engine.gameState.$state)),
+    engineState: JSON.parse(JSON.stringify(engine.engineState.$state)),
   };
 
   localStorage.setItem(`Save_${PROJECT_ID}_${slot}`, JSON.stringify(data));
