@@ -1,8 +1,8 @@
-import type { VNEvent } from "@/engine/runtime/types";
+import type { VNEvent } from '@/engine/runtime/types';
 
 const intro: VNEvent = {
-  id: "intro",
-  name: "Introduction",
+  id: 'intro',
+  name: 'Introduction',
   conditions: () => true,
   unlocked: () => true,
   locked: (state) => state.flags.introSeen,
