@@ -1,6 +1,6 @@
 import { setupFileRoutes } from './routes/files.ts';
 import { setupProjectRoutes } from './routes/project.ts';
-import { setupStateRoutes }./routes/state.ts';
+import { setupStateRoutes } from './routes/state.ts';
 import { setupAssetsRoutes } from './routes/assets.ts';
 
 export function setupDevApi(middlewares: any) {

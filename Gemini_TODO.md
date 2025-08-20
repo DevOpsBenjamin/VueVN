@@ -27,7 +27,7 @@
   - [x] Convert `src/editor/docs/EventTemplates.js` to `src/editor/docs/EventTemplates.ts`.
   - [x] Update all `require` and `module.exports` syntax in the converted `.cts` files to ES Modules syntax (`import`/`export`).
   - [ ] Add types for all function parameters and return values in the newly converted files.
-  - [ ] Run `npm run build sample` to ensure all conversions and typing were successful.
+  - [ ] Run `npm run build sample` to ensure all conversions and typing were successful. (Fixed import typo in `dev_src/index.ts`)
 
 - [ ] **Task 1.2: Deprecate `dev_src` with a Vite Plugin**
   - [ ] Create a new directory: `vite-plugins`.
