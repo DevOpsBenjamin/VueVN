@@ -1,9 +1,9 @@
-export function setupStateRoutes(middlewares, { currentProject }) {
-  let gameStateSnapshot = {};
-  let engineStateSnapshot = {};
+export function setupStateRoutes(middlewares: any, { currentProject }: { currentProject: string }) {
+  let gameStateSnapshot: Record<string, any> = {};
+  let engineStateSnapshot: Record<string, any> = {};
 
   // Get current game state
-  middlewares.use('/api/state/game', (req, res, next) => {
+  middlewares.use('/api/state/game', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'GET') {
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(gameStateSnapshot));
@@ -13,17 +13,17 @@ export function setupStateRoutes(middlewares, { currentProject }) {
     // Update game state (from editor)
     if (req.method === 'POST') {
       let body = '';
-      req.on('data', (chunk) => (body += chunk));
+      req.on('data', (chunk: string) => (body += chunk));
       req.on('end', () => {
         try {
-          const updates = JSON.parse(body);
+          const updates: Record<string, any> = JSON.parse(body);
           // Here you would emit events to update the actual Pinia store
           // For now, just update our snapshot
           Object.assign(gameStateSnapshot, updates);
 
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ success: true }));
-        } catch (err) {
+        } catch (err: any) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: err.message }));
         }
@@ -34,7 +34,7 @@ export function setupStateRoutes(middlewares, { currentProject }) {
   });
 
   // Get engine state
-  middlewares.use('/api/state/engine', (req, res, next) => {
+  middlewares.use('/api/state/engine', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'GET') {
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(engineStateSnapshot));
@@ -44,7 +44,7 @@ export function setupStateRoutes(middlewares, { currentProject }) {
   });
 
   // SSE endpoint for real-time state updates
-  middlewares.use('/api/state/stream', (req, res, next) => {
+  middlewares.use('/api/state/stream', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'GET') {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -78,7 +78,7 @@ export function setupStateRoutes(middlewares, { currentProject }) {
   });
 
   // Reset states
-  middlewares.use('/api/state/reset', (req, res, next) => {
+  middlewares.use('/api/state/reset', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'POST') {
       gameStateSnapshot = {};
       engineStateSnapshot = {};

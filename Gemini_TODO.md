@@ -21,7 +21,7 @@
   - [x] Convert `dev_src/routes/assets.js` to `dev_src/routes/assets.ts`.
   - [x] Convert `dev_src/routes/files.js` to `dev_src/routes/files.ts`.
   - [x] Convert `dev_src/routes/project.js` to `dev_src/routes/project.ts`.
-  - [ ] Convert `dev_src/routes/state.js` to `dev_src/routes/state.ts`.
+  - [x] Convert `dev_src/routes/state.js` to `dev_src/routes/state.ts`.
   - [ ] Convert `src/editor/stores/editorState.js` to `src/editor/stores/editorState.ts`.
   - [ ] Convert `src/editor/utils/monacoLoader.js` to `src/editor/utils/monacoLoader.ts`.
   - [ ] Convert `src/editor/docs/EventTemplates.js` to `src/editor/docs/EventTemplates.ts`.
