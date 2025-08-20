@@ -1,11 +1,11 @@
-import { setupFileRoutes } from './routes/files.js';
-import { setupProjectRoutes } from './routes/project.js';
-import { setupStateRoutes } from './routes/state.js';
-import { setupAssetsRoutes } from './routes/assets.js';
+import { setupFileRoutes } from './routes/files.ts';
+import { setupProjectRoutes } from './routes/project.ts';
+import { setupStateRoutes }./routes/state.ts';
+import { setupAssetsRoutes } from './routes/assets.ts';
 
-export function setupDevApi(middlewares) {
+export function setupDevApi(middlewares: any) {
   // Get current project from environment
-  const currentProject = process.env.VUEVN_PROJECT;
+  const currentProject: string | undefined = process.env.VUEVN_PROJECT;
   if (!currentProject) {
     console.error('❌ No project specified for dev API');
     return;
@@ -22,7 +22,7 @@ export function setupDevApi(middlewares) {
   setupAssetsRoutes(middlewares, context);
 
   // Health check endpoint
-  middlewares.use('/api/health', (req, res, next) => {
+  middlewares.use('/api/health', (req: any, res: any, next: any) => {
     if (req.method === 'GET') {
       res.setHeader('Content-Type', 'application/json');
       res.end(

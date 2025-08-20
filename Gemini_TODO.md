@@ -17,7 +17,7 @@
   - [x] Convert `scripts/generate-components-index.cjs` to `scripts/generate-components-index.cts`.
   - [x] Convert `scripts/generate-engine-index.cjs` to `scripts/generate-engine-index.cts`.
   - [x] Convert `scripts/generate-events-index.cjs` to `scripts/generate-events-index.cts`.
-  - [ ] Convert `dev_src/index.js` to `dev_src/index.ts`.
+  - [x] Convert `dev_src/index.js` to `dev_src/index.ts`.
   - [ ] Convert `dev_src/routes/assets.js` to `dev_src/routes/assets.ts`.
   - [ ] Convert `dev_src/routes/files.js` to `dev_src/routes/files.ts`.
   - [ ] Convert `dev_src/routes/project.js` to `dev_src/routes/project.ts`.
