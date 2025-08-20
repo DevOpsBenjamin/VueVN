@@ -107,10 +107,10 @@ const startEventContent: string = `export default {
 `;
 
 fs.writeFileSync(
-  path.join(projectPath, 'events', 'start', 'intro.js'),
+  path.join(projectPath, 'events', 'start', 'intro.ts'),
   startEventContent
 );
-console.log(`📄 Created: projects/${projectName}/events/start/intro.js`);
+console.log(`📄 Created: projects/${projectName}/events/start/intro.ts`);
 
 // 3. Example bedroom event
 const bedroomEventContent: string = `export default {
@@ -127,10 +127,10 @@ const bedroomEventContent: string = `export default {
 `;
 
 fs.writeFileSync(
-  path.join(projectPath, 'events', 'bedroom', 'wake-up.js'),
+  path.join(projectPath, 'events', 'bedroom', 'wake-up.ts'),
   bedroomEventContent
 );
-console.log(`📄 Created: projects/${projectName}/events/bedroom/wake-up.js`);
+console.log(`📄 Created: projects/${projectName}/events/bedroom/wake-up.ts`);
 
 // 4. Sample NPC
 const sampleNPCContent: string = `import { baseGameState } from '@/generate/stores';
@@ -146,8 +146,8 @@ const npc_1 = createNPC({
 export default npc_1;
 `;
 
-fs.writeFileSync(path.join(projectPath, 'npcs', 'npc_1.js'), sampleNPCContent);
-console.log(`📄 Created: projects/${projectName}/npcs/npc_1.js`);
+fs.writeFileSync(path.join(projectPath, 'npcs', 'npc_1.ts'), sampleNPCContent);
+console.log(`📄 Created: projects/${projectName}/npcs/npc_1.ts`);
 
 // 5. Base game state with sample NPC
 const gameStateContent: string = `import { defineStore } from 'pinia';
@@ -187,10 +187,10 @@ export default useGameState;
 `;
 
 fs.writeFileSync(
-  path.join(projectPath, 'stores', 'gameState.js'),
+  path.join(projectPath, 'stores', 'gameState.ts'),
   gameStateContent
 );
-console.log(`📄 Created: projects/${projectName}/stores/gameState.js`);
+console.log(`📄 Created: projects/${projectName}/stores/gameState.ts`);
 
 // 5. README for the project
 const readmeContent: string = `# ${projectName}
@@ -219,7 +219,7 @@ Create new events in
 
 ## Customizing the Engine
 
-Override any core component by creating a file in your project with the same path as in the engine.
+Override any core component by creating a file in your project with the same path as in the engine. 
 
 Example: To customize the main menu, create 
 `;
@@ -238,4 +238,7 @@ console.log(`
 ✅ Project "${projectName}" created successfully!`);
 console.log(`
 📝 Next steps:`);
-console.log(`   1. Run 
+console.log(`   1. Run "npm install" in your new project directory.`);
+console.log(`   2. Start the development server: "npm run dev ${projectName}"`);
+console.log(`   3. Open your browser to http://localhost:5173/`);
+console.log(`   4. Start building your visual novel!`);
