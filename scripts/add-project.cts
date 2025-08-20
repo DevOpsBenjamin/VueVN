@@ -1,1 +1,241 @@
-#!/usr/bin/env node\n\nimport fs from \'fs\';\nimport path from \'path\';\n\n// Get project name from command line\nconst projectName: string | undefined = process.argv[2];\n\nif (!projectName) {\n  console.error(\'❌ Error: Please provide a project name\');\n  console.error(\'Usage: npm run add-project <project-name>\');\n  process.exit(1);\n}\n\n// Validate project name\nif (!/^[a-zA-Z0-9-_]+$/.test(projectName)) {\n  console.error(\n    \'❌ Error: Project name should only contain letters, numbers, hyphens and underscores\'\n  );\n  process.exit(1);\n}\n\nconst projectPath: string = path.join(__dirname, \'..\', \'projects\', projectName);\n\n// Check if project already exists\nif (fs.existsSync(projectPath)) {\n  console.error(`❌ Error: Project \"${projectName}\" already exists`);\n  process.exit(1);\n}\n\n// Create project structure\nconsole.log(`🚀 Creating project \"${projectName}\"...`);\n\n// Create directories\nconst dirs: string[] = [\n  projectPath,\n  path.join(projectPath, \'events\'),\n  path.join(projectPath, \'events\', \'start\'),\n  path.join(projectPath, \'events\', \'bedroom\'),\n  path.join(projectPath, \'assets\'),\n  path.join(projectPath, \'assets\', \'images\'),\n  path.join(projectPath, \'assets\', \'sounds\'),\n  path.join(projectPath, \'stores\'),\n  path.join(projectPath, \'npcs\'),\n  path.join(projectPath, \'locations\'),\n];\n\ndirs.forEach((dir: string) => {\n  fs.mkdirSync(dir, { recursive: true });\n  console.log(`📁 Created: ${path.relative(process.cwd(), dir)}`);\n});\n\n// Create default files\n\n// 1. Project configuration\nconst configContent = {\n  name: projectName,\n  version: \'1.0.0\',\n  description: `A VueVN visual novel project`,\n  author: \'\',\n  settings: {\n    defaultLocation: \'start\',\n    gameTitle: projectName,\n  },\n};\n\nfs.writeFileSync(\n  path.join(projectPath, \'config.json\'),\n  JSON.stringify(configContent, null, 2)\n);\nconsole.log(`📄 Created: projects/${projectName}/config.json`);\n\n// 2. Example start event\nconst startEventContent: string = `export default {\n  id: \'intro\',\n  name: \'Introduction\',\n  \n  // This event triggers when entering the \'start\' location\n  conditions: (state) => !state.flags.introSeen,\n  \n  async execute(engine, state) {\n    // Set background\n    engine.setBackground(\'/assets/images/placeholder.jpg\');\n    \n    // Show some text\n    await engine.showText(\'Welcome to ${projectName}!\');\n    await engine.showText(\'This is your first event.\');\n    \n    // Show a choice\n    const choice = await engine.showChoices([\n      { text: \"Start the adventure\", id: \"start\" },\n      { text: \"Learn more\", id: \"learn\" }\n    ]);\n    \n    if (choice === \'learn\') {\n      await engine.showText(\'VueVN is a visual novel engine built with Vue 3.\');\n      await engine.showText(\'You can create your own stories by adding events and assets.\');\n    }\n    \n    // Mark intro as seen\n    state.flags.introSeen = true;\n\n    // Change location (this will trigger new events)\n    state.location = \'bedroom\';\n  }\n};\n`;\n\nfs.writeFileSync(\n  path.join(projectPath, \'events\', \'start\', \'intro.js\'),\n  startEventContent\n);\nconsole.log(`📄 Created: projects/${projectName}/events/start/intro.js`);\n\n// 3. Example bedroom event\nconst bedroomEventContent: string = `export default {\n  id: \'wake_up\',\n  name: \'Wake Up\',\n\n  conditions: (state) => state.location === \'bedroom\' && !state.flags.wokeUp,\n\n  async execute(engine, state) {\n    await engine.showText(\'You wake up in your bedroom.\');\n    state.flags.wokeUp = true;\n  },\n};\n`;\n\nfs.writeFileSync(\n  path.join(projectPath, \'events\', \'bedroom\', \'wake-up.js\'),\n  bedroomEventContent\n);\nconsole.log(`📄 Created: projects/${projectName}/events/bedroom/wake-up.js`);\n\n// 4. Sample NPC\nconst sampleNPCContent: string = `import { baseGameState } from \'@/generate/stores\';\nconst { createNPC } = baseGameState;\n\nconst npc_1 = createNPC({\n  name: \'NPC 1\',\n  relation: 0,\n  trust: 0,\n  // LONG as heck definition continues here...\n});\n\nexport default npc_1;\n`;\n\nfs.writeFileSync(path.join(projectPath, \'npcs\', \'npc_1.js\'), sampleNPCContent);\nconsole.log(`📄 Created: projects/${projectName}/npcs/npc_1.js`);\n\n// 5. Base game state with sample NPC\nconst gameStateContent: string = `import { defineStore } from \'pinia\';\n\nimport { baseGameState } from \'@/generate/stores\';\nimport { npc_1 } from \'@/generate/npcs\';\nconst { BASE_GAME_STATE } = baseGameState;\n\nconst useGameState = defineStore(\'gameState\', {\n  state: () => ({\n    // 🚨 PROTECTED - Required by engine, do not remove/rename\n    ...BASE_GAME_STATE,\n\n    //Sample EXTERNAL NPC\n    npc_1,\n\n    // ✅ SAFE TO MODIFY - Your custom fields below\n    myCustomField: \'\',\n    myCustomArray: [],\n  }),\n\n  actions: {\n    resetGame() {\n      // Reset all base fields\n      Object.assign(this, {\n        ...BASE_GAME_STATE,\n        npc_1,\n        myCustomField: \'\',\n        myCustomArray: [],\n      });\n    },\n    // Your other actions\n  },\n});\n\nexport default useGameState;\n`;\n\nfs.writeFileSync(\n  path.join(projectPath, \'stores\', \'gameState.js\'),\n  gameStateContent\n);\nconsole.log(`📄 Created: projects/${projectName}/stores/gameState.js`);\n\n// 5. README for the project\nconst readmeContent: string = `# ${projectName}\n\nA visual novel created with VueVN.\n\n## Project Structure\n\n- \`events/\` - Game events organized by location\n- \`assets/\` - Images, sounds, and other media files\n- \`stores/\` - Custom game state overrides (NPCs, flags, etc.)\n- \`config.json\` - Project configuration\n\nThis sample includes an intro event in \`events/start/intro.js\`,\n a follow-up event in \`events/bedroom/wake-up.js\`,\n and a sample NPC defined in \`stores/baseGameState.js\`.\n\n## Development\n\n\`\`\`bash\n# Start development server\nnpm run dev ${projectName}\n\n# Build for production\nnpm run build ${projectName}\n\`\`\`\n\n## Adding Events\n\nCreate new events in \`events/[location]/[event-name].js\`:\n\n\`\`\`javascript\nexport default {\n  id: \'unique_id\',\n  name: \'Event Name\',\n  conditions: (state) => true, // When this event should trigger\n  async execute(engine, state) {\n    // Your event logic here\n  }\n};\n\`\`\`\n\n## Customizing the Engine\n\nOverride any core component by creating a file in your project with the same path as in the engine.\n\nExample: To customize the main menu, create \`menu/MainMenu.vue\`.\n`;\n\nfs.writeFileSync(\n  path.join(projectPath, \'README.md\'),\n  readmeContent\n);\nconsole.log(`📄 Created: projects/${projectName}/README.md`);\n\n// 5. .gitkeep files for empty directories\nfs.writeFileSync(path.join(projectPath, \'assets\', \'images\', \'.gitkeep\'), \'\');\nfs.writeFileSync(path.join(projectPath, \'assets\', \'sounds\', \'.gitkeep\'), \'\');\n\nconsole.log(`\n✅ Project \"${projectName}\" created successfully!`);\nconsole.log(`\n📝 Next steps:`);\nconsole.log(`   1. Run \"npm run dev ${projectName}\" to start development`);\nconsole.log(`   2. Edit events in projects/${projectName}/events/`);\nconsole.log(`   3. Add assets to projects/${projectName}/assets/`);\nconsole.log(\n  `   4. Override engine files by mirroring paths inside projects/${projectName}/`\n);\n
+#!/usr/bin/env node
+
+import fs from 'fs';
+import path from 'path';
+
+// Get project name from command line
+const projectName: string | undefined = process.argv[2];
+
+if (!projectName) {
+  console.error('❌ Error: Please provide a project name');
+  console.error('Usage: npm run add-project <project-name>');
+  process.exit(1);
+}
+
+// Validate project name
+if (!/^[a-zA-Z0-9-_]+$/.test(projectName)) {
+  console.error(
+    '❌ Error: Project name should only contain letters, numbers, hyphens and underscores'
+  );
+  process.exit(1);
+}
+
+const projectPath: string = path.join(__dirname, '..', 'projects', projectName);
+
+// Check if project already exists
+if (fs.existsSync(projectPath)) {
+  console.error(`❌ Error: Project "${projectName}" already exists`);
+  process.exit(1);
+}
+
+// Create project structure
+console.log(`🚀 Creating project "${projectName}"...`);
+
+// Create directories
+const dirs: string[] = [
+  projectPath,
+  path.join(projectPath, 'events'),
+  path.join(projectPath, 'events', 'start'),
+  path.join(projectPath, 'events', 'bedroom'),
+  path.join(projectPath, 'assets'),
+  path.join(projectPath, 'assets', 'images'),
+  path.join(projectPath, 'assets', 'sounds'),
+  path.join(projectPath, 'stores'),
+  path.join(projectPath, 'npcs'),
+  path.join(projectPath, 'locations'),
+];
+
+dirs.forEach((dir: string) => {
+  fs.mkdirSync(dir, { recursive: true });
+  console.log(`📁 Created: ${path.relative(process.cwd(), dir)}`);
+});
+
+// Create default files
+
+// 1. Project configuration
+const configContent = {
+  name: projectName,
+  version: '1.0.0',
+  description: `A VueVN visual novel project`,
+  author: '',
+  settings: {
+    defaultLocation: 'start',
+    gameTitle: projectName,
+  },
+};
+
+fs.writeFileSync(
+  path.join(projectPath, 'config.json'),
+  JSON.stringify(configContent, null, 2)
+);
+console.log(`📄 Created: projects/${projectName}/config.json`);
+
+// 2. Example start event
+const startEventContent: string = `export default {
+  id: 'intro',
+  name: 'Introduction',
+  
+  // This event triggers when entering the 'start' location
+  conditions: (state) => !state.flags.introSeen,
+  
+  async execute(engine, state) {
+    // Set background
+    engine.setBackground('/assets/images/placeholder.jpg');
+    
+    // Show some text
+    await engine.showText('Welcome to ${projectName}!');
+    await engine.showText('This is your first event.');
+    
+    // Show a choice
+    const choice = await engine.showChoices([
+      { text: "Start the adventure", id: "start" },
+      { text: "Learn more", id: "learn" }
+    ]);
+    
+    if (choice === 'learn') {
+      await engine.showText('VueVN is a visual novel engine built with Vue 3.');
+      await engine.showText('You can create your own stories by adding events and assets.');
+    }
+    
+    // Mark intro as seen
+    state.flags.introSeen = true;
+
+    // Change location (this will trigger new events)
+    state.location = 'bedroom';
+  }
+};
+`;
+
+fs.writeFileSync(
+  path.join(projectPath, 'events', 'start', 'intro.js'),
+  startEventContent
+);
+console.log(`📄 Created: projects/${projectName}/events/start/intro.js`);
+
+// 3. Example bedroom event
+const bedroomEventContent: string = `export default {
+  id: 'wake_up',
+  name: 'Wake Up',
+
+  conditions: (state) => state.location === 'bedroom' && !state.flags.wokeUp,
+
+  async execute(engine, state) {
+    await engine.showText('You wake up in your bedroom.');
+    state.flags.wokeUp = true;
+  },
+};
+`;
+
+fs.writeFileSync(
+  path.join(projectPath, 'events', 'bedroom', 'wake-up.js'),
+  bedroomEventContent
+);
+console.log(`📄 Created: projects/${projectName}/events/bedroom/wake-up.js`);
+
+// 4. Sample NPC
+const sampleNPCContent: string = `import { baseGameState } from '@/generate/stores';
+const { createNPC } = baseGameState;
+
+const npc_1 = createNPC({
+  name: 'NPC 1',
+  relation: 0,
+  trust: 0,
+  // LONG as heck definition continues here...
+});
+
+export default npc_1;
+`;
+
+fs.writeFileSync(path.join(projectPath, 'npcs', 'npc_1.js'), sampleNPCContent);
+console.log(`📄 Created: projects/${projectName}/npcs/npc_1.js`);
+
+// 5. Base game state with sample NPC
+const gameStateContent: string = `import { defineStore } from 'pinia';
+
+import { baseGameState } from '@/generate/stores';
+import { npc_1 } from '@/generate/npcs';
+const { BASE_GAME_STATE } = baseGameState;
+
+const useGameState = defineStore('gameState', {
+  state: () => ({
+    // 🚨 PROTECTED - Required by engine, do not remove/rename
+    ...BASE_GAME_STATE,
+
+    //Sample EXTERNAL NPC
+    npc_1,
+
+    // ✅ SAFE TO MODIFY - Your custom fields below
+    myCustomField: '',
+    myCustomArray: [],
+  }),
+
+  actions: {
+    resetGame() {
+      // Reset all base fields
+      Object.assign(this, {
+        ...BASE_GAME_STATE,
+        npc_1,
+        myCustomField: '',
+        myCustomArray: [],
+      });
+    },
+    // Your other actions
+  },
+});
+
+export default useGameState;
+`;
+
+fs.writeFileSync(
+  path.join(projectPath, 'stores', 'gameState.js'),
+  gameStateContent
+);
+console.log(`📄 Created: projects/${projectName}/stores/gameState.js`);
+
+// 5. README for the project
+const readmeContent: string = `# ${projectName}
+
+A visual novel created with VueVN.
+
+## Project Structure
+
+- 
+- 
+- 
+- 
+
+This sample includes an intro event in 
+ a follow-up event
+ and a sample NPC defined in 
+
+## Development
+
+
+
+## Adding Events
+
+Create new events in 
+
+
+## Customizing the Engine
+
+Override any core component by creating a file in your project with the same path as in the engine.
+
+Example: To customize the main menu, create 
+`;
+
+fs.writeFileSync(
+  path.join(projectPath, 'README.md'),
+  readmeContent
+);
+console.log(`📄 Created: projects/${projectName}/README.md`);
+
+// 5. .gitkeep files for empty directories
+fs.writeFileSync(path.join(projectPath, 'assets', 'images', '.gitkeep'), '');
+fs.writeFileSync(path.join(projectPath, 'assets', 'sounds', '.gitkeep'), '');
+
+console.log(`
+✅ Project "${projectName}" created successfully!`);
+console.log(`
+📝 Next steps:`);
+console.log(`   1. Run
