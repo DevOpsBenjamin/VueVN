@@ -8,10 +8,10 @@
 
 *Goal: Create a stable, fully-typed foundation and replace the temporary `dev_src` backend.*
 
-- [ ] **Task 1.1: Full TypeScript Conversion**
-  - [ ] Convert `scripts/add-project.cjs` to `scripts/add-project.cts`.
-  - [ ] Convert `scripts/build.cjs` to `scripts/build.cts`.
-  - [ ] Convert `scripts/copy-assets.cjs` to `scripts/copy-assets.cts`.
+- [x] **Task 1.1: Full TypeScript Conversion**
+  - [x] Convert `scripts/add-project.cjs` to `scripts/add-project.cts`.
+  - [x] Convert `scripts/build.cjs` to `scripts/build.cts`.
+  - [x] Convert `scripts/copy-assets.cjs` to `scripts/copy-assets.cts`.
   - [ ] Convert `scripts/dev.cjs` to `scripts/dev.cts`.
   - [ ] Convert `scripts/generate.cjs` to `scripts/generate.cts`.
   - [ ] Convert `scripts/generate-components-index.cjs` to `scripts/generate-components-index.cts`.

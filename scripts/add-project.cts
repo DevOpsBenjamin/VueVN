@@ -172,14 +172,12 @@ const useGameState = defineStore('gameState', {
   actions: {
     resetGame() {
       // Reset all base fields
-      Object.assign(this,
-        {
-          ...BASE_GAME_STATE,
-          npc_1,
-          myCustomField: '',
-          myCustomArray: [],
-        }
-      );
+      Object.assign(this, {
+        ...BASE_GAME_STATE,
+        npc_1,
+        myCustomField: '',
+        myCustomArray: [],
+      });
     },
     // Your other actions
   },
@@ -201,33 +199,41 @@ A visual novel created with VueVN.
 
 ## Project Structure
 
-- \`events/\` - Game events organized by location
-- \`assets/\` - Images, sounds, and other media files
-- \`stores/\` - Custom game state overrides (NPCs, flags, etc.)
-- \`config.json\` - Project configuration
+- 
+`events/` - Game events organized by location
+- 
+`assets/` - Images, sounds, and other media files
+- 
+`stores/` - Custom game state overrides (NPCs, flags, etc.)
+- 
+`config.json` - Project configuration
 
-This sample includes an intro event in \`events/start/intro.js\`, a follow-up event
-in \`events/bedroom/wake-up.js\`, and a sample NPC defined in
-\
-stores/baseGameState.js\
-`.
+This sample includes an intro event in 
+`events/start/intro.js`
+, a follow-up event
+in 
+`events/bedroom/wake-up.js`
+, and a sample NPC defined in
+
+`stores/baseGameState.js`
 
 ## Development
 
-\`\`\`bash
+```bash
 # Start development server
 npm run dev ${projectName}
 
 # Build for production
 npm run build ${projectName}
-\`\`\`
+```
 
 ## Adding Events
 
 Create new events in 
-xevents/[location]/[event-name].js\`:
+`events/[location]/[event-name].js`
+:
 
-\`\`\`javascript
+```javascript
 export default {
   id: 'unique_id',
   name: 'Event Name',
@@ -236,13 +242,14 @@ export default {
     // Your event logic here
   }
 };
-\`\`\`
+```
 
 ## Customizing the Engine
 
 Override any core component by creating a file in your project with the same path as in the engine.
 
-Example: To customize the main menu, create \`menu/MainMenu.vue\
+Example: To customize the main menu, create 
+`menu/MainMenu.vue`
 `;
 
 fs.writeFileSync(path.join(projectPath, 'README.md'), readmeContent);
@@ -256,4 +263,4 @@ console.log(`
 ✅ Project "${projectName}" created successfully!`);
 console.log(`
 📝 Next steps:`);
-console.log(`   1. Run
+console.log(`   1. Run 
