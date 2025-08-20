@@ -1,45 +1,82 @@
-# Gemini's VueVN TODO List
+# Gemini's Detailed VueVN TODO List
 
-This is a prioritized list of tasks to fix critical issues, complete the core engine, and improve the overall framework to make it "VN Ready".
-
----
-
-## P0: Critical Engine Fixes
-
-*These tasks address fundamental issues preventing the engine from running correctly.*
-
-- [ ] **Fix the Game Loop:** The main game loop in `engine/runtime/Engine.ts` currently uses a `setTimeout` placeholder. This needs to be replaced with a proper, continuous loop that checks for and executes events, or waits for user input when no events are available.
-- [ ] **Decouple Engine from `window`:** The engine instance is currently accessed globally via `window.__VN_ENGINE__` in components like `SaveLoadMenu.vue`. This should be refactored. The engine instance should be managed through Pinia actions or another dependency injection method to avoid global scope pollution.
-- [ ] **Fix Dev Server State Sync:** The `dev_src` API keeps its own state snapshot, which is completely disconnected from the client's live Pinia state. This will not work for live editing. This should be re-architected, possibly using WebSockets or `postMessage` to communicate directly between the editor and the running game instance.
+**Objective:** To systematically refactor and enhance the VueVN framework. This plan is designed to be executed sequentially by an AI agent. Each task is broken down into specific, verifiable steps.
 
 ---
 
-## P1: Core Framework Features
+## Phase 1: Codebase Stabilization & Refactoring
 
-*The minimal feature set required for the framework to be considered a usable Visual Novel engine.*
+*Goal: Create a stable, fully-typed foundation and replace the temporary `dev_src` backend.*
 
-- [ ] **Implement a Robust Awaiter System:** The `resolveAwaiter` mechanism is a good start but must be fully integrated. The game loop must properly pause when the engine is awaiting input (e.g., for `showText` or `showChoices`) and only resume when input is received.
-- [ ] **Complete Save/Load Functionality:** The UI exists, but the save/load logic needs to be hardened. The `startEventReplay` function must be able to reliably restore the exact game and UI state, including any active dialogue or choices.
-- [ ] **Implement Drawable Events:** The `Drawing.vue` layer is currently a placeholder. The engine needs a system to render and manage drawable events (e.g., character sprites, on-screen objects) and allow user interaction with them.
-- [ ] **Location and Navigation:** Implement the logic for the `LocationOverlay.vue` to show possible navigation options and allow the player to move between locations, which in turn will trigger new events.
-- [ ] **In-Game Error Overlay:** Replace all `window.alert()` calls for error handling with a non-blocking, in-game overlay. This will prevent the entire application from freezing on an event script error.
+- [ ] **Task 1.1: Full TypeScript Conversion**
+  - [ ] Convert `scripts/add-project.cjs` to `scripts/add-project.cts`.
+  - [ ] Convert `scripts/build.cjs` to `scripts/build.cts`.
+  - [ ] Convert `scripts/copy-assets.cjs` to `scripts/copy-assets.cts`.
+  - [ ] Convert `scripts/dev.cjs` to `scripts/dev.cts`.
+  - [ ] Convert `scripts/generate.cjs` to `scripts/generate.cts`.
+  - [ ] Convert `scripts/generate-components-index.cjs` to `scripts/generate-components-index.cts`.
+  - [ ] Convert `scripts/generate-engine-index.cjs` to `scripts/generate-engine-index.cts`.
+  - [ ] Convert `scripts/generate-events-index.cjs` to `scripts/generate-events-index.cts`.
+  - [ ] Convert `dev_src/index.js` to `dev_src/index.ts`.
+  - [ ] Convert `dev_src/routes/assets.js` to `dev_src/routes/assets.ts`.
+  - [ ] Convert `dev_src/routes/files.js` to `dev_src/routes/files.ts`.
+  - [ ] Convert `dev_src/routes/project.js` to `dev_src/routes/project.ts`.
+  - [ ] Convert `dev_src/routes/state.js` to `dev_src/routes/state.ts`.
+  - [ ] Convert `src/editor/stores/editorState.js` to `src/editor/stores/editorState.ts`.
+  - [ ] Convert `src/editor/utils/monacoLoader.js` to `src/editor/utils/monacoLoader.ts`.
+  - [ ] Convert `src/editor/docs/EventTemplates.js` to `src/editor/docs/EventTemplates.ts`.
+  - [ ] Update all `require` and `module.exports` syntax in the converted `.cts` files to ES Modules syntax (`import`/`export`).
+  - [ ] Add types for all function parameters and return values in the newly converted files.
+  - [ ] Run `npm run build sample` to ensure all conversions and typing were successful.
+
+- [ ] **Task 1.2: Deprecate `dev_src` with a Vite Plugin**
+  - [ ] Create a new directory: `vite-plugins`.
+  - [ ] Create a new file: `vite-plugins/api.ts`.
+  - [ ] In `vite-plugins/api.ts`, create a new Vite plugin. This plugin will use the `configureServer` hook to replicate the API endpoints from `dev_src` (e.g., for listing files, reading content, creating files).
+  - [ ] Update `vite.config.js` to use this new local plugin instead of the `dev_src` setup.
+  - [ ] Delete the `dev_src` directory entirely.
+  - [ ] Run `npm run dev sample` and test the editor to confirm the new API plugin is working correctly.
+
+- [ ] **Task 1.3: Implement Editor-Game Communication Channel**
+  - [ ] Create a new utility file `src/editor/utils/communication.ts`.
+  - [ ] In this file, export a `BroadcastChannel` instance named `editorChannel`.
+  - [ ] In `StateEditorPanel.vue`, instead of using `fetch` to an API, use `editorChannel.postMessage()` to send state update events.
+  - [ ] In `engine/runtime/Engine.ts`, listen for messages on the `editorChannel` and update the Pinia state accordingly when a message is received from the editor.
 
 ---
 
-## P2: Editor & Developer Experience
+## Phase 2: Editor Enhancements
 
-*Improvements to make creating content easier and more efficient.*
+*Goal: Implement the core features of the integrated development environment.*
 
-- [ ] **Monaco Editor Autocompletion:** Implement autocompletion for the `engine` API methods (`showText`, `setBackground`, etc.) within the editor. This is a massive quality-of-life improvement for event scripting.
-- [ ] **Isolate Event Testing:** Add a "Run This Event" button in the editor to allow developers to test a single event in isolation without having to play through the entire game to trigger its conditions.
-- [ ] **Refactor Project Scaffolding:** Extract the large, hardcoded file templates in `scripts/add-project.cjs` into separate `.template` files to make the scaffolding script cleaner and easier to manage.
+- [ ] **Task 2.1: Monaco Editor Autocompletion**
+  - [ ] In `editor/components/MonacoEditor.vue`, read the content of the engine's type definition files (e.g., `src/engine/runtime/EngineAPI.ts`, `src/engine/runtime/types.ts`) as raw strings.
+  - [ ] Use `monaco.languages.typescript.typescriptDefaults.addExtraLib()` to add these type definitions to the Monaco editor instance.
+  - [ ] Verify that autocompletion for methods like `engine.showText(...)` works when editing an event file.
+
+- [ ] **Task 2.2: Event Condition Bypass**
+  - [ ] Add a "Bypass Conditions" toggle button to `ProjectEditor.vue`.
+  - [ ] When toggled on, use the `editorChannel` to post a message to the game, e.g., `{ type: 'SET_DEBUG_FLAG', payload: { bypassConditions: true } }`.
+  - [ ] In the `engineState` store, add a new `debugFlags` property.
+  - [ ] In `engine/runtime/EngineEvents.ts`, modify the `getEvents` function to check for `engineState.debugFlags.bypassConditions`. If true, it should treat all events as if their `conditions` returned true.
 
 ---
 
-## P3: Code Quality & Refactoring
+## Phase 3: Internationalization (i18n)
 
-*Tasks to improve the long-term health and maintainability of the codebase.*
+*Goal: Integrate a flexible i18n system for both the editor and game content.*
 
-- [ ] **Increase Type Safety:** Convert remaining JavaScript files to TypeScript (e.g., in `dev_src/`, `editor/stores/`, `editor/utils/`) and eliminate usages of `any` where possible.
-- [ ] **Separate Asset Copying Logic:** The asset copying logic is currently inside `scripts/build.cjs`. Move this logic to the (currently empty) `scripts/copy-assets.cjs` script to improve separation of concerns.
-- [ ] **Centralize State Actions:** Instead of components directly patching state (`engineState.$patch(...)`), they should call actions on the stores. This makes state changes more predictable and easier to debug.
+- [ ] **Task 3.1: Integrate `vue-i18n`**
+  - [ ] Install `vue-i18n` using npm: `npm install vue-i18n`.
+  - [ ] Create a new setup file `src/i18n.ts` to configure and export the i18n instance.
+  - [ ] Update `src/main.ts` to use the new i18n instance.
+
+- [ ] **Task 3.2: Translate Editor UI**
+  - [ ] Create language resource files, e.g., `src/locales/en.json`, `src/locales/fr.json`.
+  - [ ] Replace all static text in the editor components (`ProjectEditor.vue`, `MonacoEditor.vue`, etc.) with `t('key')` calls from `vue-i18n`.
+
+- [ ] **Task 3.3: Translate Game Content**
+  - [ ] Add a `language` property to the `gameState` store.
+  - [ ] Modify the `engine.showText` and `engine.showChoices` methods. They should now accept a translation key (e.g., `intro.welcome_text`).
+  - [ ] Inside these methods, use the `i18n` instance to look up the translated string for the `gameState.language`.
+  - [ ] Add a language switcher UI to the `MainMenu.vue` component.
