@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Get project name from command line
-const projectName = process.argv[2];
+const projectName: string | undefined = process.argv[2];
 
 if (!projectName) {
   console.error('❌ Error: Please provide a project name');
@@ -20,7 +20,7 @@ if (!/^[a-zA-Z0-9-_]+$/.test(projectName)) {
   process.exit(1);
 }
 
-const projectPath = path.join(__dirname, '..', 'projects', projectName);
+const projectPath: string = path.join(__dirname, '..', 'projects', projectName);
 
 // Check if project already exists
 if (fs.existsSync(projectPath)) {
@@ -32,7 +32,7 @@ if (fs.existsSync(projectPath)) {
 console.log(`🚀 Creating project "${projectName}"...`);
 
 // Create directories
-const dirs = [
+const dirs: string[] = [
   projectPath,
   path.join(projectPath, 'events'),
   path.join(projectPath, 'events', 'start'),
@@ -45,7 +45,7 @@ const dirs = [
   path.join(projectPath, 'locations'),
 ];
 
-dirs.forEach((dir) => {
+dirs.forEach((dir: string) => {
   fs.mkdirSync(dir, { recursive: true });
   console.log(`📁 Created: ${path.relative(process.cwd(), dir)}`);
 });
@@ -71,7 +71,7 @@ fs.writeFileSync(
 console.log(`📄 Created: projects/${projectName}/config.json`);
 
 // 2. Example start event
-const startEventContent = `export default {
+const startEventContent: string = `export default {
   id: 'intro',
   name: 'Introduction',
   
@@ -113,7 +113,7 @@ fs.writeFileSync(
 console.log(`📄 Created: projects/${projectName}/events/start/intro.js`);
 
 // 3. Example bedroom event
-const bedroomEventContent = `export default {
+const bedroomEventContent: string = `export default {
   id: 'wake_up',
   name: 'Wake Up',
 
@@ -133,7 +133,7 @@ fs.writeFileSync(
 console.log(`📄 Created: projects/${projectName}/events/bedroom/wake-up.js`);
 
 // 4. Sample NPC
-const sampleNPCContent = `import { baseGameState } from '@/generate/stores';
+const sampleNPCContent: string = `import { baseGameState } from '@/generate/stores';
 const { createNPC } = baseGameState;
 
 const npc_1 = createNPC({
@@ -150,7 +150,7 @@ fs.writeFileSync(path.join(projectPath, 'npcs', 'npc_1.js'), sampleNPCContent);
 console.log(`📄 Created: projects/${projectName}/npcs/npc_1.js`);
 
 // 5. Base game state with sample NPC
-const gameStateContent = `import { defineStore } from 'pinia';
+const gameStateContent: string = `import { defineStore } from 'pinia';
 
 import { baseGameState } from '@/generate/stores';
 import { npc_1 } from '@/generate/npcs';
@@ -172,12 +172,14 @@ const useGameState = defineStore('gameState', {
   actions: {
     resetGame() {
       // Reset all base fields
-      Object.assign(this, {
-        ...BASE_GAME_STATE,
-        npc_1,
-        myCustomField: '',
-        myCustomArray: [],
-      });
+      Object.assign(this,
+        {
+          ...BASE_GAME_STATE,
+          npc_1,
+          myCustomField: '',
+          myCustomArray: [],
+        }
+      );
     },
     // Your other actions
   },
@@ -193,7 +195,7 @@ fs.writeFileSync(
 console.log(`📄 Created: projects/${projectName}/stores/gameState.js`);
 
 // 5. README for the project
-const readmeContent = `# ${projectName}
+const readmeContent: string = `# ${projectName}
 
 A visual novel created with VueVN.
 
@@ -206,7 +208,9 @@ A visual novel created with VueVN.
 
 This sample includes an intro event in \`events/start/intro.js\`, a follow-up event
 in \`events/bedroom/wake-up.js\`, and a sample NPC defined in
-\`stores/baseGameState.js\`.
+\
+stores/baseGameState.js\
+`.
 
 ## Development
 
@@ -220,7 +224,8 @@ npm run build ${projectName}
 
 ## Adding Events
 
-Create new events in \`events/[location]/[event-name].js\`:
+Create new events in 
+xevents/[location]/[event-name].js\`:
 
 \`\`\`javascript
 export default {
@@ -237,7 +242,7 @@ export default {
 
 Override any core component by creating a file in your project with the same path as in the engine.
 
-Example: To customize the main menu, create \`menu/MainMenu.vue\`.
+Example: To customize the main menu, create \`menu/MainMenu.vue\
 `;
 
 fs.writeFileSync(path.join(projectPath, 'README.md'), readmeContent);
@@ -247,11 +252,8 @@ console.log(`📄 Created: projects/${projectName}/README.md`);
 fs.writeFileSync(path.join(projectPath, 'assets', 'images', '.gitkeep'), '');
 fs.writeFileSync(path.join(projectPath, 'assets', 'sounds', '.gitkeep'), '');
 
-console.log(`\n✅ Project "${projectName}" created successfully!`);
-console.log(`\n📝 Next steps:`);
-console.log(`   1. Run "npm run dev ${projectName}" to start development`);
-console.log(`   2. Edit events in projects/${projectName}/events/`);
-console.log(`   3. Add assets to projects/${projectName}/assets/`);
-console.log(
-  `   4. Override engine files by mirroring paths inside projects/${projectName}/`
-);
+console.log(`
+✅ Project "${projectName}" created successfully!`);
+console.log(`
+📝 Next steps:`);
+console.log(`   1. Run
