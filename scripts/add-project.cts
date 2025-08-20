@@ -238,4 +238,4 @@ console.log(`
 ✅ Project "${projectName}" created successfully!`);
 console.log(`
 📝 Next steps:`);
-console.log(`   1. Run
+console.log(`   1. Run 
