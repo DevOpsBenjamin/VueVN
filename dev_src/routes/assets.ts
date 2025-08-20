@@ -2,30 +2,59 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+interface Request {
+  method: string;
+  headers: Record<string, string>;
+  url: string;
+  on(event: 'data' | 'end', listener: (chunk: Buffer) => void): void;
+  searchParams: URLSearchParams; // Added for GET requests
+}
+
+interface Response {
+  statusCode: number;
+  setHeader(name: string, value: string): void;
+  end(data?: string | Buffer): void;
+}
+
+type NextFunction = () => void;
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
 
-export function setupAssetsRoutes(middlewares, { currentProject }) {
+export function setupAssetsRoutes(middlewares: any, { currentProject }: { currentProject: string }) {
   const projectPath = path.join(rootDir, 'projects', currentProject);
   const assetsPath = path.join(projectPath, 'assets');
 
   // Upload asset
-  middlewares.use('/api/assets/upload', (req, res, next) => {
+  middlewares.use('/api/assets/upload', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'POST') {
-      let chunks = [];
+      let chunks: Buffer[] = [];
 
-      req.on('data', (chunk) => chunks.push(chunk));
+      req.on('data', (chunk: Buffer) => chunks.push(chunk));
       req.on('end', () => {
         try {
           const buffer = Buffer.concat(chunks);
-          const boundary = req.headers['content-type'].split('boundary=')[1];
+          const contentTypeHeader = req.headers['content-type'];
+          if (!contentTypeHeader) {
+            res.statusCode = 400;
+            res.end('Missing Content-Type header');
+            return;
+          }
+          const boundaryMatch = contentTypeHeader.match(/boundary=(.+)/);
+          if (!boundaryMatch) {
+            res.statusCode = 400;
+            res.end('Missing boundary in Content-Type');
+            return;
+          }
+          const boundary = boundaryMatch[1];
 
           // Parse multipart form data (simplified)
           const parts = buffer.toString('binary').split(`--${boundary}`);
 
           for (const part of parts) {
             if (part.includes('filename=')) {
-              const filenameMatch = part.match(/filename="(.+)"/);
+              const filenameMatch = part.match(/filename="(.+)"/
+);
               const typeMatch = part.match(/Content-Type: (.+)/);
 
               if (filenameMatch && typeMatch) {
@@ -36,7 +65,7 @@ export function setupAssetsRoutes(middlewares, { currentProject }) {
                 const contentStart = part.indexOf('\r\n\r\n') + 4;
                 const contentEnd = part.lastIndexOf('\r\n');
                 const content = Buffer.from(
-                  part.slice(contentStart, contentEnd),
+                  part.slice(contentStart, contentEnd), // slice returns string, Buffer.from needs string or Buffer
                   'binary'
                 );
 
@@ -70,7 +99,7 @@ export function setupAssetsRoutes(middlewares, { currentProject }) {
 
           res.statusCode = 400;
           res.end('No file found in upload');
-        } catch (err) {
+        } catch (err: any) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: err.message }));
         }
@@ -81,10 +110,10 @@ export function setupAssetsRoutes(middlewares, { currentProject }) {
   });
 
   // List assets
-  middlewares.use('/api/assets/list', (req, res, next) => {
+  middlewares.use('/api/assets/list', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'GET') {
       try {
-        const assets = {
+        const assets: Record<string, any[]> = {
           images: [],
           sounds: [],
           videos: [],
@@ -112,7 +141,7 @@ export function setupAssetsRoutes(middlewares, { currentProject }) {
 
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(assets));
-      } catch (err) {
+      } catch (err: any) {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: err.message }));
       }
@@ -122,8 +151,9 @@ export function setupAssetsRoutes(middlewares, { currentProject }) {
   });
 
   // Get asset info/preview
-  middlewares.use('/api/assets/info', (req, res, next) => {
+  middlewares.use('/api/assets/info', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'GET') {
+      // req.url is the full URL, need to parse it
       const url = new URL(req.url, `http://${req.headers.host}`);
       const assetPath = url.searchParams.get('path');
 
@@ -136,6 +166,7 @@ export function setupAssetsRoutes(middlewares, { currentProject }) {
       try {
         const fullPath = path.join(projectPath, assetPath);
 
+        // Security check: ensure the path is within the project directory
         if (!fullPath.startsWith(projectPath)) {
           res.statusCode = 403;
           res.end('Access denied');
@@ -168,7 +199,7 @@ export function setupAssetsRoutes(middlewares, { currentProject }) {
             preview,
           })
         );
-      } catch (err) {
+      } catch (err: any) {
         res.statusCode = 404;
         res.end('Asset not found');
       }
