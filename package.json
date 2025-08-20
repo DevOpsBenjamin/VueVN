@@ -8,7 +8,7 @@
   },
   "scripts": {
     "add-project": "tsx scripts/add-project.cts",
-    "dev": "node scripts/dev.cjs",
+    "dev": "tsx scripts/dev.cts",
     "build": "tsx scripts/build.cts",
     "preview": "vite preview"
   },
