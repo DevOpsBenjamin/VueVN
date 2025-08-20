@@ -1,8 +1,8 @@
 // Templates d'event pour l'éditeur Monaco
-export const eventTemplate = `/**
- * @typedef {Object} EventDefinition
+export const eventTemplate: string = `/**
+ * @typedef {Object}
  * @property {string} id
- * @property {string} name
+ * * @property {string} name
  * @property {(state: Object) => boolean} conditions
  * @property {(engine: Engine, state: Object) => Promise<void>} execute
  */
