@@ -263,4 +263,9 @@ console.log(`
 ✅ Project "${projectName}" created successfully!`);
 console.log(`
 📝 Next steps:`);
-console.log(`   1. Run 
+console.log(`   1. Run "npm run dev ${projectName}" to start development`);
+console.log(`   2. Edit events in projects/${projectName}/events/`);
+console.log(`   3. Add assets to projects/${projectName}/assets/`);
+console.log(
+  `   4. Override engine files by mirroring paths inside projects/${projectName}/`
+);
