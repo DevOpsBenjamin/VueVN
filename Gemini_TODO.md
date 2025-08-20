@@ -25,7 +25,7 @@
   - [x] Convert `src/editor/stores/editorState.js` to `src/editor/stores/editorState.ts`.
   - [x] Convert `src/editor/utils/monacoLoader.js` to `src/editor/utils/monacoLoader.ts`.
   - [x] Convert `src/editor/docs/EventTemplates.js` to `src/editor/docs/EventTemplates.ts`.
-  - [ ] Update all `require` and `module.exports` syntax in the converted `.cts` files to ES Modules syntax (`import`/`export`).
+  - [x] Update all `require` and `module.exports` syntax in the converted `.cts` files to ES Modules syntax (`import`/`export`).
   - [ ] Add types for all function parameters and return values in the newly converted files.
   - [ ] Run `npm run build sample` to ensure all conversions and typing were successful.
 
