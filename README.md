@@ -18,3 +18,6 @@ npm run build my-novel
 ```
 
 See the [Project Wiki](https://github.com/DevOpsBenjamin/VueVN/wiki) for full installation, project structure, and event documentation.
+
+# IA coding
+This project is build using a lot of IA as a vibe coding test.
