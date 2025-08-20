@@ -13,7 +13,7 @@
   - [x] Convert `scripts/build.cjs` to `scripts/build.cts`.
   - [x] Convert `scripts/copy-assets.cjs` to `scripts/copy-assets.cts`.
   - [x] Convert `scripts/dev.cjs` to `scripts/dev.cts`.
-  - [ ] Convert `scripts/generate.cjs` to `scripts/generate.cts`.
+  - [x] Convert `scripts/generate.cjs` to `scripts/generate.cts`.
   - [ ] Convert `scripts/generate-components-index.cjs` to `scripts/generate-components-index.cts`.
   - [ ] Convert `scripts/generate-engine-index.cjs` to `scripts/generate-engine-index.cts`.
   - [ ] Convert `scripts/generate-events-index.cjs` to `scripts/generate-events-index.cts`.
