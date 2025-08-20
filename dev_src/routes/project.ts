@@ -2,18 +2,34 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+interface Request {
+  method: string;
+  headers: Record<string, string>;
+  url: string;
+  on(event: 'data' | 'end', listener: (chunk: string) => void): void;
+  searchParams: URLSearchParams; // Added for GET requests
+}
+
+interface Response {
+  statusCode: number;
+  setHeader(name: string, value: string): void;
+  end(data?: string | Buffer): void;
+}
+
+type NextFunction = () => void;
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
 
-export function setupProjectRoutes(middlewares, { currentProject }) {
+export function setupProjectRoutes(middlewares: any, { currentProject }: { currentProject: string }) {
   const projectPath = path.join(rootDir, 'projects', currentProject);
 
   // Get project info and config
-  middlewares.use('/api/project/info', (req, res, next) => {
+  middlewares.use('/api/project/info', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'GET') {
       try {
         const configPath = path.join(projectPath, 'config.json');
-        let config = {};
+        let config: Record<string, any> = {};
 
         if (fs.existsSync(configPath)) {
           config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
@@ -50,7 +66,7 @@ export function setupProjectRoutes(middlewares, { currentProject }) {
             stats,
           })
         );
-      } catch (err) {
+      } catch (err: any) {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: err.message }));
       }
@@ -60,13 +76,13 @@ export function setupProjectRoutes(middlewares, { currentProject }) {
   });
 
   // Update project config
-  middlewares.use('/api/project/config', (req, res, next) => {
+  middlewares.use('/api/project/config', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'POST') {
       let body = '';
-      req.on('data', (chunk) => (body += chunk));
+      req.on('data', (chunk: string) => (body += chunk));
       req.on('end', () => {
         try {
-          const config = JSON.parse(body);
+          const config: Record<string, any> = JSON.parse(body);
           const configPath = path.join(projectPath, 'config.json');
 
           // Backup existing config
@@ -78,7 +94,7 @@ export function setupProjectRoutes(middlewares, { currentProject }) {
 
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ success: true }));
-        } catch (err) {
+        } catch (err: any) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: err.message }));
         }
@@ -89,7 +105,7 @@ export function setupProjectRoutes(middlewares, { currentProject }) {
   });
 
   // Get event templates
-  middlewares.use('/api/project/templates', (req, res, next) => {
+  middlewares.use('/api/project/templates', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'GET') {
       const templates = {
         event: getEventTemplate(),
@@ -105,7 +121,7 @@ export function setupProjectRoutes(middlewares, { currentProject }) {
   });
 }
 
-function countFiles(dir, ...extensions) {
+function countFiles(dir: string, ...extensions: string[]): number {
   if (!fs.existsSync(dir)) return 0;
 
   let count = 0;
@@ -125,7 +141,7 @@ function countFiles(dir, ...extensions) {
   return count;
 }
 
-function countPluginFiles(dir) {
+function countPluginFiles(dir: string): number {
   if (!fs.existsSync(dir)) return 0;
 
   let count = 0;
@@ -146,7 +162,7 @@ function countPluginFiles(dir) {
   return count;
 }
 
-function getEventTemplate() {
+function getEventTemplate(): string {
   return `export default {
   id: 'unique_event_id',
   name: 'Event Name',
@@ -164,7 +180,7 @@ function getEventTemplate() {
 };`;
 }
 
-function getComponentTemplate() {
+function getComponentTemplate(): string {
   return `<template>
   <div class="custom-component">
     <!-- Your component template -->
@@ -182,7 +198,7 @@ function getComponentTemplate() {
 </style>`;
 }
 
-function getStoreTemplate() {
+function getStoreTemplate(): string {
   return `import { defineStore } from 'pinia';
 
 export default defineStore('customStore', {
