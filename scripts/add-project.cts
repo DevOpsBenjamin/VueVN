@@ -71,39 +71,41 @@ fs.writeFileSync(
 console.log(`📄 Created: projects/${projectName}/config.json`);
 
 // 2. Example start event
-const startEventContent: string = `export default {
+const startEventContent: string = `import type { VNEvent } from '@/engine/runtime/types';
+
+const intro: VNEvent = {
   id: 'intro',
   name: 'Introduction',
   
-  // This event triggers when entering the 'start' location
   conditions: (state) => !state.flags.introSeen,
+  unlocked: () => true,
+  locked: (state) => state.flags.introSeen,
   
   async execute(engine, state) {
-    // Set background
-    engine.setBackground('/assets/images/placeholder.jpg');
-    
-    // Show some text
+    engine.setForeground('assets/images/background/intro/hall.png');
     await engine.showText('Welcome to ${projectName}!');
     await engine.showText('This is your first event.');
-    
-    // Show a choice
-    const choice = await engine.showChoices([
-      { text: "Start the adventure", id: "start" },
-      { text: "Learn more", id: "learn" }
-    ]);
-    
-    if (choice === 'learn') {
-      await engine.showText('VueVN is a visual novel engine built with Vue 3.');
-      await engine.showText('You can create your own stories by adding events and assets.');
+    let choice = '';
+    while (choice !== 'start') {
+      choice = await engine.showChoices([
+        { text: "Start the adventure", id: "start" },
+        { text: "Learn more", id: "learn" }
+      ]);
+      
+      if (choice === 'learn') {
+        await engine.showText('VueVN is a visual novel engine built with Vue 3.');
+        await engine.showText('You can create your own stories by adding events and assets.');
+        await engine.showChoices([{ text: 'Return', id: 'return' }]);
+      }
     }
     
-    // Mark intro as seen
+    await engine.showText("Great! Let's begin your adventure.");
     state.flags.introSeen = true;
-
-    // Change location (this will trigger new events)
     state.location = 'bedroom';
   }
 };
+
+export default intro;
 `;
 
 fs.writeFileSync(
@@ -113,7 +115,9 @@ fs.writeFileSync(
 console.log(`📄 Created: projects/${projectName}/events/start/intro.ts`);
 
 // 3. Example bedroom event
-const bedroomEventContent: string = `export default {
+const bedroomEventContent: string = `import type { VNEvent } from "@/engine/runtime/types";
+
+const wakeUp: VNEvent = {
   id: 'wake_up',
   name: 'Wake Up',
 
@@ -124,6 +128,8 @@ const bedroomEventContent: string = `export default {
     state.flags.wokeUp = true;
   },
 };
+
+export default wakeUp;
 `;
 
 fs.writeFileSync(
@@ -140,7 +146,6 @@ const npc_1 = createNPC({
   name: 'NPC 1',
   relation: 0,
   trust: 0,
-  // LONG as heck definition continues here...
 });
 
 export default npc_1;
