@@ -1,14 +1,14 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, Ref } from 'vue';
 
 export const useEditorState = defineStore('editorState', () => {
   // Current file being edited (relative path in the project)
-  const currentFile = ref(null);
+  const currentFile: Ref<string | null> = ref(null);
 
   // Preview visibility
-  const previewVisible = ref(false);
+  const previewVisible: Ref<boolean> = ref(false);
 
-  function selectFile(file) {
+  function selectFile(file: string) {
     currentFile.value = file;
   }
 
