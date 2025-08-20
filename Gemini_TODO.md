@@ -34,7 +34,7 @@
   - [x] Create a new file: `vite-plugins/api.ts`.
   - [x] In `vite-plugins/api.ts`, create a new Vite plugin. This plugin will use the `configureServer` hook to replicate the API endpoints from `dev_src` (e.g., for listing files, reading content, creating files).
   - [x] Update `vite.config.js` to use this new local plugin instead of the `dev_src` setup.
-  - [ ] Delete the `dev_src` directory entirely.
+  - [x] Delete the `dev_src` directory entirely.
   - [ ] Run `npm run dev sample` and test the editor to confirm the new API plugin is working correctly.
 
 - [ ] **Task 1.3: Implement Editor-Game Communication Channel**
