@@ -1,7 +1,14 @@
-// src/utils/monacoLoader.js
-let monacoPromise;
+// src/utils/monacoLoader.ts
+let monacoPromise: Promise<void> | undefined;
 
-export function loadMonaco() {
+declare global {
+  interface Window {
+    monaco: any;
+    require: any;
+  }
+}
+
+export function loadMonaco(): Promise<void> {
   if (window.monaco) {
     return Promise.resolve();
   }
