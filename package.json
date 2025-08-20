@@ -9,7 +9,7 @@
   "scripts": {
     "add-project": "tsx scripts/add-project.cts",
     "dev": "node scripts/dev.cjs",
-    "build": "node scripts/build.cjs",
+    "build": "tsx scripts/build.cts",
     "preview": "vite preview"
   },
   "dependencies": {

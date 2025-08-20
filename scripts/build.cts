@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const path = require('path');
-const fs = require('fs');
-const fsExtra = require('fs-extra');
+import { execSync } from 'child_process';
+import path from 'path';
+import fs from 'fs';
+import fsExtra from 'fs-extra';
 
-const projectName = process.argv[2];
+const projectName: string | undefined = process.argv[2];
 
 if (!projectName) {
   console.error('❌ Error: Please provide a project name');
@@ -13,7 +13,7 @@ if (!projectName) {
   process.exit(1);
 }
 
-const projectPath = path.join(__dirname, '..', 'projects', projectName);
+const projectPath: string = path.join(__dirname, '..', 'projects', projectName);
 
 if (!fs.existsSync(projectPath)) {
   console.error(`❌ Error: Project "${projectName}" does not exist`);
@@ -27,7 +27,7 @@ const env = { ...process.env, VUEVN_PROJECT: projectName };
 
 try {
   // Generate files
-  execSync('node scripts/generate.cjs', { stdio: 'inherit', env });
+  execSync('tsx scripts/generate.cts', { stdio: 'inherit', env });
 
   // Build with Vite
   execSync('vite build', { stdio: 'inherit', env });
@@ -38,13 +38,13 @@ try {
   try {
     fsExtra.copySync(src, dest, { overwrite: true });
     console.log(`✅ Copied assets for ${projectName} to dist/assets`);
-  } catch (e) {
+  } catch (e: any) {
     console.error('❌ Failed to copy assets:', e);
     process.exit(1);
   }
 
   console.log(`✅ Build complete for: ${projectName}`);
-} catch (error) {
+} catch (error: any) {
   console.error('❌ Build failed');
   process.exit(1);
 }
