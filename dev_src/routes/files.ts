@@ -2,15 +2,31 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
+interface Request {
+  method: string;
+  headers: Record<string, string>;
+  url: string;
+  on(event: 'data' | 'end', listener: (chunk: string) => void): void;
+  searchParams: URLSearchParams; // Added for GET requests
+}
+
+interface Response {
+  statusCode: number;
+  setHeader(name: string, value: string): void;
+  end(data?: string | Buffer): void;
+}
+
+type NextFunction = () => void;
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Ensure file operations target the repository root instead of dev_src
 const rootDir = path.join(__dirname, "..", "..");
 
-export function setupFileRoutes(middlewares, { currentProject }) {
+export function setupFileRoutes(middlewares: any, { currentProject }: { currentProject: string }) {
   const projectPath = path.join(rootDir, "projects", currentProject);
 
   // List files in directory
-  middlewares.use("/api/files", (req, res, next) => {
+  middlewares.use("/api/files", (req: Request, res: Response, next: NextFunction) => {
     if (req.method === "GET") {
       const url = new URL(req.url, `http://${req.headers.host}`);
       const requestPath = url.searchParams.get("path") || "";
@@ -50,7 +66,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
           res.statusCode = 400;
           res.end("Not a directory");
         }
-      } catch (err) {
+      } catch (err: any) {
         res.statusCode = 404;
         res.end("Path not found");
       }
@@ -60,7 +76,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
   });
 
   // Read file content
-  middlewares.use("/api/file", (req, res, next) => {
+  middlewares.use("/api/file", (req: Request, res: Response, next: NextFunction) => {
     if (req.method === "GET") {
       const url = new URL(req.url, `http://${req.headers.host}`);
       const filePath = url.searchParams.get("path");
@@ -91,7 +107,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
             size: stats.size,
           }),
         );
-      } catch (err) {
+      } catch (err: any) {
         res.statusCode = 404;
         res.end("File not found");
       }
@@ -101,10 +117,10 @@ export function setupFileRoutes(middlewares, { currentProject }) {
     // Save file
     if (req.method === "POST") {
       let body = "";
-      req.on("data", (chunk) => (body += chunk));
+      req.on("data", (chunk: string) => (body += chunk));
       req.on("end", () => {
         try {
-          const { path: filePath, content } = JSON.parse(body);
+          const { path: filePath, content }: { path: string, content: string } = JSON.parse(body);
           const fullPath = path.join(projectPath, filePath);
 
           if (!fullPath.startsWith(projectPath)) {
@@ -129,7 +145,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
               size: Buffer.byteLength(content, "utf-8"),
             }),
           );
-        } catch (err) {
+        } catch (err: any) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: err.message }));
         }
@@ -141,13 +157,13 @@ export function setupFileRoutes(middlewares, { currentProject }) {
   });
 
   // Create new file/folder
-  middlewares.use("/api/create", (req, res, next) => {
+  middlewares.use("/api/create", (req: Request, res: Response, next: NextFunction) => {
     if (req.method === "POST") {
       let body = "";
-      req.on("data", (chunk) => (body += chunk));
+      req.on("data", (chunk: string) => (body += chunk));
       req.on("end", () => {
         try {
-          const { path: itemPath, type, template } = JSON.parse(body);
+          const { path: itemPath, type, template }: { path: string, type: string, template?: string } = JSON.parse(body);
           const fullPath = path.join(projectPath, itemPath);
 
           if (!fullPath.startsWith(projectPath)) {
@@ -177,7 +193,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
 
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ success: true, path: itemPath }));
-        } catch (err) {
+        } catch (err: any) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: err.message }));
         }
@@ -188,7 +204,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
   });
 
   // Delete file/folder
-  middlewares.use("/api/delete", (req, res, next) => {
+  middlewares.use("/api/delete", (req: Request, res: Response, next: NextFunction) => {
     if (req.method === "DELETE") {
       const url = new URL(req.url, `http://${req.headers.host}`);
       const itemPath = url.searchParams.get("path");
@@ -214,7 +230,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
         }
         res.setHeader("Content-Type", "application/json");
         res.end(JSON.stringify({ success: true }));
-      } catch (err) {
+      } catch (err: any) {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: err.message }));
       }
@@ -224,13 +240,13 @@ export function setupFileRoutes(middlewares, { currentProject }) {
   });
 
   // Rename/move file
-  middlewares.use("/api/rename", (req, res, next) => {
+  middlewares.use("/api/rename", (req: Request, res: Response, next: NextFunction) => {
     if (req.method === "POST") {
       let body = "";
-      req.on("data", (chunk) => (body += chunk));
+      req.on("data", (chunk: string) => (body += chunk));
       req.on("end", () => {
         try {
-          const { oldPath, newPath } = JSON.parse(body);
+          const { oldPath, newPath }: { oldPath: string, newPath: string } = JSON.parse(body);
           const fullOldPath = path.join(projectPath, oldPath);
           const fullNewPath = path.join(projectPath, newPath);
 
@@ -253,7 +269,7 @@ export function setupFileRoutes(middlewares, { currentProject }) {
 
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ success: true }));
-        } catch (err) {
+        } catch (err: any) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: err.message }));
         }
