@@ -26,10 +26,10 @@
   - [x] Convert `src/editor/utils/monacoLoader.js` to `src/editor/utils/monacoLoader.ts`.
   - [x] Convert `src/editor/docs/EventTemplates.js` to `src/editor/docs/EventTemplates.ts`.
   - [x] Update all `require` and `module.exports` syntax in the converted `.cts` files to ES Modules syntax (`import`/`export`).
-  - [ ] Add types for all function parameters and return values in the newly converted files.
+  - [x] Add types for all function parameters and return values in the newly converted files.
   - [x] Run `npm run build sample` to ensure all conversions and typing were successful. (Fixed import typo in `dev_src/index.ts`)
 
-- [ ] **Task 1.2: Deprecate `dev_src` with a Vite Plugin**
+- [x] **Task 1.2: Deprecate `dev_src` with a Vite Plugin**
   - [x] Create a new directory: `vite-plugins`.
   - [x] Create a new file: `vite-plugins/api.ts`.
   - [x] In `vite-plugins/api.ts`, create a new Vite plugin. This plugin will use the `configureServer` hook to replicate the API endpoints from `dev_src` (e.g., for listing files, reading content, creating files).
