@@ -196,4 +196,105 @@ export class NewEngine {
     // TODO: Implement historical choice lookup
     return null;
   }
+
+  /**
+   * Execute a single action with real user interaction
+   */
+  private async executeAction(action: VNAction): Promise<void> {
+    switch (action.type) {
+      case 'showText':
+        this.engineState.dialogue = { 
+          text: action.text, 
+          from: action.from || 'Narrator' 
+        };
+        await this.waitForContinue();
+        break;
+
+      case 'setBackground':
+        this.engineState.background = action.imagePath;
+        break;
+
+      case 'setForeground':
+        this.engineState.foreground = action.imagePath;
+        break;
+
+      case 'showChoices':
+        this.engineState.choices = action.choices;
+        const choiceId = await this.waitForChoice();
+        this.recordChoiceInHistory(choiceId);
+        break;
+
+      case 'jump':
+        this.jumpToEvent(action.eventId);
+        throw new JumpInterrupt(action.eventId);
+        break;
+
+      case 'runCustomLogic':
+        const result = await this.executeCustomLogic(action.logicId, action.args);
+        this.cacheCustomLogicResult(action.logicId, result);
+        // Custom logic exits event flow
+        throw new JumpInterrupt('EXIT_EVENT');
+        break;
+
+      default:
+        console.warn(`Unknown action type: ${(action as any).type}`);
+    }
+  }
+
+  /**
+   * Wait for user to continue (right click or space)
+   */
+  private async waitForContinue(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.awaiterResult = resolve;
+    });
+  }
+
+  /**
+   * Wait for user to select a choice
+   */
+  private async waitForChoice(): Promise<string> {
+    return new Promise<string>((resolve) => {
+      this.awaiterResult = resolve;
+    });
+  }
+
+  /**
+   * Record choice in history (placeholder)
+   */
+  private recordChoiceInHistory(choiceId: string): void {
+    // TODO: Record choice in last history entry
+    console.debug(`Choice made: ${choiceId}`);
+  }
+
+  /**
+   * Jump to a new event (placeholder)
+   */
+  private jumpToEvent(eventId: string): void {
+    // TODO: Set up jump to new event
+    this.engineState.currentEvent = eventId;
+    this.engineState.currentActionIndex = 0;
+    console.debug(`Jumping to event: ${eventId}`);
+  }
+
+  /**
+   * Execute custom logic function
+   */
+  private async executeCustomLogic(logicId: string, args: any): Promise<any> {
+    const logicFunction = CustomLogicRegistry.get(logicId);
+    if (!logicFunction) {
+      throw new Error(`Custom logic '${logicId}' not found`);
+    }
+
+    // Execute custom logic - this exits event context
+    const result = await logicFunction(args, this.gameState);
+    return result;
+  }
+
+  /**
+   * Cache custom logic result for history navigation
+   */
+  private cacheCustomLogicResult(logicId: string, result: any): void {
+    this.customLogicCache[logicId] = result;
+  }
 }
