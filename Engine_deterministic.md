@@ -1,14 +1,16 @@
-# Proposed Engine Architecture: Mixed Approach for VueVN
+# Proposed Engine Architecture: Deterministic Approach for VueVN
 
-This document details a revised engine architecture for VueVN, combining the benefits of atomic action logging for robust history and replay with the flexibility of user-defined TypeScript logic within events. This "mixed" approach aims to provide a powerful yet intuitive development experience.
+This document details a revised engine architecture for VueVN, focusing on a **deterministic, action-based approach**. This design ensures ultimate control over game state and history, enabling robust replay, rewind, and fast-forward functionalities, while still allowing developers to write flexible TypeScript logic within events.
 
 ## Core Principles
 
 1.  **Atomic Actions (`VNAction`):** These remain the fundamental, granular units of game progression (e.g., showing text, changing background). They are crucial for building a precise history log.
 2.  **Game History Log (`GameHistoryEntry`):** The engine maintains a comprehensive, ordered log of every `VNAction` executed, along with a snapshot of the `gameState` and `engineState` *before* that action. This log is the bedrock for "go back" and "go forward" functionality.
 3.  **State Snapshotting:** Before each `VNAction` is processed by the core engine, a deep copy of the current `gameState` and `engineState` is taken and stored in the `history` log. This ensures that any modifications made by the user's TypeScript code (e.g., to `gameState.flags`) are accurately captured *before* the next atomic action is applied.
-4.  **User-Defined `execute` Method:** Each `VNEvent` will have an `async execute(engine, gameState)` method. This is where the game developer writes their custom TypeScript logic, including conditional branching, direct `gameState` manipulation, and calls to the engine's API.
-5.  **Engine API as Action Emitter:** The `engine` object passed into the `execute` method will expose a set of high-level methods (e.g., `showText`, `showChoices`, `jump`). When these methods are called by the user, they do *not* directly modify the engine's visual state. Instead, they internally create the corresponding `VNAction` and "emit" it to the core engine for processing. The `execute` method then `await`s this processing.
+4.  **User-Defined `execute` Method:** Each `VNEvent` will have an `async execute(engine, gameState)` method. This is where the game developer writes their custom TypeScript logic, including conditional branching and direct `gameState` manipulation.
+5.  **Engine API as Action Recorder (Simulation):** The `engine` object passed into the `execute` method will expose a set of high-level methods (e.g., `showText`, `showChoices`, `jump`). When these methods are called by the user, they do *not* directly modify the engine's live visual state. Instead, they internally record the corresponding `VNAction` into a sequence. The `execute` method runs in a **simulation mode** to generate this sequence.
+6.  **Deterministic Choice Handling:** `showChoices` actions are designed to always lead to an immediate `jump` to another event. This simplifies the simulation process by avoiding complex branching logic within the simulation itself.
+7.  **Engine as Action Playback System:** After an event's `execute` method has been simulated to generate its action sequence, the "real" engine then plays back this sequence, applying actions to the live state and handling user input.
 
 ## Key Components and Changes
 
@@ -26,7 +28,8 @@ export type Dialogue = {
 
 export type Choice = {
   text: string;
-  id: string;
+  id: string; // Still useful for tracking the specific choice made
+  jump_id: string; // The event ID to jump to if this choice is selected
 };
 
 /**
@@ -37,7 +40,7 @@ export type VNAction =
   | { type: 'showText'; text: string; from?: string }
   | { type: 'setBackground'; imagePath: string }
   | { type: 'setForeground'; imagePath: string }
-  | { type: 'showChoices'; choices: Array<Choice> }
+  | { type: 'showChoices'; choices: Array<Choice> } // Choices now include jump_id
   | { type: 'jump'; eventId: string }; // Jumps to another event by ID
 
 /**
@@ -53,14 +56,14 @@ export type GameHistoryEntry = {
 
 /**
  * Interface defining the methods available to event developers within the `execute` function.
- * These methods emit VNActions to the core engine.
+ * These methods record VNActions into the simulation sequence.
  */
 export interface EngineAPIForEvents {
   showText: (text: string, from?: string) => Promise<void>;
-  setBackground: (imagePath: string) => Promise<void>; // Now async to await engine processing
-  setForeground: (imagePath: string) => Promise<void>; // Now async
-  showChoices: (choices: Array<Choice>) => Promise<string>;
-  jump: (eventId: string) => Promise<void>; // Now async, and will cause an interrupt
+  setBackground: (imagePath: string) => Promise<void>;
+  setForeground: (imagePath: string) => Promise<void>;
+  showChoices: (choices: Array<Choice>) => Promise<string>; // Returns the chosen ID
+  jump: (eventId: string) => Promise<void>; // Records a jump action
 }
 
 /**
@@ -71,6 +74,7 @@ export interface VNEvent {
   id: string;
   name: string;
   conditions?: (gameState: GameState) => boolean; // Conditions for the event to be available
+  isJumpTarget?: boolean; // New flag: true if this event is primarily a target for jumps (not discovered by getEvents)
   execute: (engine: EngineAPIForEvents, gameState: GameState) => Promise<void>;
 }
 
@@ -89,7 +93,7 @@ export interface EngineState {
   initialized: boolean;
   state: string; // e.g., "RUNNING", "MENU", "LOADING"
   currentEvent: string | null; // ID of the currently executing event
-  currentActionIndex: number; // Index of the current action within the current event's actions array (for internal engine use)
+  currentActionIndex: number; // Index of the current action within the current event's action sequence
   choices: Array<Choice> | null;
   history: GameHistoryEntry[]; // The main history log for "go back"
   future: GameHistoryEntry[]; // A temporary stack for "go forward" (when "go back" is used)
@@ -108,7 +112,7 @@ import {
   VNInterruptError,
 } from "@/generate/runtime";
 import { engineStateEnum as ENGINE_STATES } from "@/generate/stores";
-import type { GameState, EngineState, VNEvent, VNAction, GameHistoryEntry, EngineAPIForEvents } from "./types";
+import type { GameState, EngineState, VNEvent, VNAction, GameHistoryEntry, EngineAPIForEvents, Choice } from "./types";
 
 class Engine {
   gameState: GameState;
@@ -129,12 +133,24 @@ class Engine {
       this.engineState.future = [];
     }
 
-    // Initialize the EngineAPIForEvents instance
+    // Initialize the EngineAPIForEvents instance for live execution
+    // This will be used when actually playing back the simulated actions.
+    // The simulation itself will use a different, temporary implementation.
     this.engineAPIForEvents = {
       showText: (text, from) => this.processActionAndAwaitUser({ type: 'showText', text, from }),
       setBackground: (imagePath) => this.processActionAndAwaitUser({ type: 'setBackground', imagePath }),
       setForeground: (imagePath) => this.processActionAndAwaitUser({ type: 'setForeground', imagePath }),
-      showChoices: (choices) => this.processActionAndAwaitUser({ type: 'showChoices', choices }),
+      showChoices: async (choices) => {
+        const chosenId = await this.processActionAndAwaitUser({ type: 'showChoices', choices });
+        // After choice, automatically perform the jump
+        const chosenOption = choices.find(c => c.id === chosenId);
+        if (chosenOption) {
+          await this.processActionAndAwaitUser({ type: 'jump', eventId: chosenOption.jump_id });
+        } else {
+          console.error(`Chosen ID '${chosenId}' not found in choices.`);
+        }
+        return chosenId;
+      },
       jump: (eventId) => this.processActionAndAwaitUser({ type: 'jump', eventId }),
     };
 
@@ -290,41 +306,87 @@ class Engine {
   }
 
   /**
-   * Processes a VNEvent by executing its `execute` method.
-   * This method is responsible for handling the flow of actions emitted by the event.
+   * Processes a VNEvent by executing its `execute` method in simulation mode
+   * to generate the action sequence, then plays back that sequence.
    * @param event The VNEvent to process.
    */
   async processEvent(event: VNEvent): Promise<void> {
-    console.debug(`Executing event: ${event.id}`);
-    try {
-      // If we are resuming an event, simulate it to fast-forward to the correct point.
-      if (this.engineState.currentActionIndex > 0) {
-        console.debug(`Resuming event ${event.id} at action index ${this.engineState.currentActionIndex}`);
-        await this.simulateEvent(event, this.engineState.currentActionIndex, true); // Fast-forward
-      }
+    console.debug(`Processing event: ${event.id}`);
 
-      // Execute the user-defined event logic in live mode from the current point.
-      await event.execute(this.engineAPIForEvents, this.gameState);
+    // 1. Simulate the event's execute method to get the full action sequence
+    const simulatedActions = await this.simulateEventExecution(event);
+    console.debug(`Event ${event.id} simulated. Actions:`, simulatedActions);
 
-      // If execute completes, the event is finished
-      this.engineState.currentEvent = null;
-      this.engineState.currentActionIndex = 0;
-      console.debug(`Event ${event.id} finished.`);
-    } catch (err) {
-      if (err instanceof VNInterruptError) {
-        console.warn(`Event ${event.id} interrupted.`);
-        // If it's a jump, the currentEvent and currentActionIndex are already set by processActionAndAwaitUser
-        // If it's a menu interrupt, the engine state will change and the loop will pause.
-      } else {
-        console.error(`Error during event ${event.id} execution:`, err);
-        // Handle unexpected errors, potentially move to an error state or skip event
-      }
+    // 2. Play back the simulated actions
+    for (let i = this.engineState.currentActionIndex; i < simulatedActions.length; i++) {
+      const action = simulatedActions[i];
+      this.engineState.currentActionIndex = i; // Update current action index
+
+      // Apply the action to the live state and record history
+      await this.processActionAndAwaitUser(action);
+
+      // If a jump occurred, the processActionAndAwaitUser will throw VNInterruptError
+      // and the loop will be interrupted.
     }
+
+    // If the loop completes, the event is finished
+    this.engineState.currentEvent = null;
+    this.engineState.currentActionIndex = 0;
+    console.debug(`Event ${event.id} finished.`);
   }
 
   /**
-   * Internal method called by EngineAPIForEvents methods.
-   * It records the state, applies the action, and awaits user input if necessary.
+   * Runs an event's `execute` method in a sandboxed simulation to generate its full action sequence.
+   * @param event The event to simulate.
+   * @returns A promise that resolves with the generated array of VNActions.
+   */
+  private async simulateEventExecution(event: VNEvent): Promise<VNAction[]> {
+    const simulatedActions: VNAction[] = [];
+    const simulatedGameState = JSON.parse(JSON.stringify(this.gameState.$state)); // Start with a copy of current game state
+
+    // Create a temporary, simulated EngineAPIForEvents instance
+    const simulatedEngineAPI: EngineAPIForEvents = {
+      showText: async (text, from) => {
+        simulatedActions.push({ type: 'showText', text, from });
+        return Promise.resolve();
+      },
+      setBackground: async (imagePath) => {
+        simulatedActions.push({ type: 'setBackground', imagePath });
+        return Promise.resolve();
+      },
+      setForeground: async (imagePath) => {
+        simulatedActions.push({ type: 'setForeground', imagePath });
+        return Promise.resolve();
+      },
+      showChoices: async (choices) => {
+        simulatedActions.push({ type: 'showChoices', choices });
+        // In simulation, we don't know the choice. We return a dummy value.
+        // The actual choice will be handled during live playback.
+        // The jump will be recorded as a separate action after the choice.
+        return Promise.resolve(choices[0].id); // Return first choice ID as a placeholder
+      },
+      jump: async (eventId) => {
+        simulatedActions.push({ type: 'jump', eventId });
+        // In simulation, a jump doesn't interrupt the simulation, it just records the action.
+        return Promise.resolve();
+      },
+    };
+
+    // Run the event's execute method in simulation mode
+    try {
+      await event.execute(simulatedEngineAPI, simulatedGameState); // Pass the simulated game state
+    } catch (err) {
+      // A jump action in simulation will not throw a VNInterruptError, it will just return.
+      // Other errors should still be logged.
+      console.error(`Error during simulation of event ${event.id}:`, err);
+    }
+
+    return simulatedActions;
+  }
+
+  /**
+   * Processes a single VNAction: records history, applies to live state, and awaits user input.
+   * This is used during live playback of simulated actions.
    * @param action The VNAction to process.
    * @returns A promise that resolves when the action is complete and user input (if any) is received.
    */
@@ -357,7 +419,7 @@ class Engine {
         const nextEvent = this.findEventById(action.eventId);
         if (nextEvent) {
           this.engineState.currentEvent = nextEvent.id;
-          this.engineState.currentActionIndex = 0; // Reset action index for the new event
+          this.engineState.currentActionIndex = 0; // New event starts from action 0
           throw new VNInterruptError("Jump to new event"); // Interrupt current event execution
         } else {
           console.error(`Event with id '${action.eventId}' not found for jump action.`);
@@ -415,7 +477,7 @@ class Engine {
         this.engineState.currentActionIndex = lastEntry.engineStateBefore.currentActionIndex;
 
         console.log("Went back in history. Current history length:", this.engineState.history.length);
-        // The runGameLoop will detect the changed currentEvent/currentActionIndex and re-simulate.
+        // The runGameLoop will detect the changed currentEvent/currentActionIndex and re-process.
       }
     } else {
       console.warn("No history to go back to.");
@@ -475,108 +537,6 @@ class Engine {
   updateEvents(location?: string): void {
     // Delegates to EngineEvents.updateEvents
     EngineEvents.updateEvents(this, location);
-  }
-
-  /**
-   * Simulates an event's execution to generate its action sequence or fast-forward to a specific point.
-   * This runs the event's `execute` method with a 'simulated' EngineAPIForEvents.
-   * @param event The event to simulate.
-   * @param targetActionIndex The index of the action to fast-forward to. Actions up to this index will be applied.
-   * @param applyToLiveState If true, actions will be applied to the live engine/game state and recorded in history.
-   */
-  private async simulateEvent(event: VNEvent, targetActionIndex: number, applyToLiveState: boolean): Promise<void> {
-    console.debug(`Simulating event ${event.id} up to action index ${targetActionIndex}. Apply to live: ${applyToLiveState}`);
-
-    const simulatedActions: VNAction[] = [];
-    let currentSimulatedActionIndex = 0;
-
-    // Create a temporary, simulated EngineAPIForEvents instance
-    const simulatedEngineAPI: EngineAPIForEvents = {
-      showText: async (text, from) => {
-        const action: VNAction = { type: 'showText', text, from };
-        simulatedActions.push(action);
-        // In simulation, we don't await user input, just return immediately.
-        return Promise.resolve();
-      },
-      setBackground: async (imagePath) => {
-        const action: VNAction = { type: 'setBackground', imagePath };
-        simulatedActions.push(action);
-        return Promise.resolve();
-      },
-      setForeground: async (imagePath) => {
-        const action: VNAction = { type: 'setForeground', imagePath };
-        simulatedActions.push(action);
-        return Promise.resolve();
-      },
-      showChoices: async (choices) => {
-        const action: VNAction = { type: 'showChoices', choices };
-        simulatedActions.push(action);
-        // In simulation, we need to return the historical choice if fast-forwarding.
-        // Otherwise, return a dummy value.
-        if (applyToLiveState && currentSimulatedActionIndex < this.engineState.history.length) {
-          const historicalEntry = this.engineState.history[currentSimulatedActionIndex];
-          if (historicalEntry && historicalEntry.action.type === 'showChoices') {
-            return Promise.resolve(historicalEntry.choiceMade || choices[0].id); // Use historical choice or default
-          }
-        }
-        return Promise.resolve(choices[0].id); // Default choice in simulation
-      },
-      jump: async (eventId) => {
-        const action: VNAction = { type: 'jump', eventId };
-        simulatedActions.push(action);
-        // In simulation, a jump doesn't interrupt the simulation, it just records the action.
-        return Promise.resolve();
-      },
-    };
-
-    // Run the event's execute method in simulation mode
-    try {
-      await event.execute(simulatedEngineAPI, this.gameState);
-    } catch (err) {
-      // A jump action in simulation will not throw a VNInterruptError, it will just return.
-      // Other errors should still be logged.
-      console.error(`Error during simulation of event ${event.id}:`, err);
-    }
-
-    // Now, apply the simulated actions to the live state if in fast-forward mode
-    for (let i = 0; i < simulatedActions.length && i < targetActionIndex; i++) {
-      const action = simulatedActions[i];
-      currentSimulatedActionIndex = i; // Keep track for historical choices
-
-      if (applyToLiveState) {
-        // Record history (this will also clear future)
-        this.recordHistory(action);
-
-        // Apply the action to the live engine state
-        switch (action.type) {
-          case 'showText':
-            this.engineState.dialogue = { from: action.from || "engine", text: action.text };
-            break;
-          case 'setBackground':
-            this.engineState.background = action.imagePath;
-            break;
-          case 'setForeground':
-            this.engineState.foreground = action.imagePath;
-            break;
-          case 'showChoices':
-            this.engineState.choices = action.choices;
-            // The choice was already handled by the simulation, no need to await here.
-            break;
-          case 'jump':
-            // A jump in fast-forward mode means we've reached the point of the jump.
-            // Set currentEvent and break the loop.
-            this.engineState.currentEvent = action.eventId;
-            this.engineState.currentActionIndex = 0; // New event starts from action 0
-            return; // Stop simulating, we've jumped.
-          default:
-            console.warn(`Unknown action type during simulation application: ${(action as any).type}`);
-        }
-      }
-    }
-
-    // After simulation, update currentActionIndex for the live engine.
-    // This is the point where the live execution should resume.
-    this.engineState.currentActionIndex = targetActionIndex;
   }
 }
 
@@ -664,7 +624,7 @@ export default {
 
 ### 4. `src/editor/docs/EventTemplates.ts` (Updated)
 
-This template will guide users in writing events with the new `execute` method and the `EngineAPIForEvents`.
+This template will guide users in writing events with the new `execute` method and the `EngineAPIForEvents`, specifically demonstrating the simplified choice handling.
 
 ```typescript
 // src/editor/docs/EventTemplates.ts
@@ -674,6 +634,7 @@ This template will guide users in writing events with the new `execute` method a
  * @property {string} id - Unique identifier for the event.
  * @property {string} name - Display name of the event.
  * @property {(gameState: Object) => boolean} [conditions] - Optional function to determine if the event is available.
+ * @property {boolean} [isJumpTarget] - True if this event is primarily a target for jumps (not discovered by getEvents).
  * @property {(engine: import('../../engine/runtime/types').EngineAPIForEvents, gameState: Object) => Promise<void>} execute - The main logic of the event.
  */
 
@@ -682,6 +643,7 @@ export const eventTemplate: string = `/**
  * @property {string} id - Unique identifier for the event.
  * @property {string} name - Display name of the event.
  * @property {(gameState: Object) => boolean} [conditions] - Optional function to determine if the event is available.
+ * @property {boolean} [isJumpTarget] - True if this event is primarily a target for jumps (not discovered by getEvents).
  * @property {(engine: import('../../engine/runtime/types').EngineAPIForEvents, gameState: Object) => Promise<void>} execute - The main logic of the event.
  */
 
@@ -707,248 +669,102 @@ export default {
       await engine.showText('Qui êtes-vous, étranger ?', 'Mysterious Voice');
     }
 
-    // --- Handling Choices ---
+    // --- Handling Choices (Simplified) ---
+    // showChoices now automatically handles the jump after a choice is made.
+    // Any code after showChoices will NOT be executed.
     await engine.showText('Que souhaitez-vous faire ensuite ?', 'Narrator');
-    const choiceId = await engine.showChoices([
-      { text: 'Suivre le sentier lumineux', id: 'path_light' },
-      { text: 'Explorer les buissons sombres', id: 'bushes_dark' },
-      { text: 'Retourner au village', id: 'go_back_village' },
+    await engine.showChoices([
+      { text: 'Suivre le sentier lumineux', id: 'path_light', jump_id: 'event_light_path' },
+      { text: 'Explorer les buissons sombres', id: 'bushes_dark', jump_id: 'event_dark_bushes' },
+      { text: 'Retourner au village', id: 'go_back_village', jump_id: 'event_village_return' },
     ]);
 
-    // --- Branching based on Choice ---
-    switch (choiceId) {
-      case 'path_light':
-        await engine.showText('Vous suivez le sentier lumineux...', 'Narrator');
-        engine.jump('event_light_path'); // Jump to another event
-        break;
-      case 'bushes_dark':
-        await engine.showText('Vous vous enfoncez dans les buissons sombres...', 'Narrator');
-        gameState.flags.foundSecret = true; // Update game state based on choice
-        engine.jump('event_dark_bushes'); // Jump to another event
-        break;
-      case 'go_back_village':
-        await engine.showText('Vous décidez de retourner au village.', 'Narrator');
-        engine.jump('event_village_return'); // Jump to another event
-        break;
-      default:
-        console.warn('Unhandled choice:', choiceId);
-        // Fallback or error handling
-        break;
-    }
-
-    // Note: Any code after a 'jump' will not be executed as 'jump' throws an interrupt.
-    // Ensure your logic correctly handles the end of an event or a jump.
+    // WARNING: Any code placed here will NOT be executed because showChoices
+    // will trigger a jump to a new event. This event's execution will be interrupted.
+    // Consider this the end of the event's active logic.
   }
 }
 `;
 ```
 
-## Detailed Explanation of Key Concepts
+## Detailed Explanation of Key Concepts (Updated)
 
-### The `execute` Method and Action Emission
+### The `execute` Method and Action Recording (Simulation)
 
 The `execute` method within a `VNEvent` is where the game developer defines the narrative flow. It receives two arguments:
 
 1.  `engine: EngineAPIForEvents`: This object provides the interface to interact with the core engine. Methods like `engine.showText()`, `engine.setBackground()`, `engine.showChoices()`, and `engine.jump()` are available here.
 2.  `gameState: GameState`: This is a direct reference to the game's state (e.g., `gameState.player`, `gameState.flags`). Developers can read from and write to `gameState` directly, leveraging TypeScript's type safety.
 
-**How it works internally:**
+**How it works internally (Simulation Phase):**
 
 When a developer calls `await engine.showText('...')` inside their `execute` method:
 
 1.  The `engine.showText()` method (from `EngineAPIForEvents`) is invoked.
 2.  Inside `engine.showText()`, it constructs a `VNAction` object (e.g., `{ type: 'showText', text: '...' }`).
-3.  It then calls an internal method on the main `Engine` instance (e.g., `this.processActionAndAwaitUser(action)`). This call is `await`ed.
-4.  The `processActionAndAwaitUser` method in `NewEngine.ts` performs the following critical steps:
-    *   **State Snapshot:** It takes a deep copy of the current `gameState` and `engineState` and creates a `GameHistoryEntry`. This snapshot *includes any modifications made to `gameState` by the user's TypeScript code just before this `engine` API call*.
-    *   **History Logging:** The `GameHistoryEntry` (containing the `VNAction` and the state snapshot) is pushed onto the `engineState.history` array.
-    *   **Action Application:** The `VNAction` is then applied to the actual `engineState` (e.g., `engineState.dialogue` is updated).
-    *   **User Await:** If the action requires user input (like `showText` or `showChoices`), it sets up an internal `awaiterResult` and pauses execution until the user provides input (e.g., clicks to continue, selects a choice).
-    *   **Return Control:** Once the action is processed and any user input is received, `processActionAndAwaitUser` resolves its promise, returning control back to the `engine.showText()` method, which then returns control to the user's `execute` method.
+3.  This `VNAction` is then added to a temporary list of `simulatedActions` that is being built by the `simulateEventExecution` method.
+4.  Crucially, during this simulation phase, no actual UI updates occur, no user input is awaited, and no history is recorded. The `execute` method runs to completion, generating the full sequence of `VNAction`s for its path.
 
-This sequence ensures that every atomic step of the game is logged with its preceding state, regardless of how complex the TypeScript logic is between `engine` API calls.
+### Deterministic Choice Handling
 
-### Choice Handling Example
+The `showChoices()` method is now designed to simplify branching in a deterministic way:
 
-The `engine.showChoices()` method returns the `id` of the chosen option. This allows developers to use standard TypeScript control flow (`if/else`, `switch`) to implement branching logic directly within their event's `execute` method.
+*   Each `Choice` object must include a `jump_id` property, specifying the ID of the event to jump to if that choice is selected.
+*   When `engine.showChoices()` is called, it will:
+    1.  Record a `showChoices` `VNAction` in the simulated sequence.
+    2.  During *live playback*, it will present the choices to the user and await their input.
+    3.  Once a choice is made (or simulated during fast-forward), it will automatically record a `jump` `VNAction` to the `jump_id` associated with the chosen option.
+    4.  **Important:** Any code written in the `execute` method *after* a `showChoices` call will **not** be executed during live playback, as the `jump` action will interrupt the current event's execution. The engine should warn developers about such unreachable code.
 
-```typescript
-// Inside a VNEvent's execute method:
-await engine.showText('Choose your destiny:', 'Narrator');
-const choiceId = await engine.showChoices([
-  { text: 'Path of Courage', id: 'courage' },
-  { text: 'Path of Wisdom', id: 'wisdom' },
-]);
+This design ensures that branching is always handled by explicit jumps to new events, making the simulation and history management much more straightforward.
 
-switch (choiceId) {
-  case 'courage':
-    gameState.flags.playerTrait = 'courageous'; // Direct state update
-    await engine.showText('You bravely step forward.', 'Narrator');
-    engine.jump('event_courage_path'); // Jump to another event
-    break;
-  case 'wisdom':
-    gameState.flags.playerTrait = 'wise'; // Direct state update
-    await engine.showText('You ponder the options carefully.', 'Narrator');
-    engine.jump('event_wisdom_path'); // Jump to another event
-    break;
-  default:
-    console.warn('Unhandled choice:', choiceId);
-    // Fallback or error handling
-    break;
-}
-```
-The `engine.jump('eventId')` call will internally create a `jump` `VNAction`. When `processActionAndAwaitUser` processes this `jump` action, it will set `engineState.currentEvent` to the target event's ID and then throw a `VNInterruptError`. This interrupt signals the `processEvent` method to stop executing the current event and allows the main `runGameLoop` to pick up the new `currentEvent`.
-
-### Save and Load Concept
+### Save and Load Concept (Updated)
 
 The save/load mechanism is greatly simplified and made more robust:
 
 *   **Saving:** The `saveGame` function simply serializes the entire `engineState` (which includes `history`, `future`, `currentEvent`, and `currentActionIndex`) and the `gameState` to `localStorage`. Because `history` contains snapshots of both `gameState` and `engineState` before each action, the entire game's progression and state are preserved.
-*   **Loading:** The `loadGame` function deserializes the saved `engineState` and `gameState` back into the engine. There is **no need for a separate "replay" function** like `startEventReplay`. The engine simply resumes from the `currentEvent` and `currentActionIndex` that were saved. If the `currentEvent` is `null`, it will find the next available event.
+*   **Loading:** The `loadGame` function deserializes the saved `engineState` and `gameState` back into the engine. There is **no need for a separate "replay" function**.
 
 ### Replay Event to Expected Point (Go Back/Go Forward) with Simulation
 
-The `history` and `future` arrays in `engineState` are the core of the replay functionality, now enhanced by a **simulation mode** for `execute` methods:
+The `history` and `future` arrays in `engineState` are the core of the replay functionality, now powered by the deterministic simulation:
+
+*   **`processEvent(event: VNEvent)` (Main Playback Loop):**
+    1.  **Simulation Phase:** First, it calls `this.simulateEventExecution(event)` to run the event's `execute` method in a sandbox. This generates the complete `simulatedActions` sequence for that event.
+    2.  **Playback Phase:** It then iterates through this `simulatedActions` array, starting from `engineState.currentActionIndex`. For each action:
+        *   It calls `this.processActionAndAwaitUser(action)` to apply the action to the live `engineState`, record it in `history`, and await user input if necessary.
+        *   If a `jump` action is encountered, `processActionAndAwaitUser` will throw a `VNInterruptError`, stopping the current event's playback and allowing the `runGameLoop` to pick up the new `currentEvent`.
+
+*   **`simulateEventExecution(event: VNEvent)` (New Private Method):**
+    *   This method runs the `event.execute()` in a sandboxed environment.
+    *   It uses a special `simulatedEngineAPI` that only records `VNAction`s to an array, without affecting the live game state or awaiting user input.
+    *   For `showChoices` actions during simulation, it will record the action and then implicitly assume a jump based on the `jump_id` (e.g., the first choice's `jump_id` or a historical one if replaying).
+
+*   **`processActionAndAwaitUser(action: VNAction)` (Updated Private Method):**
+    *   This method is responsible for applying a single `VNAction` to the live `engineState`, recording it in `history`, and handling user input.
+    *   During `showChoices` playback, it will present the choices to the user and await their selection. The chosen `id` will then be used to trigger the corresponding `jump` action.
 
 *   **`goBack()`:**
-    1.  When `goBack()` is called, the *current* state (before going back) is pushed onto the `engineState.future` stack.
-    2.  The last `GameHistoryEntry` is popped from `engineState.history`.
-    3.  The `gameStateBefore` and `engineStateBefore` from this popped entry are used to restore the engine's state. This effectively reverts the game to the state it was in *before* the last `VNAction` was executed.
-    4.  The `currentEvent` and `currentActionIndex` are also restored from the `engineStateBefore` snapshot, ensuring the engine knows exactly where it was in the event flow.
-    5.  The `runGameLoop` will then detect the changed `currentEvent` and `currentActionIndex`. If `currentEvent` is not null, it will call `this.simulateEvent(currentEvent, engineState.currentActionIndex, false)` to re-run the `execute` method in simulation mode, ensuring the internal state of the `execute` method is consistent with the reverted game state. This simulation does *not* apply actions to the live state or record history.
+    1.  Pushes the current state onto `engineState.future`.
+    2.  Pops the last `GameHistoryEntry` from `engineState.history`.
+    3.  Restores `gameState` and `engineState` from the `gameStateBefore` and `engineStateBefore` of the popped entry.
+    4.  The `runGameLoop` will then re-process the `currentEvent` from its new `currentActionIndex`, effectively replaying the event from that point.
 
 *   **`goForward()`:**
-    1.  When `goForward()` is called, the last entry is popped from `engineState.future`.
-    2.  The `gameStateBefore` and `engineStateBefore` from this entry are used to restore the state.
-    3.  It then calls `this.simulateEvent(currentEvent, engineState.currentActionIndex, true)` (fast-forward mode). This re-applies the actions that were "undone" by `goBack`, moving the game forward. During this fast-forward, `showChoices` will use the `choiceMade` from the historical entry.
+    1.  Pops the next `GameHistoryEntry` from `engineState.future`.
+    2.  Restores `gameState` and `engineState` from the `gameStateBefore` and `engineStateBefore` of the popped entry.
+    3.  Calls `processActionAndAwaitUser()` with the `action` from the popped entry. This re-applies the action to the live state and records it back into `history`.
 
 *   **Loading a Game (Resuming):**
     1.  `loadGame` restores `gameState` and `engineState` (including `history` and `future`).
     2.  The `runGameLoop` detects `engineState.currentEvent` and `engineState.currentActionIndex`.
-    3.  If `currentEvent` is not null and `currentActionIndex` is greater than 0 (meaning we are resuming mid-event), it calls `this.simulateEvent(currentEvent, engineState.currentActionIndex, true)` (fast-forward mode). This re-runs the `execute` method in simulation, applying actions to the live state and using historical choices, until it reaches the saved `currentActionIndex`. The engine is now precisely at the point where it was saved, ready for live execution.
-
-### The `simulateEvent` Method (New in `NewEngine.ts`)
-
-This private method is the core of the simulation logic:
-
-```typescript
-// Inside NewEngine.ts
-
-  /**
-   * Simulates an event's execution to generate its action sequence or fast-forward to a specific point.
-   * This runs the event's `execute` method with a 'simulated' EngineAPIForEvents.
-   * @param event The event to simulate.
-   * @param targetActionIndex The index of the action to fast-forward to. Actions up to this index will be applied.
-   * @param applyToLiveState If true, actions will be applied to the live engine/game state and recorded in history.
-   */
-  private async simulateEvent(event: VNEvent, targetActionIndex: number, applyToLiveState: boolean): Promise<void> {
-    console.debug(`Simulating event ${event.id} up to action index ${targetActionIndex}. Apply to live: ${applyToLiveState}`);
-
-    const simulatedActions: VNAction[] = [];
-    let currentSimulatedActionIndex = 0;
-
-    // Create a temporary, simulated EngineAPIForEvents instance
-    const simulatedEngineAPI: EngineAPIForEvents = {
-      showText: async (text, from) => {
-        const action: VNAction = { type: 'showText', text, from };
-        simulatedActions.push(action);
-        // In simulation, we don't await user input, just return immediately.
-        return Promise.resolve();
-      },
-      setBackground: async (imagePath) => {
-        const action: VNAction = { type: 'setBackground', imagePath };
-        simulatedActions.push(action);
-        return Promise.resolve();
-      },
-      setForeground: async (imagePath) => {
-        const action: VNAction = { type: 'setForeground', imagePath };
-        simulatedActions.push(action);
-        return Promise.resolve();
-      },
-      showChoices: async (choices) => {
-        const action: VNAction = { type: 'showChoices', choices };
-        simulatedActions.push(action);
-        // In simulation, we need to return the historical choice if fast-forwarding.
-        // Otherwise, return a dummy value.
-        if (applyToLiveState && currentSimulatedActionIndex < this.engineState.history.length) {
-          const historicalEntry = this.engineState.history[currentSimulatedActionIndex];
-          if (historicalEntry && historicalEntry.action.type === 'showChoices') {
-            return Promise.resolve(historicalEntry.choiceMade || choices[0].id); // Use historical choice or default
-          }
-        }
-        return Promise.resolve(choices[0].id); // Default choice in simulation
-      },
-      jump: async (eventId) => {
-        const action: VNAction = { type: 'jump', eventId };
-        simulatedActions.push(action);
-        // In simulation, a jump doesn't interrupt the simulation, it just records the action.
-        return Promise.resolve();
-      },
-    };
-
-    // Run the event's execute method in simulation mode
-    try {
-      await event.execute(simulatedEngineAPI, this.gameState);
-    } catch (err) {
-      // A jump action in simulation will not throw a VNInterruptError, it will just return.
-      // Other errors should still be logged.
-      console.error(`Error during simulation of event ${event.id}:`, err);
-    }
-
-    // Now, apply the simulated actions to the live state if in fast-forward mode
-    for (let i = 0; i < simulatedActions.length && i < targetActionIndex; i++) {
-      const action = simulatedActions[i];
-      currentSimulatedActionIndex = i; // Keep track for historical choices
-
-      if (applyToLiveState) {
-        // Record history (this will also clear future)
-        this.recordHistory(action);
-
-        // Apply the action to the live engine state
-        switch (action.type) {
-          case 'showText':
-            this.engineState.dialogue = { from: action.from || "engine", text: action.text };
-            break;
-          case 'setBackground':
-            this.engineState.background = action.imagePath;
-            break;
-          case 'setForeground':
-            this.engineState.foreground = action.imagePath;
-            break;
-          case 'showChoices':
-            this.engineState.choices = action.choices;
-            // The choice was already handled by the simulation, no need to await here.
-            break;
-          case 'jump':
-            // A jump in fast-forward mode means we've reached the point of the jump.
-            // Set currentEvent and break the loop.
-            this.engineState.currentEvent = action.eventId;
-            this.engineState.currentActionIndex = 0; // New event starts from action 0
-            return; // Stop simulating, we've jumped.
-          default:
-            console.warn(`Unknown action type during simulation application: ${(action as any).type}`);
-        }
-      }
-    }
-
-    // After simulation, update currentActionIndex for the live engine.
-    // This is the point where the live execution should resume.
-    this.engineState.currentActionIndex = targetActionIndex;
-  }
-```
+    3.  It then calls `processEvent(currentEvent)`. `processEvent` will first `simulateEventExecution` to get the full action sequence, and then start playback from `engineState.currentActionIndex`, effectively resuming the game precisely where it was saved.
 
 ## Benefits Summary
 
 *   **Unrestricted TypeScript Logic:** Developers have full control over event logic, including complex conditionals and direct `gameState` manipulation, with TypeScript's type safety.
 *   **Robust History and Replay:** The atomic action logging ensures a perfect, granular history, enabling reliable "go back," "go forward," and seamless save/load.
-*   **Seamless `execute` Integration:** The simulation mode allows `execute` methods to be re-run and fast-forwarded/rewound without complex state management within the event itself.
-*   **Simplified Event Definition:** Events are now focused on their narrative and logical flow, rather than complex engine state management.
+*   **Deterministic Simulation:** The `execute` method runs in a sandbox, generating a predictable sequence of actions, which simplifies complex branching and replay logic.
+*   **Simplified Choice Handling:** `showChoices` always leading to a `jump` makes event structure clearer and simulation easier.
 *   **Clear Separation of Concerns:** The user's event code defines *what* happens, while the core engine handles *how* it happens (rendering, history, state management).
 *   **Intuitive API:** The `engine.method()` calls are familiar and easy to use, abstracting away the underlying history logging.
-
-
-
-await engine.showChoices([
-  { text: 'Path of Courage', jump_id: 'event_courage_path' },
-  { text: 'Path of Wisdom', jump_id: 'event_wisdom_path' },
-]);
