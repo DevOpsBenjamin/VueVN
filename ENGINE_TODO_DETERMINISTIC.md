@@ -19,7 +19,6 @@ This document outlines the step-by-step plan for implementing the deterministic 
     *   Implement the `constructor`, `initVNInputHandlers`, `resolveAwaiter`, `cancelAwaiter`, `cleanAwaiter`, `run`, `runGameLoop`, `processEvent`, `simulateEventExecution`, `processActionAndAwaitUser`, `recordHistory`, `goBack`, `goForward`, `findEventById`, `createEventsCopy`, and `updateEvents` methods.
     *   **Crucial:** Ensure `processEvent` calls `simulateEventExecution` first, then iterates through the `simulatedActions` and calls `processActionAndAwaitUser` for each.
     *   **Crucial:** Implement the `simulatedEngineAPI` within `simulateEventExecution` to correctly record `VNAction`s (including `runCustomLogic` without executing the actual custom logic) without live side effects.
-    *   **Crucial:** Ensure `processActionAndAwaitUser` correctly handles `showChoices` by automatically triggering a `jump` after a choice is made.
     *   **Crucial:** Implement `processActionAndAwaitUser` to execute `runCustomLogic` via `CustomLogicRegistry` and `await` its completion. For `goForward`, it will re-execute the custom logic.
 
 4.  **Update `src/engine/runtime/Engine.ts`:**
