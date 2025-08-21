@@ -10,27 +10,18 @@ This document provides a prioritized action plan for future Claude Code instance
 
 ## 🔥 CRITICAL PRIORITY - Must Do First
 
-### 1. Remove Debug Delays (IMMEDIATE - 10 minutes)
-**Status:** 🔴 BLOCKING ALL GAMEPLAY  
+### 1. ~~Remove Debug Delays~~ (INTENTIONAL - KEEP FOR NOW)
+**Status:** 🟡 INTENTIONAL DEBUG FEATURE  
 **File:** `src/engine/runtime/Engine.ts:171`  
-**Issue:** Hard-coded 20-second delay makes engine unusable
+**Purpose:** Prevents infinite event loops during engine development
 
-**Action:**
-```typescript
-// DELETE THIS LINE:
-await new Promise((resolve) => setTimeout(resolve, 20000));
-```
+**Note:** The 20-second delay is intentional to debug event loops and prevent browser freezing. Should remain until engine loop logic is stable.
 
-**Testing:**
-1. Run `npm run dev sample`
-2. Click through events - should progress immediately
-3. Verify no 20-second waits between events
-
-**Success Criteria:** Events advance immediately on user input
+**Future Action:** Remove only after engine event loop is proven stable and no longer produces infinite loops.
 
 ---
 
-### 2. Fix Awaiter Resolution System (2-3 days)
+### 1. Fix Awaiter Resolution System (2-3 days)
 **Status:** 🔴 CRITICAL - Events hang indefinitely  
 **Files:** `src/engine/runtime/Engine.ts`, `src/engine/runtime/EngineAPI.ts`
 
@@ -69,7 +60,7 @@ await new Promise((resolve) => setTimeout(resolve, 20000));
 
 ---
 
-### 3. Stabilize Save/Load System (1 week)
+### 2. Stabilize Save/Load System (1 week)
 **Status:** 🔴 CRITICAL - Save corruption and failures  
 **Files:** `src/engine/runtime/EngineSave.ts`, `src/engine/runtime/Engine.ts`
 
@@ -113,7 +104,7 @@ await new Promise((resolve) => setTimeout(resolve, 20000));
 
 ## 🟡 HIGH PRIORITY - Next Steps
 
-### 4. Add Basic Testing Framework (1-2 weeks)
+### 3. Add Basic Testing Framework (1-2 weeks)
 **Status:** 🟡 No tests exist - high regression risk
 
 **Actions:**
@@ -145,7 +136,7 @@ await new Promise((resolve) => setTimeout(resolve, 20000));
 
 ---
 
-### 5. Improve Error Handling (1 week)
+### 4. Improve Error Handling (1 week)
 **Status:** 🟡 Poor error messages and no error boundaries
 
 **Actions:**
@@ -180,7 +171,7 @@ await new Promise((resolve) => setTimeout(resolve, 20000));
 
 ---
 
-### 6. Memory Management (1 week)
+### 5. Memory Management (1 week)
 **Status:** 🟡 Memory leaks during extended gameplay
 
 **Problems:**
@@ -222,7 +213,7 @@ await new Promise((resolve) => setTimeout(resolve, 20000));
 
 ## 🔵 MEDIUM PRIORITY - Improvements
 
-### 7. Monaco Editor Enhancements (1-2 weeks)
+### 6. Monaco Editor Enhancements (1-2 weeks)
 **Status:** 🔵 Basic editor works, missing advanced features
 
 **Actions:**
@@ -251,7 +242,7 @@ await new Promise((resolve) => setTimeout(resolve, 20000));
 
 ---
 
-### 8. Performance Optimization (2 weeks)
+### 7. Performance Optimization (2 weeks)
 **Status:** 🔵 Works but not optimized for large projects
 
 **Actions:**
@@ -279,7 +270,7 @@ await new Promise((resolve) => setTimeout(resolve, 20000));
 
 ---
 
-### 9. Security Improvements (1 week)
+### 8. Security Improvements (1 week)
 **Status:** 🔵 Basic security, needs hardening
 
 **Actions:**
@@ -307,42 +298,42 @@ await new Promise((resolve) => setTimeout(resolve, 20000));
 
 ## 🔵 LOW PRIORITY - Future Enhancements
 
-### 10. Audio System Completion
+### 9. Audio System Completion
 **Time:** 2-3 weeks  
 - Complete audio implementation
 - Add background music support
 - Sound effect system
 - Audio controls and settings
 
-### 11. Animation Support
+### 10. Animation Support
 **Time:** 2-3 weeks  
 - Character animations
 - Scene transitions
 - Effect animations
 - Timeline-based animation system
 
-### 12. Plugin Architecture
+### 11. Plugin Architecture
 **Time:** 3-4 weeks  
 - Plugin API design
 - Plugin loading system
 - Extension points for engine
 - Plugin marketplace integration
 
-### 13. Localization System
+### 12. Localization System
 **Time:** 2-3 weeks  
 - Multi-language support
 - Translation management
 - Dynamic language switching
 - RTL text support
 
-### 14. Advanced Editor Features
+### 13. Advanced Editor Features
 **Time:** 4-6 weeks  
 - Visual scripting interface
 - Advanced debugging tools
 - Performance profiling
 - Asset management UI
 
-### 15. Production Features
+### 14. Production Features
 **Time:** 6-8 weeks  
 - Game distribution system
 - Cloud save integration
@@ -478,10 +469,10 @@ npm install                 # Install dependencies
 ## Success Metrics
 
 ### Critical Priority Success:
-- [ ] Game plays without 20-second delays
-- [ ] Events advance on user input
+- [ ] Events advance properly on user input (awaiter system fixed)
 - [ ] Save/load works reliably
 - [ ] No event hanging or infinite loops
+- [x] Debug delays remain in place during engine development
 
 ### High Priority Success:
 - [ ] Basic test coverage (>50% core functions)
@@ -495,4 +486,4 @@ npm install                 # Install dependencies
 - [ ] Security vulnerabilities addressed
 - [ ] Professional development experience
 
-Remember: **Fix critical issues first before adding new features.** The engine must be functional before it can be enhanced.
+Remember: **Fix critical issues first before adding new features.** Focus on making the engine stable and reliable before adding enhancements. The debug delays should remain until the engine loop is proven stable.

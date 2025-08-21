@@ -87,16 +87,16 @@ The build system relies heavily on generated TypeScript files which creates:
 
 ## Critical Issues and Blocking Problems
 
-### 🔴 CRITICAL: Game Loop Debug Delays
+### 🟡 INTENTIONAL: Game Loop Debug Delays
 
 **Location:** `src/engine/runtime/Engine.ts:171`
 ```typescript
 await new Promise((resolve) => setTimeout(resolve, 20000));
 ```
 
-**Impact:** Makes the engine completely unusable for actual gameplay. The game waits 20 seconds between every event, making it impossible to play visual novels.
+**Purpose:** Intentional debugging mechanism to prevent infinite event loops during engine development. The 20-second delay allows developers to identify and fix event loop issues before they cause browser freezing.
 
-**Evidence:** Commit message "FUCKING IA LOOP" (95e78d1) indicates developer frustration with this issue.
+**Status:** Should remain in place during base engine development, removed only when engine loop logic is stable.
 
 ### 🔴 CRITICAL: Awaiter Resolution Issues
 
