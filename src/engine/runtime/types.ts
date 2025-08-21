@@ -5,15 +5,39 @@ export interface Dialogue {
   text: string;
 }
 
+export interface Choice {
+  text: string;
+  id: string;
+  jump_id: string;
+}
+
+export interface VNAction {
+  type: 'showText' | 'setBackground' | 'setForeground' | 'showChoices' | 'jump' | 'runCustomLogic';
+  [key: string]: any;
+}
+
+export interface HistoryEntry {
+  action: VNAction;
+  gameStateBefore: GameState;
+  engineStateBefore: EngineState;
+  timestamp: number;
+  choiceMade?: string;
+  customLogicResult?: any;
+}
+
 export interface EngineState {
   background: string | null;
   foreground: string | null;
   dialogue: Dialogue | null;
-  choices?: Array<{ text: string; id: string }> | null;
+  choices: Array<Choice> | null;
   initialized: boolean;
   state: string;
   currentEvent: string | null;
-  currentStep: number;
+  currentActionIndex: number;
+  history: HistoryEntry[];
+  future: HistoryEntry[];
+  isSimulating: boolean;
+  isFastForwarding: boolean;
   resetState: () => void;
 }
 
