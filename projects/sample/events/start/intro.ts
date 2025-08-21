@@ -9,6 +9,7 @@ const intro: VNEvent = {
   async execute(engine, state) {
     engine.setForeground('assets/images/background/intro/hall.png');
     await engine.showText('Welcome to sample!');
+    state.npc_1.rel +=1;
     await engine.showText('This is your first event.');
     let choice = '';
     // Loop until the user chooses to start the adventure

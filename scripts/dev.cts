@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+import { spawn } from 'child_process';
+import path from 'path';
+import fs from 'fs';
 
-const projectName = process.argv[2];
+const projectName: string | undefined = process.argv[2];
 
 if (!projectName) {
   console.error('❌ Error: Please provide a project name');
@@ -12,7 +12,7 @@ if (!projectName) {
   process.exit(1);
 }
 
-const projectPath = path.join(__dirname, '..', 'projects', projectName);
+const projectPath: string = path.join(__dirname, '..', 'projects', projectName);
 
 if (!fs.existsSync(projectPath)) {
   console.error(`❌ Error: Project "${projectName}" does not exist`);
@@ -34,7 +34,7 @@ spawn(
     'GEN,VITE',
     '-c',
     'green,cyan',
-    `"node scripts/generate.cjs --watch"`,
+    `"tsx scripts/generate.cts --watch"`,
     '"vite"',
   ],
   {

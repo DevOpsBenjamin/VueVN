@@ -1,11 +1,13 @@
 // Script unique pour générer tous les index (components, engine, events)
-// Usage: node scripts/generate.cjs [--watch]
-const { execSync } = require("child_process");
-const path = require("path");
-const fs = require("fs");
+// Usage: tsx scripts/generate.cts [--watch]
+
+import { execSync } from "child_process";
+import path from "path";
+import fs from "fs";
+import chokidar from "chokidar";
 
 // Verify we have a project
-const currentProject = process.env.VUEVN_PROJECT;
+const currentProject: string | undefined = process.env.VUEVN_PROJECT;
 if (!currentProject) {
   console.error(
     "No project specified. This script should be run via npm run dev/build",
@@ -15,9 +17,9 @@ if (!currentProject) {
 
 console.log(`📦 Generating files for project: ${currentProject}`);
 
-function run(script) {
+function run(script: string): void {
   try {
-    execSync(`node ${path.join(__dirname, script)}`, {
+    execSync(`tsx ${path.join(__dirname, script)}`, {
       stdio: "inherit",
       env: process.env, // Pass environment variables
     });
@@ -28,16 +30,15 @@ function run(script) {
 }
 
 // Run all generation scripts
-run("generate-components-index.cjs");
-run("generate-engine-index.cjs");
-run("generate-events-index.cjs");
+run("generate-components-index.cts");
+run("generate-engine-index.cts");
+run("generate-events-index.cts");
 
 // Mode watch (dev)
 if (process.argv.includes("--watch")) {
-  const chokidar = require("chokidar");
 
   // Watch paths specific to the current project
-  const watchList = [
+  const watchList: string[] = [
     "src/engine/**/*.vue",
     "src/engine/**/*.ts",
     `projects/${currentProject}/**/*.vue`,
@@ -51,15 +52,15 @@ if (process.argv.includes("--watch")) {
     cwd: path.join(__dirname, ".."),
   });
 
-  watcher.on("all", (event, filePath) => {
+  watcher.on("all", (event: string, filePath: string) => {
     console.log(`🔄 File ${event}: ${filePath}`);
 
-    run("generate-components-index.cjs");
-    run("generate-engine-index.cjs");
-    run("generate-events-index.cjs");
+    run("generate-components-index.cts");
+    run("generate-engine-index.cts");
+    run("generate-events-index.cts");
   });
 
-  watcher.on("error", (error) => {
+  watcher.on("error", (error: Error) => {
     console.error("Watcher error:", error);
   });
 

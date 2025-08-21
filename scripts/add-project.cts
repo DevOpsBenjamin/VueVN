@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // Get project name from command line
-const projectName = process.argv[2];
+const projectName: string | undefined = process.argv[2];
 
 if (!projectName) {
   console.error('❌ Error: Please provide a project name');
@@ -20,7 +20,7 @@ if (!/^[a-zA-Z0-9-_]+$/.test(projectName)) {
   process.exit(1);
 }
 
-const projectPath = path.join(__dirname, '..', 'projects', projectName);
+const projectPath: string = path.join(__dirname, '..', 'projects', projectName);
 
 // Check if project already exists
 if (fs.existsSync(projectPath)) {
@@ -32,7 +32,7 @@ if (fs.existsSync(projectPath)) {
 console.log(`🚀 Creating project "${projectName}"...`);
 
 // Create directories
-const dirs = [
+const dirs: string[] = [
   projectPath,
   path.join(projectPath, 'events'),
   path.join(projectPath, 'events', 'start'),
@@ -45,7 +45,7 @@ const dirs = [
   path.join(projectPath, 'locations'),
 ];
 
-dirs.forEach((dir) => {
+dirs.forEach((dir: string) => {
   fs.mkdirSync(dir, { recursive: true });
   console.log(`📁 Created: ${path.relative(process.cwd(), dir)}`);
 });
@@ -71,49 +71,53 @@ fs.writeFileSync(
 console.log(`📄 Created: projects/${projectName}/config.json`);
 
 // 2. Example start event
-const startEventContent = `export default {
+const startEventContent: string = `import type { VNEvent } from '@/engine/runtime/types';
+
+const intro: VNEvent = {
   id: 'intro',
   name: 'Introduction',
   
-  // This event triggers when entering the 'start' location
   conditions: (state) => !state.flags.introSeen,
+  unlocked: () => true,
+  locked: (state) => state.flags.introSeen,
   
   async execute(engine, state) {
-    // Set background
-    engine.setBackground('/assets/images/placeholder.jpg');
-    
-    // Show some text
+    engine.setForeground('assets/images/background/intro/hall.png');
     await engine.showText('Welcome to ${projectName}!');
     await engine.showText('This is your first event.');
-    
-    // Show a choice
-    const choice = await engine.showChoices([
-      { text: "Start the adventure", id: "start" },
-      { text: "Learn more", id: "learn" }
-    ]);
-    
-    if (choice === 'learn') {
-      await engine.showText('VueVN is a visual novel engine built with Vue 3.');
-      await engine.showText('You can create your own stories by adding events and assets.');
+    let choice = '';
+    while (choice !== 'start') {
+      choice = await engine.showChoices([
+        { text: "Start the adventure", id: "start" },
+        { text: "Learn more", id: "learn" }
+      ]);
+      
+      if (choice === 'learn') {
+        await engine.showText('VueVN is a visual novel engine built with Vue 3.');
+        await engine.showText('You can create your own stories by adding events and assets.');
+        await engine.showChoices([{ text: 'Return', id: 'return' }]);
+      }
     }
     
-    // Mark intro as seen
+    await engine.showText("Great! Let's begin your adventure.");
     state.flags.introSeen = true;
-
-    // Change location (this will trigger new events)
     state.location = 'bedroom';
   }
 };
+
+export default intro;
 `;
 
 fs.writeFileSync(
-  path.join(projectPath, 'events', 'start', 'intro.js'),
+  path.join(projectPath, 'events', 'start', 'intro.ts'),
   startEventContent
 );
-console.log(`📄 Created: projects/${projectName}/events/start/intro.js`);
+console.log(`📄 Created: projects/${projectName}/events/start/intro.ts`);
 
 // 3. Example bedroom event
-const bedroomEventContent = `export default {
+const bedroomEventContent: string = `import type { VNEvent } from "@/engine/runtime/types";
+
+const wakeUp: VNEvent = {
   id: 'wake_up',
   name: 'Wake Up',
 
@@ -124,33 +128,34 @@ const bedroomEventContent = `export default {
     state.flags.wokeUp = true;
   },
 };
+
+export default wakeUp;
 `;
 
 fs.writeFileSync(
-  path.join(projectPath, 'events', 'bedroom', 'wake-up.js'),
+  path.join(projectPath, 'events', 'bedroom', 'wake-up.ts'),
   bedroomEventContent
 );
-console.log(`📄 Created: projects/${projectName}/events/bedroom/wake-up.js`);
+console.log(`📄 Created: projects/${projectName}/events/bedroom/wake-up.ts`);
 
 // 4. Sample NPC
-const sampleNPCContent = `import { baseGameState } from '@/generate/stores';
+const sampleNPCContent: string = `import { baseGameState } from '@/generate/stores';
 const { createNPC } = baseGameState;
 
 const npc_1 = createNPC({
   name: 'NPC 1',
   relation: 0,
   trust: 0,
-  // LONG as heck definition continues here...
 });
 
 export default npc_1;
 `;
 
-fs.writeFileSync(path.join(projectPath, 'npcs', 'npc_1.js'), sampleNPCContent);
-console.log(`📄 Created: projects/${projectName}/npcs/npc_1.js`);
+fs.writeFileSync(path.join(projectPath, 'npcs', 'npc_1.ts'), sampleNPCContent);
+console.log(`📄 Created: projects/${projectName}/npcs/npc_1.ts`);
 
 // 5. Base game state with sample NPC
-const gameStateContent = `import { defineStore } from 'pinia';
+const gameStateContent: string = `import { defineStore } from 'pinia';
 
 import { baseGameState } from '@/generate/stores';
 import { npc_1 } from '@/generate/npcs';
@@ -187,71 +192,58 @@ export default useGameState;
 `;
 
 fs.writeFileSync(
-  path.join(projectPath, 'stores', 'gameState.js'),
+  path.join(projectPath, 'stores', 'gameState.ts'),
   gameStateContent
 );
-console.log(`📄 Created: projects/${projectName}/stores/gameState.js`);
+console.log(`📄 Created: projects/${projectName}/stores/gameState.ts`);
 
 // 5. README for the project
-const readmeContent = `# ${projectName}
+const readmeContent: string = `# ${projectName}
 
 A visual novel created with VueVN.
 
 ## Project Structure
 
-- \`events/\` - Game events organized by location
-- \`assets/\` - Images, sounds, and other media files
-- \`stores/\` - Custom game state overrides (NPCs, flags, etc.)
-- \`config.json\` - Project configuration
+- 
+- 
+- 
+- 
 
-This sample includes an intro event in \`events/start/intro.js\`, a follow-up event
-in \`events/bedroom/wake-up.js\`, and a sample NPC defined in
-\`stores/baseGameState.js\`.
+This sample includes an intro event in 
+ a follow-up event
+ and a sample NPC defined in 
 
 ## Development
 
-\`\`\`bash
-# Start development server
-npm run dev ${projectName}
 
-# Build for production
-npm run build ${projectName}
-\`\`\`
 
 ## Adding Events
 
-Create new events in \`events/[location]/[event-name].js\`:
+Create new events in 
 
-\`\`\`javascript
-export default {
-  id: 'unique_id',
-  name: 'Event Name',
-  conditions: (state) => true, // When this event should trigger
-  async execute(engine, state) {
-    // Your event logic here
-  }
-};
-\`\`\`
 
 ## Customizing the Engine
 
-Override any core component by creating a file in your project with the same path as in the engine.
+Override any core component by creating a file in your project with the same path as in the engine. 
 
-Example: To customize the main menu, create \`menu/MainMenu.vue\`.
+Example: To customize the main menu, create 
 `;
 
-fs.writeFileSync(path.join(projectPath, 'README.md'), readmeContent);
+fs.writeFileSync(
+  path.join(projectPath, 'README.md'),
+  readmeContent
+);
 console.log(`📄 Created: projects/${projectName}/README.md`);
 
 // 5. .gitkeep files for empty directories
 fs.writeFileSync(path.join(projectPath, 'assets', 'images', '.gitkeep'), '');
 fs.writeFileSync(path.join(projectPath, 'assets', 'sounds', '.gitkeep'), '');
 
-console.log(`\n✅ Project "${projectName}" created successfully!`);
-console.log(`\n📝 Next steps:`);
-console.log(`   1. Run "npm run dev ${projectName}" to start development`);
-console.log(`   2. Edit events in projects/${projectName}/events/`);
-console.log(`   3. Add assets to projects/${projectName}/assets/`);
-console.log(
-  `   4. Override engine files by mirroring paths inside projects/${projectName}/`
-);
+console.log(`
+✅ Project "${projectName}" created successfully!`);
+console.log(`
+📝 Next steps:`);
+console.log(`   1. Run "npm install" in your new project directory.`);
+console.log(`   2. Start the development server: "npm run dev ${projectName}"`);
+console.log(`   3. Open your browser to http://localhost:5173/`);
+console.log(`   4. Start building your visual novel!`);
