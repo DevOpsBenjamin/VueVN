@@ -48,6 +48,15 @@ export interface GameState {
   [key: string]: any;
 }
 
+export interface EngineAPIForEvents {
+  showText: (text: string, from?: string) => Promise<void>;
+  setBackground: (imagePath: string) => Promise<void>;
+  setForeground: (imagePath: string) => Promise<void>;
+  showChoices: (choices: Array<Choice>) => Promise<string>;
+  jump: (eventId: string) => Promise<void>;
+  runCustomLogic: (logicId: string, args: any) => Promise<any>;
+}
+
 export interface VNEvent {
   id: string;
   name: string;
@@ -55,5 +64,5 @@ export interface VNEvent {
   unlocked?: (state: GameState) => boolean;
   locked?: (state: GameState) => boolean;
   draw?: (engine: Engine, state: GameState) => void;
-  execute: (engine: Engine, state: GameState) => Promise<void>;
+  execute: (engine: EngineAPIForEvents, state: GameState) => Promise<void>;
 }
