@@ -142,4 +142,58 @@ export class NewEngine {
     // TODO: Implement go forward functionality
     console.debug("Go forward requested - not yet implemented");
   }
+
+  /**
+   * Create simulation API that records actions without real execution
+   */
+  private createSimulationAPI(actions: VNAction[]): EngineAPIForEvents {
+    return {
+      async showText(text: string, from?: string): Promise<void> {
+        actions.push({ type: 'showText', text, from });
+        // No waiting in simulation
+      },
+
+      async setBackground(imagePath: string): Promise<void> {
+        actions.push({ type: 'setBackground', imagePath });
+      },
+
+      async setForeground(imagePath: string): Promise<void> {
+        actions.push({ type: 'setForeground', imagePath });
+      },
+
+      async showChoices(choices: Array<Choice>): Promise<string> {
+        actions.push({ type: 'showChoices', choices });
+        
+        // Use historical choice if replaying, otherwise first choice
+        const choiceId = this.getHistoricalChoice() || choices[0].id;
+        const choice = choices.find(c => c.id === choiceId);
+        
+        if (choice?.jump_id) {
+          actions.push({ type: 'jump', eventId: choice.jump_id });
+          throw new JumpInterrupt(choice.jump_id);
+        }
+        
+        return choiceId;
+      },
+
+      async jump(eventId: string): Promise<void> {
+        actions.push({ type: 'jump', eventId });
+        throw new JumpInterrupt(eventId);
+      },
+
+      async runCustomLogic(logicId: string, args: any): Promise<any> {
+        actions.push({ type: 'runCustomLogic', logicId, args });
+        // Custom logic exits event flow
+        throw new JumpInterrupt('EXIT_EVENT');
+      }
+    };
+  }
+
+  /**
+   * Get historical choice for replay (placeholder)
+   */
+  private getHistoricalChoice(): string | null {
+    // TODO: Implement historical choice lookup
+    return null;
+  }
 }
