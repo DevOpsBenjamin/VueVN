@@ -297,4 +297,98 @@ export class NewEngine {
   private cacheCustomLogicResult(logicId: string, result: any): void {
     this.customLogicCache[logicId] = result;
   }
+
+  /**
+   * Main event processor using dual-phase execution
+   */
+  async processEvent(event: VNEvent): Promise<void> {
+    console.debug(`Processing event: ${event.id}`);
+    
+    try {
+      // Phase 1: Simulation - generate action sequence
+      const actionSequence = await this.simulateEvent(event);
+      
+      // Phase 2: Playback - execute actions with real user interaction
+      await this.playbackActions(actionSequence);
+      
+      // Event completed successfully
+      this.engineState.currentEvent = null;
+      this.engineState.currentActionIndex = 0;
+      console.debug(`Event ${event.id} completed`);
+      
+    } catch (error) {
+      if (error instanceof JumpInterrupt) {
+        console.debug(`Event ${event.id} interrupted by jump to ${error.targetEventId}`);
+        // Jump handling will be done by main game loop
+      } else {
+        console.error(`Error processing event ${event.id}:`, error);
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Phase 1: Simulate event execution to generate action sequence
+   */
+  private async simulateEvent(event: VNEvent): Promise<VNAction[]> {
+    const actions: VNAction[] = [];
+    this.engineState.isSimulating = true;
+    
+    console.debug(`Simulating event: ${event.id}`);
+    
+    try {
+      const simulationAPI = this.createSimulationAPI(actions);
+      await event.execute(simulationAPI, this.gameState);
+    } catch (jumpInterrupt) {
+      // Expected for choices and custom logic - simulation ends here
+      console.debug(`Simulation ended with jump interrupt`);
+    } finally {
+      this.engineState.isSimulating = false;
+    }
+    
+    console.debug(`Generated ${actions.length} actions from simulation`);
+    return actions;
+  }
+
+  /**
+   * Phase 2: Execute actions with real user interaction
+   */
+  private async playbackActions(actions: VNAction[]): Promise<void> {
+    console.debug(`Playing back ${actions.length} actions`);
+    
+    for (let i = this.engineState.currentActionIndex; i < actions.length; i++) {
+      const action = actions[i];
+      
+      // Record state before action for history
+      this.recordHistory(action);
+      
+      // Execute action with real user interaction
+      await this.executeAction(action);
+      
+      this.engineState.currentActionIndex = i + 1;
+    }
+  }
+
+  /**
+   * Record current state and action in history
+   */
+  private recordHistory(action: VNAction): void {
+    // Clear future when new action taken (no more go-forward)
+    this.engineState.future = [];
+    
+    // Create snapshot of current state
+    const entry: HistoryEntry = {
+      action,
+      gameStateBefore: JSON.parse(JSON.stringify(this.gameState)),
+      engineStateBefore: JSON.parse(JSON.stringify(this.engineState)),
+      timestamp: Date.now()
+    };
+    
+    this.engineState.history.push(entry);
+    
+    // Limit history size for performance (50 entries max)
+    if (this.engineState.history.length > 50) {
+      this.engineState.history.shift(); // Remove oldest
+    }
+  }
 }
