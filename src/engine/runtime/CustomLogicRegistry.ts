@@ -25,3 +25,5 @@ export class CustomLogicRegistry {
     this.registry.clear();
   }
 }
+
+export default CustomLogicRegistry;

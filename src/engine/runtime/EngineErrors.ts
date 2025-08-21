@@ -17,3 +17,5 @@ export class VNInterruptError extends Error {
     this.name = 'VNInterruptError';
   }
 }
+
+export default { JumpInterrupt, VNInterruptError };
