@@ -182,8 +182,8 @@ private createSimulationAPI(actions: VNAction[]): EngineAPI {
     
     async runCustomLogic(logicId: string, args: any): Promise<any> {
       actions.push({ type: 'runCustomLogic', logicId, args });
-      // Return cached result if available, otherwise default
-      return this.getCachedCustomLogicResult(logicId, args) || {};
+      // Custom logic exits event flow - throw jump interrupt
+      throw new JumpInterrupt('EXIT_EVENT'); // Exit current event
     }
   };
 }
@@ -209,6 +209,8 @@ private async executeAction(action: VNAction): Promise<void> {
     case 'runCustomLogic':
       const result = await this.executeCustomLogic(action.logicId, action.args);
       this.cacheCustomLogicResult(action.logicId, result);
+      // Custom logic exits event flow
+      throw new JumpInterrupt('EXIT_EVENT');
       break;
       
     case 'jump':
@@ -311,7 +313,7 @@ private initializeInputHandlers(): void {
 
 #### 3.1 Custom Logic Registry
 
-**Purpose:** Handle mini-games and custom code that exits events
+**Purpose:** Handle mini-games and custom code that exits events (like choices with jumps)
 ```typescript
 class CustomLogicRegistry {
   private static registry = new Map<string, CustomLogicFunction>();
@@ -335,12 +337,11 @@ class NewEngine {
       throw new Error(`Custom logic '${logicId}' not found`);
     }
     
-    // Execute custom logic - this exits event context
+    // Execute custom logic - this exits event context (like showChoices)
     const result = await logicFunction(args, this.gameState);
     
-    // After custom logic finishes, engine loop will look for new events
-    this.engineState.currentEvent = null;
-    this.engineState.currentActionIndex = 0;
+    // Cache result for history navigation
+    this.cacheCustomLogicResult(logicId, result);
     
     return result;
   }
