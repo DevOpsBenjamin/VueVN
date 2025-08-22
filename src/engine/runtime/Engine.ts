@@ -32,6 +32,7 @@ class Engine {
   private customLogicCache: Record<string, any>;
   private skipMode: boolean = false;
   private keyboardLayout: 'qwerty' | 'azerty' = 'qwerty';
+  private keyboardDetected: boolean = false;
 
   constructor(gameState: GameState, engineState: EngineState) {
     this.gameState = gameState;
@@ -144,10 +145,22 @@ class Engine {
       } else if (e.key === "ArrowLeft") {
         this.goBack(); // History backward
       } else if (this.isForwardKey(e.key)) {
-        // E key (QWERTY) or E key (AZERTY) - forward
+        // E key (works on both layouts) - forward
         this.resolveAwaiter("continue");
       } else if (this.isBackwardKey(e.key)) {
-        // Q key (QWERTY) or A key (AZERTY) - backward  
+        // Q key (QWERTY) or A key (AZERTY) - backward
+        this.goBack();
+      } else if ((e.key === 'q' || e.key === 'Q') && !this.keyboardDetected) {
+        // User pressed Q - they're likely on QWERTY, treat as backward
+        this.keyboardLayout = 'qwerty';
+        this.keyboardDetected = true;
+        console.debug('Detected QWERTY layout (Q key pressed)');
+        this.goBack();
+      } else if ((e.key === 'a' || e.key === 'A') && !this.keyboardDetected) {
+        // User pressed A - they might be on AZERTY trying to press Q, treat as backward
+        this.keyboardLayout = 'azerty';
+        this.keyboardDetected = true;
+        console.debug('Detected AZERTY layout (A key pressed)');
         this.goBack();
       } else {
         console.debug(`Unhandled key: ${e.key}`);
@@ -178,15 +191,9 @@ class Engine {
   }
 
   private detectKeyboardLayout(): void {
-    // Try to detect keyboard layout based on browser language
-    const lang = navigator.language.toLowerCase();
-    if (lang.startsWith('fr')) {
-      this.keyboardLayout = 'azerty';
-      console.debug('Detected AZERTY keyboard layout');
-    } else {
-      this.keyboardLayout = 'qwerty';
-      console.debug('Detected QWERTY keyboard layout');
-    }
+    // Start with QWERTY as default (most common)
+    this.keyboardLayout = 'qwerty';
+    console.debug('Keyboard layout: Starting with QWERTY (will auto-detect on first Q/A key press)');
   }
 
   private isForwardKey(key: string): boolean {
@@ -195,6 +202,9 @@ class Engine {
   }
 
   private isBackwardKey(key: string): boolean {
+    // Only return true if layout is already detected
+    if (!this.keyboardDetected) return false;
+    
     // Q for QWERTY, A for AZERTY (since Q is where A is on AZERTY)
     if (this.keyboardLayout === 'azerty') {
       return key === 'a' || key === 'A';
