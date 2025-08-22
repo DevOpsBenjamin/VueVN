@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { ENGINE_STATES } from './engineStateEnum';
-import type { Dialogue, EngineState } from '../runtime/types';
+import type { Dialogue, EngineState } from '@/generate/runtime';
 
 const useEngineState = defineStore('engineState', () => {
   const background = ref<string | null>(null);

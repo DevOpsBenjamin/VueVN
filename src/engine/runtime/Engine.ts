@@ -14,8 +14,9 @@ import type {
   EngineAPIForEvents,
   Choice 
 } from "./types";
-import { JumpInterrupt } from "./EngineErrors";
-import { CustomLogicRegistry } from "./CustomLogicRegistry";
+import { EngineErrors } from '@/generate/runtime';
+const { JumpInterrupt } = EngineErrors;
+import { CustomLogicRegistry } from '@/generate/runtime';
 
 class Engine {
   gameState: GameState;

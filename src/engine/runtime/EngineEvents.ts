@@ -1,7 +1,7 @@
 import { events as eventIndex } from "@/generate/events";
 import { VNInterruptError } from "@/generate/runtime";
-import type Engine from "./Engine";
-import type { VNEvent } from "./types";
+import type { Engine } from '@/generate/runtime';
+import type { VNEvent } from '@/generate/runtime';
 
 const handleEvent = async (engine: Engine, event: VNEvent): Promise<void> => {
   console.debug("Executing immediate event:", event.id);

@@ -1,4 +1,4 @@
-import type Engine from "./Engine";
+import type { Engine } from '@/generate/runtime';
 
 export const setBackground = (engine: Engine, imagePath: string): void => {
   console.debug("Setting background image:", imagePath);

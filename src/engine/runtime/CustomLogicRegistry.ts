@@ -1,4 +1,4 @@
-import type { GameState } from './types';
+import type { GameState } from '@/generate/runtime';
 
 export type CustomLogicFunction = (args: any, gameState: GameState) => Promise<any>;
 

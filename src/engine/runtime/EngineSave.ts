@@ -1,6 +1,6 @@
 import { PROJECT_ID } from '@/generate/components';
 import { engineStateEnum as ENGINE_STATES } from '@/generate/stores';
-import type Engine from './Engine';
+import type { Engine } from '@/generate/runtime';
 
 export const startNewGame = async (engine: Engine): Promise<void> => {
   engine.cancelAwaiter();

@@ -1,4 +1,4 @@
-import type Engine from "./Engine";
+// No direct Engine import to avoid circular dependency
 
 export interface Dialogue {
   from: string;
@@ -68,6 +68,6 @@ export interface VNEvent {
   conditions?: (state: GameState) => boolean;
   unlocked?: (state: GameState) => boolean;
   locked?: (state: GameState) => boolean;
-  draw?: (engine: Engine, state: GameState) => void;
+  draw?: (engine: any, state: GameState) => void;
   execute: (engine: EngineAPIForEvents, state: GameState) => Promise<void>;
 }

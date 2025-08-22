@@ -6,9 +6,10 @@ import type {
   HistoryEntry, 
   EngineAPIForEvents,
   Choice
-} from "./types";
-import { JumpInterrupt, VNInterruptError } from "./EngineErrors";
-import { CustomLogicRegistry } from "./CustomLogicRegistry";
+} from '@/generate/runtime';
+import { EngineErrors } from '@/generate/runtime';
+const { JumpInterrupt, VNInterruptError } = EngineErrors;
+import { CustomLogicRegistry } from '@/generate/runtime';
 
 export class NewEngine {
   gameState: GameState;
