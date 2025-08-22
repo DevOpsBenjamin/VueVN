@@ -41,7 +41,7 @@ const useHistoryState = defineStore('historyState', () => {
   }
 
   function moveToHistoryFromFuture(): HistoryEntry | null {
-    return future.value.pop() || null;
+    return future.value.shift() || null; // Take FIRST item, not last
   }
 
   function addBackToHistory(entry: HistoryEntry): void {
