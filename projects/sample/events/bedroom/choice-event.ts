@@ -1,29 +1,60 @@
 import type { VNEvent } from '@/engine/runtime/types';
 
-const bedroomChoice: VNEvent = {
-  id: 'bedroom_choice',
-  name: 'Bedroom Choice Event',
-  conditions: (state) => state.flags.bedroomExplored,
+const choiceEvent: VNEvent = {
+  id: 'choice-event',
+  name: 'Important Decision',
+  conditions: (state) => state.location === 'bedroom',
+  unlocked: (state) => state.flags.introSeen && (state.flags.exploredRoom || state.flags.checkedPhone),
+  locked: (state) => state.flags.majorChoiceMade,
+  
   async execute(engine, state) {
-    await engine.showText('You decided to explore further...', 'Narrator');
+    await engine.setBackground('assets/images/background/bedroom/morning.png');
+    await engine.showText('You find yourself in your cozy bedroom.');
+    await engine.showText('Sunlight streams through the window.');
+    await engine.showText("As you contemplate your next move... You hear a knock at your door.");
+    await engine.showText("This could be the moment that changes everything.");
     
-    // Conditional logic based on previous state
-    if (state.player.money >= 100) {
-      await engine.showText('Your money feels heavy in your pocket.', 'Narrator');
-    }
-    
-    await engine.showText('Suddenly, you notice a strange device on the table.', 'Narrator');
-    await engine.showText('It appears to be some kind of timing game...', 'Narrator');
-    
-    await engine.showChoices([
-      { text: 'Try the timing game', id: 'timing', jump_id: 'timing_event' },
-      { text: 'Examine the device closer', id: 'examine', jump_id: 'timing_event' },
-      { text: 'Ignore it and continue exploring', id: 'ignore', jump_id: 'timing_event' }
+    const choice = await engine.showChoices([
+      { text: 'Open the door immediately', id: 'open', branch: 'open_door' },
+      { text: 'Ask who it is first', id: 'ask', branch: 'ask_first' },
+      { text: 'Pretend nobody is home', id: 'hide', branch: 'pretend_away' }
     ]);
-    
-    // This code should never execute
-    console.error('Choice event: This should never be reached!');
   },
+
+  branches: {
+    open_door: {
+      async execute(engine, state) {
+        state.flags.majorChoiceMade = true;
+        state.character.personality = 'brave';
+        state.location = 'hallway';
+        await engine.showText("You boldly open the door without hesitation.");
+        await engine.showText("Standing there is a mysterious figure in a dark coat...");
+        await engine.showText("Your adventure truly begins now!");
+      }
+    },
+    
+    ask_first: {
+      async execute(engine, state) {
+        state.flags.majorChoiceMade = true;
+        state.character.personality = 'cautious';
+        state.location = 'hallway';
+        await engine.showText("'Who is it?' you call out cautiously.");
+        await engine.showText("'A friend,' comes the cryptic reply.");
+        await engine.showText("You slowly open the door...");
+      }
+    },
+    
+    pretend_away: {
+      async execute(engine, state) {
+        state.flags.majorChoiceMade = true;
+        state.character.personality = 'secretive';
+        await engine.showText("You stay very quiet, hoping they'll go away.");
+        await engine.showText("After a few minutes, you hear footsteps leaving.");
+        await engine.showText("But you notice they slipped something under your door...");
+        state.flags.mysteriousNote = true;
+      }
+    }
+  }
 };
 
-export default bedroomChoice;
+export default choiceEvent;

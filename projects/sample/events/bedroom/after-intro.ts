@@ -1,38 +1,57 @@
 import type { VNEvent } from '@/engine/runtime/types';
-// Import timing minigame to register it
-import '@/minigames/TimingGameLogic';
 
 const afterIntro: VNEvent = {
-  id: 'after_intro',
-  name: 'After Introduction - Bedroom',
-  conditions: (state) => state.location === 'bedroom' && state.flags.introSeen && !state.flags.bedroomExplored,
+  id: 'after-intro',
+  name: 'After Introduction',
+  conditions: (state) => state.location === 'bedroom',
+  unlocked: (state) => state.flags.introSeen,
+  locked: (state) => state.flags.introAct,
+  
   async execute(engine, state) {
-    await engine.setBackground('assets/images/background/intro/hall.png');
-    await engine.showText('You find yourself in a mysterious bedroom.', 'Narrator');
+    await engine.setBackground('assets/images/background/bedroom/morning.png');
+    await engine.showText('You find yourself in your cozy bedroom.');
+    await engine.showText('Sunlight streams through the window.');
+    await engine.showText('What would you like to do?');
     
-    // Test direct state manipulation
-    if (!state.player.money) {
-      state.player.money = 100;
-    }
-    
-    await engine.showText(`You have ${state.player.money} money with you.`, 'Narrator');
-    await engine.showText('There seems to be something interesting here...', 'Narrator');
-    
-    // Test setting flags
-    state.flags.bedroomExplored = true;
-    
-    await engine.showText('What would you like to do?', 'Narrator');
-    
-    // This will trigger the choice event
-    await engine.showChoices([
-      { text: 'Investigate the room', id: 'investigate', jump_id: 'bedroom_choice' },
-      { text: 'Look out the window', id: 'window', jump_id: 'bedroom_choice' },
-      { text: 'Go back to sleep', id: 'sleep', jump_id: 'bedroom_choice' }
+    const choice = await engine.showChoices([
+      { text: 'Explore the room', id: 'explore', branch: 'explore_room' },
+      { text: 'Check your phone', id: 'phone', branch: 'check_phone' },
+      { text: 'Go back to sleep', id: 'sleep', branch: 'go_sleep' }
     ]);
-    
-    // Code after showChoices should never execute
-    console.error('This should never be reached!');
   },
+
+  branches: {
+    explore_room: {
+      async execute(engine, state) {
+        state.flags.introAct = true;
+        state.flags.exploredRoom = true;
+        await engine.showText("You look around your bedroom carefully.");
+        await engine.showText("You notice some interesting books on your shelf.");
+        await engine.showText("There's also a mysterious box under your bed...");
+        // Reste dans bedroom, d'autres événements peuvent apparaître
+      }
+    },
+    
+    check_phone: {
+      async execute(engine, state) {
+        state.flags.introAct = true;
+        state.flags.checkedPhone = true;
+        await engine.showText("You pick up your phone from the nightstand.");
+        await engine.showText("You have 3 missed messages from your friend Alex.");
+        await engine.showText("Maybe you should reply later...");
+      }
+    },
+    
+    go_sleep: {
+      async execute(engine, state) {
+        state.flags.introAct = true;
+        state.flags.triedSleep = true;
+        await engine.showText("You try to go back to sleep...");
+        await engine.showText("But you're too excited about your adventure!");
+        await engine.showText("You decide to get up instead.");
+      }
+    }
+  }
 };
 
 export default afterIntro;
