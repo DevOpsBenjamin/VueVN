@@ -31,4 +31,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
+  server: {
+    host: true,             // 0.0.0.0 so it’s reachable in Docker
+    port: 5173,
+    strictPort: true,
+    allowedHosts: ['dev.jetdail.fr'],
+    hmr: {
+      host: 'dev.jetdail.fr',
+      protocol: 'wss',
+      clientPort: 443,
+    },
+  },
 });
