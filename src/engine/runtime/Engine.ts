@@ -33,6 +33,8 @@ class Engine {
   private skipMode: boolean = false;
   private keyboardLayout: 'qwerty' | 'azerty' = 'qwerty';
   private keyboardDetected: boolean = false;
+  private currentActions: VNAction[] = [];
+  private navigationAwaiter: ((value: any) => void) | null = null;
 
   constructor(gameState: GameState, engineState: EngineState) {
     this.gameState = gameState;
@@ -138,15 +140,15 @@ class Engine {
       } else if (e.key === "Space" || e.key === "ArrowRight") {
         // Forward navigation
         if (e.shiftKey && e.key === "ArrowRight") {
-          this.goForward(); // History forward
+          this.resolveNavigation(); // History forward (redo)
         } else {
-          this.resolveAwaiter("continue"); // Continue dialogue
+          this.resolveNavigation(); // Main forward navigation
         }
       } else if (e.key === "ArrowLeft") {
         this.goBack(); // History backward
       } else if (this.isForwardKey(e.key)) {
         // E key (works on both layouts) - forward
-        this.resolveAwaiter("continue");
+        this.resolveNavigation();
       } else if (this.isBackwardKey(e.key)) {
         // Q key (QWERTY) or A key (AZERTY) - backward
         this.goBack();
@@ -177,7 +179,7 @@ class Engine {
     window.addEventListener("click", (e) => {
       if (e.clientX > window.innerWidth / 2) {
         if (this.engineState.state === ENGINE_STATES.RUNNING) {
-          this.resolveAwaiter("continue");
+          this.resolveNavigation(); // Main forward navigation
         } else {
           console.debug("Click ignored, not in RUNNING state");
         }
@@ -295,15 +297,17 @@ class Engine {
     console.debug(`Processing event with dual-phase execution: ${immediateEvent.id}`);
     
     try {
-      // Phase 1: Simulation - generate action sequence
+      // Phase 1: Simulation - generate action sequence with pre-calculated results
       const actionSequence = await this.simulateEvent(immediateEvent);
       
-      // Phase 2: Playback - execute actions with real user interaction
-      await this.playbackActions(actionSequence);
-      
-      // Event completed successfully
-      this.engineState.currentEvent = null;
+      // Phase 2: Store actions for navigation and start at first action
+      this.currentActions = actionSequence;
+      this.engineState.currentEvent = immediateEvent.id;
       this.engineState.currentStep = 0;
+      
+      // Start navigation (first goForward will show first action and wait)
+      await this.goForward();
+      
       console.debug(`Event ${immediateEvent.id} completed`);
       
     } catch (error) {
@@ -318,19 +322,23 @@ class Engine {
   }
 
   /**
-   * Phase 1: Simulate event execution to generate action sequence
+   * Phase 1: Simulate event execution to generate action sequence with state snapshots
    */
   private async simulateEvent(event: VNEvent): Promise<VNAction[]> {
     const actions: VNAction[] = [];
     this.engineState.isSimulating = true;
     
+    // Create copies of state to work on during simulation
+    const gameStateCopy = JSON.parse(JSON.stringify(this.gameState));
+    const engineStateCopy = JSON.parse(JSON.stringify(this.engineState));
+    
     console.debug(`Simulating event: ${event.id}`);
     
     try {
-      const simulationAPI = this.createSimulationAPI(actions);
-      await event.execute(simulationAPI, this.gameState);
+      const simulationAPI = this.createSimulationAPI(actions, gameStateCopy, engineStateCopy);
+      await event.execute(simulationAPI, gameStateCopy);
     } catch (jumpInterrupt) {
-      // Expected for choices and custom logic - simulation ends here
+      // Expected for choices and jumps - simulation ends here
       console.debug(`Simulation ended with jump interrupt`);
     } finally {
       this.engineState.isSimulating = false;
@@ -338,6 +346,7 @@ class Engine {
     
     // TODO: Remove debug logs when engine is stable - requested for development debugging
     console.log(`SIMULATED EVENT: ${event.name || event.id}`);
+    console.log(`GENERATED ACTIONS (${actions.length}):`, actions.map(a => a.type));
     console.log(`HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
     console.log(`FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
     
@@ -364,32 +373,60 @@ class Engine {
   }
 
   /**
-   * Create simulation API that records actions without real execution
+   * Create simulation API that works on state copies and captures full snapshots
    */
-  private createSimulationAPI(actions: VNAction[]): EngineAPIForEvents {
+  private createSimulationAPI(actions: VNAction[], gameStateCopy: any, engineStateCopy: any): EngineAPIForEvents {
     return {
       async showText(text: string, from?: string): Promise<void> {
-        actions.push({ type: 'showText', text, from });
-        // No waiting in simulation
+        // Update the engine state copy immediately
+        engineStateCopy.dialogue = { text, from: from || 'Narrator' };
+        
+        // Create action with complete state snapshot
+        actions.push({
+          type: 'showText',
+          gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
+          engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
+        });
+        
+        console.debug(`SIMULATION: showText captured state snapshot`);
       },
 
       async setBackground(imagePath: string): Promise<void> {
-        actions.push({ type: 'setBackground', imagePath });
+        // IMMEDIATE - no action created, just update copy
+        engineStateCopy.background = imagePath;
+        console.debug(`SIMULATION: setBackground immediate - ${imagePath}`);
       },
 
       async setForeground(imagePath: string): Promise<void> {
-        actions.push({ type: 'setForeground', imagePath });
+        // IMMEDIATE - no action created, just update copy  
+        engineStateCopy.foreground = imagePath;
+        console.debug(`SIMULATION: setForeground immediate - ${imagePath}`);
       },
 
       async showChoices(choices: Array<Choice>): Promise<string> {
-        actions.push({ type: 'showChoices', choices });
+        // Update engine state copy
+        engineStateCopy.choices = choices;
         
-        // Use historical choice if replaying, otherwise first choice
+        // Create action with state snapshot
+        actions.push({
+          type: 'showChoices',
+          choices,
+          gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
+          engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
+        });
+        
+        // Use historical choice if replaying, otherwise first choice for simulation
         const choiceId = this.getHistoricalChoice() || choices[0].id;
         const choice = choices.find(c => c.id === choiceId);
         
         if (choice?.jump_id) {
-          actions.push({ type: 'jump', eventId: choice.jump_id });
+          // Create jump action
+          actions.push({
+            type: 'jump',
+            eventId: choice.jump_id,
+            gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
+            engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
+          });
           throw new EngineErrors.JumpInterrupt(choice.jump_id);
         }
         
@@ -397,14 +434,28 @@ class Engine {
       },
 
       async jump(eventId: string): Promise<void> {
-        actions.push({ type: 'jump', eventId });
+        actions.push({
+          type: 'jump',
+          eventId,
+          gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
+          engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
+        });
         throw new EngineErrors.JumpInterrupt(eventId);
       },
 
       async runCustomLogic(logicId: string, args: any): Promise<any> {
-        actions.push({ type: 'runCustomLogic', logicId, args });
-        // Custom logic exits event flow
-        throw new EngineErrors.JumpInterrupt('EXIT_EVENT');
+        // Create action for custom logic (will be executed during navigation)
+        actions.push({
+          type: 'runCustomLogic',
+          logicId,
+          args,
+          gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
+          engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
+        });
+        
+        // Return placeholder result for simulation
+        console.debug(`SIMULATION: runCustomLogic placeholder - ${logicId}`);
+        return { placeholder: true, logicId };
       }
     };
   }
@@ -633,54 +684,136 @@ class Engine {
   }
 
   /**
-   * Go forward one step (after going back)
+   * Main navigation method - go forward to next action and wait for user input
    */
   async goForward(): Promise<void> {
-    if (!this.historyState.canGoForward()) {
-      console.warn("No future to go forward to");
-      return;
-    }
-
-    console.debug("Going forward in history...");
-    
-    // Get the next entry from future stack
-    const nextEntry = this.historyState.moveToHistoryFromFuture(); // Remove from future
-    if (nextEntry) {
-      // Add this entry back to history using proper store method
-      this.historyState.addBackToHistory(nextEntry);
+    // Check if we're going forward in history (redo) vs normal navigation
+    if (this.historyState.canGoForward()) {
+      console.log("GOFORWARD: Restoring from future (redo)");
       
-      // Apply the effects of this action to current state
-      if (nextEntry.action.type === 'showText') {
-        this.engineState.dialogue = {
-          text: nextEntry.action.text,
-          from: nextEntry.action.from || 'Narrator'
-        };
-      } else if (nextEntry.action.type === 'setBackground') {
-        this.engineState.background = nextEntry.action.imagePath;
-      } else if (nextEntry.action.type === 'setForeground') {
-        this.engineState.foreground = nextEntry.action.imagePath;
-      } else if (nextEntry.action.type === 'showChoices') {
-        this.engineState.choices = nextEntry.action.choices;
-        // Use cached choice result instead of waiting for user
-        if (nextEntry.choiceMade) {
-          // Apply the choice result to game state without waiting
-          // TODO: Apply cached choice effects to game state
-        }
-      } else if (nextEntry.action.type === 'runCustomLogic') {
-        // Use cached custom logic result instead of re-running
-        if (nextEntry.customLogicResult) {
-          this.customLogicCache[nextEntry.action.logicId] = nextEntry.customLogicResult;
-          // Update game state with cached result
-          if (nextEntry.action.logicId === 'timingMinigame' && nextEntry.customLogicResult.reward) {
-            this.gameState.player.money += nextEntry.customLogicResult.reward;
-            this.gameState.flags.lastMinigameResult = nextEntry.customLogicResult;
-          }
-        }
+      // Get the next entry from future stack
+      const nextEntry = this.historyState.moveToHistoryFromFuture();
+      if (nextEntry) {
+        this.historyState.addBackToHistory(nextEntry);
+        this.applyActionToEngine(nextEntry.action);
+        console.log(`GOFORWARD REDO - Action: ${nextEntry.action.type}`);
+        console.log(`GOFORWARD REDO - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
+        console.log(`GOFORWARD REDO - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
       }
       
-      console.log(`GOFORWARD - Action: ${nextEntry.action.type}`);
-      console.log(`GOFORWARD - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
-      console.log(`GOFORWARD - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
+      // Wait for next user input unless skip mode
+      if (!this.skipMode) {
+        await this.waitForNavigation();
+      }
+      return;
+    }
+    
+    // Normal forward navigation through current actions
+    if (this.engineState.currentStep >= this.currentActions.length) {
+      console.log("GOFORWARD: End of actions reached");
+      return;
+    }
+    
+    const currentAction = this.currentActions[this.engineState.currentStep];
+    console.log(`GOFORWARD NORMAL - Step ${this.engineState.currentStep} - Action: ${currentAction.type}`);
+    
+    // Record current state in history before applying action
+    this.recordHistory(currentAction);
+    
+    // Apply the action to engine state
+    this.applyActionToEngine(currentAction);
+    
+    // Move to next step
+    this.engineState.currentStep++;
+    
+    console.log(`GOFORWARD NORMAL - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
+    console.log(`GOFORWARD NORMAL - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
+    
+    // Handle special actions
+    if (currentAction.type === 'showChoices') {
+      // For choices, wait for user selection (not skip mode)
+      await this.waitForChoice();
+    } else if (currentAction.type === 'runCustomLogic') {
+      // Execute custom logic now (not simulated)
+      await this.executeCustomLogic(currentAction);
+    } else {
+      // Normal actions: wait for user input unless skip mode
+      if (!this.skipMode) {
+        await this.waitForNavigation();
+      }
+    }
+  }
+
+  /**
+   * Apply an action's complete state snapshot to current state
+   */
+  private applyActionToEngine(action: VNAction): void {
+    if (action.type === 'jump') {
+      // Handle jumps separately
+      console.log(`APPLYING JUMP to: ${action.eventId}`);
+      throw new EngineErrors.JumpInterrupt(action.eventId);
+    }
+    
+    if (action.gameStateCopy && action.engineStateCopy) {
+      // Restore complete state snapshots from simulation
+      Object.assign(this.gameState, action.gameStateCopy);
+      Object.assign(this.engineState, action.engineStateCopy);
+      
+      console.debug(`APPLIED STATE SNAPSHOT for ${action.type}`);
+      console.debug(`- Game state restored`);
+      console.debug(`- Engine state restored (dialogue, background, foreground, etc.)`);
+    } else {
+      console.warn(`Action ${action.type} missing state snapshots - old format?`);
+    }
+  }
+
+  /**
+   * Wait for user navigation input (the main await in dual-phase engine)
+   */
+  private async waitForNavigation(): Promise<void> {
+    console.debug("WAITING FOR NAVIGATION INPUT...");
+    return new Promise<void>((resolve) => {
+      this.navigationAwaiter = resolve;
+    });
+  }
+
+  /**
+   * Execute custom logic (not simulated, real execution)
+   */
+  private async executeCustomLogic(action: VNAction): Promise<void> {
+    console.log(`EXECUTING CUSTOM LOGIC: ${action.logicId}`);
+    
+    try {
+      // Execute the actual custom logic with current state
+      const result = await CustomLogicRegistry.execute(action.logicId, action.args, this.gameState, this);
+      
+      // Cache the result for potential replay
+      this.customLogicCache[action.logicId] = result;
+      
+      // Apply any state changes from custom logic
+      console.log(`CUSTOM LOGIC COMPLETED: ${action.logicId}`, result);
+      
+    } catch (error) {
+      console.error(`Custom logic error: ${action.logicId}`, error);
+      // Continue with cached result if available
+      if (this.customLogicCache[action.logicId]) {
+        console.log(`Using cached result for ${action.logicId}`);
+      }
+    }
+  }
+
+  /**
+   * Resolve the navigation awaiter to continue forward
+   */
+  private resolveNavigation(): void {
+    if (this.navigationAwaiter) {
+      console.debug("RESOLVING NAVIGATION - calling goForward()");
+      this.navigationAwaiter();
+      this.navigationAwaiter = null;
+      // After resolving, call goForward for next action
+      this.goForward();
+    } else {
+      console.debug("No navigation awaiter to resolve");
     }
   }
 }
