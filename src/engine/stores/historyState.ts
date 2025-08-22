@@ -33,7 +33,7 @@ const useHistoryState = defineStore('historyState', () => {
   }
 
   function moveToFuture(entry: HistoryEntry): void {
-    future.value.push(entry);
+    future.value.unshift(entry); // Add to BEGINNING of future (first to be retrieved)
   }
 
   function moveToHistory(): HistoryEntry | null {
