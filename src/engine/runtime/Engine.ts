@@ -338,8 +338,8 @@ class Engine {
     
     // TODO: Remove debug logs when engine is stable - requested for development debugging
     console.log(`SIMULATED EVENT: ${event.name || event.id}`);
-    console.log(`HISTORY:`, this.historyState.history);
-    console.log(`FUTURE:`, this.historyState.future);
+    console.log(`HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
+    console.log(`FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
     
     return actions;
   }
@@ -626,7 +626,9 @@ class Engine {
         props: null
       };
       
-      console.debug(`Went back to before action: ${lastEntry.action.type}. History: ${this.historyState.history.length}, Future: ${this.historyState.future.length}`);
+      console.log(`GOBACK - Action: ${lastEntry.action.type}`);
+      console.log(`GOBACK - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
+      console.log(`GOBACK - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
     }
   }
 
@@ -644,8 +646,8 @@ class Engine {
     // Get the next entry from future stack
     const nextEntry = this.historyState.moveToHistoryFromFuture(); // Remove from future
     if (nextEntry) {
-      // Add this entry back to history (but don't use recordHistory as it would create new snapshot)
-      this.historyState.history.push(nextEntry);
+      // Add this entry back to history using proper store method
+      this.historyState.addBackToHistory(nextEntry);
       
       // Apply the effects of this action to current state
       if (nextEntry.action.type === 'showText') {
@@ -676,7 +678,9 @@ class Engine {
         }
       }
       
-      console.debug(`Went forward to action: ${nextEntry.action.type}. History: ${this.historyState.history.length}, Future: ${this.historyState.future.length}`);
+      console.log(`GOFORWARD - Action: ${nextEntry.action.type}`);
+      console.log(`GOFORWARD - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
+      console.log(`GOFORWARD - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
     }
   }
 }

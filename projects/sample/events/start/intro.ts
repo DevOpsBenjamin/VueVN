@@ -9,8 +9,13 @@ const intro: VNEvent = {
   async execute(engine, state) {
     await engine.setForeground('assets/images/background/intro/hall.png');
     await engine.showText('Welcome to sample!');
+    await engine.showText('This is your first VN engine experience.');
+    await engine.showText('You can use Arrow Left/Q to go back in history.');
+    await engine.showText('You can use Space/Arrow Right/E to continue forward.');
     state.npc_1.relation +=1;
-    await engine.showText('This is your first event.');
+    await engine.showText('This is your first event with multiple text entries.');
+    await engine.showText('Perfect for testing the go back and go forward functionality.');
+    await engine.showText('Each of these text lines should be a separate history entry.');
     
     // Test basic choices without automatic jumps (old pattern converted)
     const choice = await engine.showChoices([

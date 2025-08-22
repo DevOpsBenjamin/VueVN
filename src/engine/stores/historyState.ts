@@ -44,6 +44,11 @@ const useHistoryState = defineStore('historyState', () => {
     return future.value.pop() || null;
   }
 
+  function addBackToHistory(entry: HistoryEntry): void {
+    // Add entry back to history without clearing future (used for goForward)
+    history.value.push(entry);
+  }
+
   return {
     history,
     future,
@@ -54,6 +59,7 @@ const useHistoryState = defineStore('historyState', () => {
     moveToFuture,
     moveToHistory,
     moveToHistoryFromFuture,
+    addBackToHistory,
   };
 });
 
