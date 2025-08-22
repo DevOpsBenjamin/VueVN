@@ -607,31 +607,17 @@ class Engine {
 
     console.debug("Going back in history...");
     
-    // Save current state to future stack for go-forward
-    const currentEntry: HistoryEntry = {
-      action: this.historyState.history[this.historyState.history.length - 1]?.action || { type: 'showText', text: 'current' },
-      gameStateBefore: JSON.parse(JSON.stringify(this.gameState)),
-      engineStateBefore: JSON.parse(JSON.stringify(this.engineState)),
-      timestamp: Date.now()
-    };
-    this.historyState.moveToFuture(currentEntry);
-    
-    // Get the entry to revert to
-    const lastEntry = this.historyState.moveToHistory();
+    // Get the last action from history (this is what we want to undo)
+    const lastEntry = this.historyState.moveToHistory(); // Remove from history
     if (lastEntry) {
-      // Restore state from before the last action
-      Object.assign(this.gameState, lastEntry.gameStateBefore);
+      // Move this action to future (so we can redo it later)
+      this.historyState.moveToFuture(lastEntry);
       
-      // Restore engine state but preserve current event flow context
-      const currentEvent = this.engineState.currentEvent;
-      const currentStep = this.engineState.currentStep;
+      // Restore state to BEFORE this action was executed
+      Object.assign(this.gameState, lastEntry.gameStateBefore);
       Object.assign(this.engineState, lastEntry.engineStateBefore);
       
-      // Update current event and action index to reflect reverted state
-      this.engineState.currentEvent = lastEntry.engineStateBefore.currentEvent;
-      this.engineState.currentStep = lastEntry.engineStateBefore.currentStep;
-      
-      // Clear any active UI state
+      // Clear any active UI state that might conflict
       this.engineState.dialogue = null;
       this.engineState.choices = null;
       this.engineState.minigame = {
@@ -640,7 +626,7 @@ class Engine {
         props: null
       };
       
-      console.debug(`Went back to before action: ${lastEntry.action.type}. History length: ${this.historyState.history.length}`);
+      console.debug(`Went back to before action: ${lastEntry.action.type}. History: ${this.historyState.history.length}, Future: ${this.historyState.future.length}`);
     }
   }
 
@@ -656,13 +642,12 @@ class Engine {
     console.debug("Going forward in history...");
     
     // Get the next entry from future stack
-    const nextEntry = this.historyState.moveToHistoryFromFuture();
+    const nextEntry = this.historyState.moveToHistoryFromFuture(); // Remove from future
     if (nextEntry) {
-      // Record current state back to history
-      this.recordHistory(nextEntry.action);
+      // Add this entry back to history (but don't use recordHistory as it would create new snapshot)
+      this.historyState.history.push(nextEntry);
       
-      // Re-execute the action that was undone by goBack
-      // For showText actions, just restore the state
+      // Apply the effects of this action to current state
       if (nextEntry.action.type === 'showText') {
         this.engineState.dialogue = {
           text: nextEntry.action.text,
@@ -676,7 +661,8 @@ class Engine {
         this.engineState.choices = nextEntry.action.choices;
         // Use cached choice result instead of waiting for user
         if (nextEntry.choiceMade) {
-          this.recordChoiceInHistory(nextEntry.choiceMade);
+          // Apply the choice result to game state without waiting
+          // TODO: Apply cached choice effects to game state
         }
       } else if (nextEntry.action.type === 'runCustomLogic') {
         // Use cached custom logic result instead of re-running
@@ -690,7 +676,7 @@ class Engine {
         }
       }
       
-      console.debug(`Went forward to action: ${nextEntry.action.type}. Future length: ${this.historyState.future.length}`);
+      console.debug(`Went forward to action: ${nextEntry.action.type}. History: ${this.historyState.history.length}, Future: ${this.historyState.future.length}`);
     }
   }
 }
