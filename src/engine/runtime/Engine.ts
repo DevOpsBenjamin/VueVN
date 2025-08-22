@@ -743,7 +743,7 @@ class Engine {
     }
     
     // Get next action from future
-    const nextAction = this.historyState.moveToHistoryFromFuture();
+    const nextAction = this.historyState.moveToHistoryFromFuture() as any;
     if (!nextAction) {
       console.log("GOFORWARD: No action retrieved from future");
       return;
@@ -777,13 +777,19 @@ class Engine {
     }
     
     // Add this action to history (it contains the state snapshot)
-    this.historyState.addBackToHistory(nextAction);
+    this.historyState.addBackToHistory(nextAction as any);
     
     
     // Handle special actions
     if (nextAction.type === 'showChoices') {
-      // For choices, wait for user selection (not skip mode)
-      await this.waitForChoice();
+      // Wait for user choice and process branch if defined
+      const choiceId = await this.waitForChoice();
+      this.recordChoiceInHistory(choiceId);
+      const selected = nextAction.choices?.find((c: any) => c.id === choiceId);
+      if (selected?.branch) {
+        await this.processBranchChoice(nextAction.event_id, selected.branch);
+        return;
+      }
     } else if (nextAction.type === 'runCustomLogic') {
       // Execute custom logic now (not simulated)
       await this.executeCustomLogic(nextAction);
@@ -793,6 +799,34 @@ class Engine {
         await this.waitForNavigation();
       }
     }
+  }
+
+  /**
+   * After a choice is made, simulate and enqueue the selected branch
+   */
+  private async processBranchChoice(parentEventId: string, branchName: string): Promise<void> {
+    const parentEvent = this.findEventById(parentEventId);
+    const branch = (parentEvent as any)?.branches?.[branchName];
+    if (!parentEvent || !branch) {
+      console.warn(`Branch '${branchName}' not found for event '${parentEventId}'`);
+      return;
+    }
+
+    // Set current event context to branch
+    this.engineState.currentEvent = `${parentEventId}:${branchName}`;
+
+    // Simulate branch to generate actions
+    const branchEvent: VNEvent = {
+      id: this.engineState.currentEvent,
+      name: branchName,
+      execute: branch.execute
+    } as VNEvent;
+
+    const actions = await this.simulateEvent(branchEvent);
+
+    // Queue actions from branch and start processing
+    actions.forEach(action => this.historyState.future.push(action as any));
+    await this.goForward();
   }
 
   /**

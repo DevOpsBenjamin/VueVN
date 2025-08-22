@@ -8,7 +8,8 @@ export interface Dialogue {
 export interface Choice {
   text: string;
   id: string;
-  jump_id: string;
+  branch?: string;
+  jump_id?: string;
 }
 
 export interface VNAction {
