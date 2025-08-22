@@ -6,17 +6,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 VueVN is a visual novel engine built with Vue 3, TypeScript, and Vite that provides a natural TypeScript development experience with perfect save/load and history functionality like Ren'Py.
 
-**Current Status:** 🔄 **Architecture Redesign Phase**  
-The project is undergoing a major engine architecture redesign to implement:
-- Dual-phase execution (simulation + playback)
-- Text-by-text go back/forward history
-- Natural TypeScript event development
-- Perfect save/load with mid-event support
+**Current Status:** ✅ **Dual-Phase Engine Complete**  
+The engine architecture redesign has been successfully implemented:
+- ✅ Dual-phase execution (simulation + playback)
+- ✅ Text-by-text go back/forward history (50 entries max)
+- ✅ Natural TypeScript event development with EngineAPIForEvents
+- ✅ Perfect save/load with mid-event support and fast-forward replay
+- ✅ Custom logic integration with minigame support
+- ✅ All imports using @/generate/runtime for extensibility
 
-## 🎯 Current Focus
+## 📋 Development Workflow
 
-### Primary Objective
-Implement the new engine architecture documented in `Claude/ENGINE_ARCHITECTURE_TODO.md`. This is the **top priority** - all other features are secondary until this core engine redesign is complete.
+### Read This First
+**New Claude instances should read `Claude/DEVELOPMENT_WORKFLOW.md`** for detailed development procedures, commit strategies, and testing protocols.
 
 ### Key Design Principles
 1. **Natural Development**: Developers write normal async/await TypeScript code
@@ -42,10 +44,11 @@ Implement the new engine architecture documented in `Claude/ENGINE_ARCHITECTURE_
 - Generated files are placed in `src/generate/` and provide type-safe access to project resources
 - Generation happens automatically during development and before builds
 
-### Engine Architecture (LEGACY - BEING REDESIGNED)
-- **Current Engine** (`src/engine/runtime/Engine.ts`): Contains 20-second debug delays (intentional)
-- **Target Architecture**: Dual-phase execution with simulation + playback
-- **New Implementation**: Will be `src/engine/runtime/NewEngine.ts` (see ENGINE_ARCHITECTURE_TODO.md)
+### Engine Architecture (CURRENT IMPLEMENTATION)
+- **Engine** (`src/engine/runtime/Engine.ts`): Dual-phase execution with simulation + playback
+- **EngineAPIForEvents**: Natural async/await API for event development
+- **History System**: Text-by-text navigation with 50-entry limit and state snapshots
+- **Save/Load**: Mid-event saves with fast-forward replay capability
 
 ### Editor Architecture
 - **ProjectEditor.vue**: Main editor interface with file explorer, Monaco editor, and live preview
@@ -94,27 +97,28 @@ import { CustomLogicRegistry } from './CustomLogicRegistry';
 - Enables true plugin/extension capability without import conflicts
 - Maintains clean separation between core and user-customizable parts
 
-### Debug Delays Are Intentional
-The current engine has **20-second delays** in the game loop (`src/engine/runtime/Engine.ts:171`). These are **intentional debugging mechanisms** to prevent infinite event loops during development, NOT bugs to be fixed. They should remain until the new engine architecture is implemented and proven stable.
-
 ### Documentation Organization
 - **`Claude/`**: All Claude Code documentation and architectural plans
-- **`Claude/ENGINE_ARCHITECTURE_TODO.md`**: Complete implementation roadmap for new engine
-- **`Claude/PROJECT_REPORT.md`**: Comprehensive codebase analysis
-- **`Claude/TODO_FOR_CLAUDE.md`**: Prioritized action items (may be outdated by ENGINE_ARCHITECTURE_TODO.md)
+- **`Claude/DEVELOPMENT_WORKFLOW.md`**: Development procedures and commit strategies
+- **`Claude/PROJECT_REPORT.md`**: Comprehensive codebase analysis and current state
+- **`Claude/CLAUDE.md`**: This overview document for new Claude instances
 
-## 🎯 Next Steps for Future Claude Instances
+## 🎯 Current State & Next Steps
 
-### Immediate Priority
-1. **Read `Claude/ENGINE_ARCHITECTURE_TODO.md`** - Complete implementation guide
-2. **Implement dual-phase engine** - This is the core architectural change needed
-3. **Test with sample project** - Use existing sample as test bed
+### Core Engine Status
+- ✅ **Dual-phase execution complete** - Engine now uses simulation + playback
+- ✅ **History system working** - Full go back/forward with state restoration
+- ✅ **Save/load updated** - Mid-event saves with fast-forward replay
+- ✅ **Testing infrastructure** - 3 test events: after-intro, choice-event, timing-event
+- ✅ **Minigame integration** - TimingGame.vue component with engine state management
+- ✅ **Import architecture** - All using @/generate/runtime for extensibility
 
-### Future Features (Lower Priority)
+### Available for Development
 - Monaco editor autocompletion for engine API
 - IDE tools for event validation and testing
 - Advanced debugging and profiling tools
-- Plugin architecture and extensibility
+- Additional minigame types and custom logic
+- Project management and deployment tools
 
 ## Development Commands
 
@@ -147,14 +151,27 @@ npm run build <project-name>
 - **Asset Serving**: Vite serves project-specific assets during development
 
 ### Event Development (Current)
-Events are TypeScript modules with `execute` functions:
+Events use the new EngineAPIForEvents interface for natural async/await development:
 ```typescript
 export default {
   id: 'event_id',
   name: 'Event Name',
-  async execute(engine, gameState) {
-    await engine.showText('Hello world!');
-    // ... event logic
+  async execute(engine: EngineAPIForEvents, gameState: GameState) {
+    await engine.showText('Hello world!', 'Narrator');
+    await engine.setBackground('/assets/images/background/room.png');
+    
+    const choice = await engine.showChoices([
+      { text: 'Continue', id: 'continue', jump_id: 'next_event' },
+      { text: 'Go back', id: 'back', jump_id: 'previous_event' }
+    ]);
+    
+    // Custom logic example
+    if (gameState.flags.hasMinigame) {
+      const result = await engine.runCustomLogic('timingMinigame', { difficulty: 2 });
+      gameState.player.money += result.reward;
+    }
+    
+    await engine.jump('next_event');
   }
 }
 ```
