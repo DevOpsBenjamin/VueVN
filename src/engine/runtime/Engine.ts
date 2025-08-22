@@ -348,6 +348,180 @@ class Engine {
   updateEvents(location?: string): void {
     EngineEvents.updateEvents(this, location);
   }
+
+  /**
+   * Execute a single action with real user interaction
+   */
+  private async executeAction(action: VNAction): Promise<void> {
+    switch (action.type) {
+      case 'showText':
+        this.engineState.dialogue = { 
+          text: action.text, 
+          from: action.from || 'Narrator' 
+        };
+        await this.waitForContinue();
+        break;
+
+      case 'setBackground':
+        this.engineState.background = action.imagePath;
+        break;
+
+      case 'setForeground':
+        this.engineState.foreground = action.imagePath;
+        break;
+
+      case 'showChoices':
+        this.engineState.choices = action.choices;
+        const choiceId = await this.waitForChoice();
+        this.recordChoiceInHistory(choiceId);
+        break;
+
+      case 'jump':
+        this.jumpToEvent(action.eventId);
+        throw new JumpInterrupt(action.eventId);
+        break;
+
+      case 'runCustomLogic':
+        const result = await this.executeCustomLogic(action.logicId, action.args);
+        this.cacheCustomLogicResult(action.logicId, result);
+        // Custom logic exits event flow
+        throw new JumpInterrupt('EXIT_EVENT');
+        break;
+
+      default:
+        console.warn(`Unknown action type: ${(action as any).type}`);
+    }
+  }
+
+  /**
+   * Record current state and action in history
+   */
+  private recordHistory(action: VNAction): void {
+    // Clear future when new action taken (no more go-forward)
+    this.engineState.future = [];
+    
+    // Create snapshot of current state
+    const entry: HistoryEntry = {
+      action,
+      gameStateBefore: JSON.parse(JSON.stringify(this.gameState)),
+      engineStateBefore: JSON.parse(JSON.stringify(this.engineState)),
+      timestamp: Date.now()
+    };
+    
+    this.engineState.history.push(entry);
+    
+    // Limit history size for performance (50 entries max)
+    if (this.engineState.history.length > 50) {
+      this.engineState.history.shift(); // Remove oldest
+    }
+  }
+
+  /**
+   * Wait for user to continue (right click or space)
+   */
+  private async waitForContinue(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.awaiterResult = resolve;
+    });
+  }
+
+  /**
+   * Wait for user to select a choice
+   */
+  private async waitForChoice(): Promise<string> {
+    return new Promise<string>((resolve) => {
+      this.awaiterResult = resolve;
+    });
+  }
+
+  /**
+   * Get historical choice for replay (placeholder)
+   */
+  private getHistoricalChoice(): string | null {
+    // TODO: Implement historical choice lookup
+    return null;
+  }
+
+  /**
+   * Record choice in history (placeholder)
+   */
+  private recordChoiceInHistory(choiceId: string): void {
+    // TODO: Record choice in last history entry
+    console.debug(`Choice made: ${choiceId}`);
+  }
+
+  /**
+   * Jump to a new event
+   */
+  private jumpToEvent(eventId: string): void {
+    this.engineState.currentEvent = eventId;
+    this.engineState.currentActionIndex = 0;
+    console.debug(`Jumping to event: ${eventId}`);
+  }
+
+  /**
+   * Execute custom logic function
+   */
+  private async executeCustomLogic(logicId: string, args: any): Promise<any> {
+    const logicFunction = CustomLogicRegistry.get(logicId);
+    if (!logicFunction) {
+      throw new Error(`Custom logic '${logicId}' not found`);
+    }
+
+    // Execute custom logic - this exits event context
+    const result = await logicFunction(args, this.gameState);
+    return result;
+  }
+
+  /**
+   * Cache custom logic result for history navigation
+   */
+  private cacheCustomLogicResult(logicId: string, result: any): void {
+    this.customLogicCache[logicId] = result;
+  }
+
+  /**
+   * Go back one step in history
+   */
+  async goBack(): Promise<void> {
+    if (this.engineState.history.length === 0) {
+      console.warn("No history to go back to");
+      return;
+    }
+
+    // TODO: Implement complete go back functionality
+    console.debug("Go back requested - basic implementation");
+    
+    // Move current state to future stack
+    const currentEntry: HistoryEntry = {
+      action: { type: 'showText', text: 'current' }, // placeholder
+      gameStateBefore: JSON.parse(JSON.stringify(this.gameState)),
+      engineStateBefore: JSON.parse(JSON.stringify(this.engineState)),
+      timestamp: Date.now()
+    };
+    this.engineState.future.push(currentEntry);
+    
+    // Restore previous state
+    const lastEntry = this.engineState.history.pop();
+    if (lastEntry) {
+      Object.assign(this.gameState, lastEntry.gameStateBefore);
+      Object.assign(this.engineState, lastEntry.engineStateBefore);
+      console.debug("Went back in history");
+    }
+  }
+
+  /**
+   * Go forward one step (after going back)
+   */
+  async goForward(): Promise<void> {
+    if (this.engineState.future.length === 0) {
+      console.warn("No future to go forward to");
+      return;
+    }
+
+    // TODO: Implement go forward functionality
+    console.debug("Go forward requested - not yet implemented");
+  }
 }
 
 export default Engine;
