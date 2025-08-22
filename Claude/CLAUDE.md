@@ -24,6 +24,10 @@ Implement the new engine architecture documented in `Claude/ENGINE_ARCHITECTURE_
 3. **Perfect History**: Text-by-text go back like Ren'Py (50 entries max)
 4. **Custom Logic Support**: Mini-games and complex code exit event flow via jumps
 5. **Jump-Only Boundaries**: All event transitions happen through jumps for simplicity
+6. **🚨 CRITICAL: Import Strategy for Extensibility**
+   - **ALWAYS** use `@/generate/runtime` imports in engine files
+   - **NEVER** use relative imports (`./`, `../`) in engine code
+   - This preserves plugin capability - users can customize any engine component through `generate/runtime` without core import conflicts
 
 ## Key Architecture
 
@@ -70,7 +74,25 @@ npm run build <project-name>
 - **Build**: Uses `scripts/build.cts` which generates files, builds with Vite, and copies assets
 - **Generation**: Automatically creates TypeScript interfaces and imports from project data
 
-## 🚨 Important Context
+## 🚨 Critical Architectural Rules
+
+### Import Strategy for Plugin System
+**MANDATORY RULE**: All engine files MUST use `@/generate/runtime` imports instead of relative imports.
+
+```typescript
+// ✅ CORRECT - Allows user customization
+import { Engine, CustomLogicRegistry } from '@/generate/runtime';
+
+// ❌ WRONG - Prevents user customization  
+import Engine from './Engine';
+import { CustomLogicRegistry } from './CustomLogicRegistry';
+```
+
+**Why this matters:**
+- Users can override any engine component by customizing `src/generate/runtime.ts`
+- Core engine won't import original versions when user provides custom ones
+- Enables true plugin/extension capability without import conflicts
+- Maintains clean separation between core and user-customizable parts
 
 ### Debug Delays Are Intentional
 The current engine has **20-second delays** in the game loop (`src/engine/runtime/Engine.ts:171`). These are **intentional debugging mechanisms** to prevent infinite event loops during development, NOT bugs to be fixed. They should remain until the new engine architecture is implemented and proven stable.
