@@ -125,7 +125,11 @@ class Engine {
         } else {
           this.engineState.state = ENGINE_STATES.MENU;
         }
-      } else if (e.key === "Space" || e.key === "ArrowRight") {
+      } else if (e.key === "Space") {
+        this.resolveAwaiter("continue");
+      } else if (e.key === "ArrowRight" && e.shiftKey) {
+        this.goForward();
+      } else if (e.key === "ArrowRight") {
         this.resolveAwaiter("continue");
       } else if (e.key === "ArrowLeft") {
         this.goBack();
@@ -538,24 +542,42 @@ class Engine {
       return;
     }
 
-    // TODO: Implement complete go back functionality
-    console.debug("Go back requested - basic implementation");
+    console.debug("Going back in history...");
     
-    // Move current state to future stack
+    // Save current state to future stack for go-forward
     const currentEntry: HistoryEntry = {
-      action: { type: 'showText', text: 'current' }, // placeholder
+      action: this.engineState.history[this.engineState.history.length - 1]?.action || { type: 'showText', text: 'current' },
       gameStateBefore: JSON.parse(JSON.stringify(this.gameState)),
       engineStateBefore: JSON.parse(JSON.stringify(this.engineState)),
       timestamp: Date.now()
     };
     this.engineState.future.push(currentEntry);
     
-    // Restore previous state
+    // Get the entry to revert to
     const lastEntry = this.engineState.history.pop();
     if (lastEntry) {
+      // Restore state from before the last action
       Object.assign(this.gameState, lastEntry.gameStateBefore);
+      
+      // Restore engine state but preserve current event flow context
+      const currentEvent = this.engineState.currentEvent;
+      const currentActionIndex = this.engineState.currentActionIndex;
       Object.assign(this.engineState, lastEntry.engineStateBefore);
-      console.debug("Went back in history");
+      
+      // Update current event and action index to reflect reverted state
+      this.engineState.currentEvent = lastEntry.engineStateBefore.currentEvent;
+      this.engineState.currentActionIndex = lastEntry.engineStateBefore.currentActionIndex;
+      
+      // Clear any active UI state
+      this.engineState.dialogue = null;
+      this.engineState.choices = null;
+      this.engineState.minigame = {
+        active: false,
+        type: null,
+        props: null
+      };
+      
+      console.debug(`Went back to before action: ${lastEntry.action.type}. History length: ${this.engineState.history.length}`);
     }
   }
 
@@ -568,8 +590,45 @@ class Engine {
       return;
     }
 
-    // TODO: Implement go forward functionality
-    console.debug("Go forward requested - not yet implemented");
+    console.debug("Going forward in history...");
+    
+    // Get the next entry from future stack
+    const nextEntry = this.engineState.future.pop();
+    if (nextEntry) {
+      // Record current state back to history
+      this.recordHistory(nextEntry.action);
+      
+      // Re-execute the action that was undone by goBack
+      // For showText actions, just restore the state
+      if (nextEntry.action.type === 'showText') {
+        this.engineState.dialogue = {
+          text: nextEntry.action.text,
+          from: nextEntry.action.from || 'Narrator'
+        };
+      } else if (nextEntry.action.type === 'setBackground') {
+        this.engineState.background = nextEntry.action.imagePath;
+      } else if (nextEntry.action.type === 'setForeground') {
+        this.engineState.foreground = nextEntry.action.imagePath;
+      } else if (nextEntry.action.type === 'showChoices') {
+        this.engineState.choices = nextEntry.action.choices;
+        // Use cached choice result instead of waiting for user
+        if (nextEntry.choiceMade) {
+          this.recordChoiceInHistory(nextEntry.choiceMade);
+        }
+      } else if (nextEntry.action.type === 'runCustomLogic') {
+        // Use cached custom logic result instead of re-running
+        if (nextEntry.customLogicResult) {
+          this.customLogicCache[nextEntry.action.logicId] = nextEntry.customLogicResult;
+          // Update game state with cached result
+          if (nextEntry.action.logicId === 'timingMinigame' && nextEntry.customLogicResult.reward) {
+            this.gameState.player.money += nextEntry.customLogicResult.reward;
+            this.gameState.flags.lastMinigameResult = nextEntry.customLogicResult;
+          }
+        }
+      }
+      
+      console.debug(`Went forward to action: ${nextEntry.action.type}. Future length: ${this.engineState.future.length}`);
+    }
   }
 }
 
