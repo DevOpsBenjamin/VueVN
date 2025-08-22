@@ -385,14 +385,17 @@ class Engine {
         // Update the engine state copy immediately
         engineStateCopy.dialogue = { text, from: from || 'Narrator' };
         
-        // Create action with complete state snapshot
+        // Create action with complete state snapshot (WITH dialogue)
         actions.push({
           type: 'showText',
           gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
           engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
         });
         
-        console.warn(`SIMULATION: showText captured state snapshot`);
+        // Clear dialogue after capturing - next action starts clean
+        engineStateCopy.dialogue = null;
+        
+        console.warn(`SIMULATION: showText captured state snapshot and cleared dialogue`);
       },
 
       async setBackground(imagePath: string): Promise<void> {
@@ -411,7 +414,7 @@ class Engine {
         // Update engine state copy
         engineStateCopy.choices = choices;
         
-        // Create action with state snapshot - this is where simulation should STOP
+        // Create action with state snapshot (WITH choices)
         actions.push({
           type: 'showChoices',
           choices,
@@ -419,7 +422,10 @@ class Engine {
           engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
         });
         
-        console.warn(`SIMULATION: showChoices captured - simulation should end here`);
+        // Clear choices after capturing - clean state for next action
+        engineStateCopy.choices = null;
+        
+        console.warn(`SIMULATION: showChoices captured and cleared - simulation should end here`);
         
         // For simulation, we DON'T make the choice or jump - that happens during navigation
         // Just return a placeholder and let simulation end naturally
