@@ -5,7 +5,17 @@ import {
   VNInterruptError,
 } from "@/generate/runtime";
 import { engineStateEnum as ENGINE_STATES } from "@/generate/stores";
-import type { GameState, EngineState, VNEvent } from "./types";
+import type { 
+  GameState, 
+  EngineState, 
+  VNEvent, 
+  VNAction, 
+  HistoryEntry, 
+  EngineAPIForEvents,
+  Choice 
+} from "./types";
+import { JumpInterrupt } from "./EngineErrors";
+import { CustomLogicRegistry } from "./CustomLogicRegistry";
 
 class Engine {
   gameState: GameState;
@@ -17,6 +27,7 @@ class Engine {
     string,
     { notReady: VNEvent[]; unlocked: VNEvent[]; locked: VNEvent[] }
   >;
+  private customLogicCache: Record<string, any>;
 
   constructor(gameState: GameState, engineState: EngineState) {
     this.gameState = gameState;
@@ -25,6 +36,24 @@ class Engine {
     this.replayMode = false;
     this.targetStep = 0;
     this.eventCache = {};
+    this.customLogicCache = {};
+
+    // Initialize new engine state properties for dual-phase execution
+    if (!this.engineState.history) {
+      this.engineState.history = [];
+    }
+    if (!this.engineState.future) {
+      this.engineState.future = [];
+    }
+    if (typeof this.engineState.currentActionIndex === 'undefined') {
+      this.engineState.currentActionIndex = 0;
+    }
+    if (typeof this.engineState.isSimulating === 'undefined') {
+      this.engineState.isSimulating = false;
+    }
+    if (typeof this.engineState.isFastForwarding === 'undefined') {
+      this.engineState.isFastForwarding = false;
+    }
 
     if (typeof window !== "undefined") {
       const w = window as any;
