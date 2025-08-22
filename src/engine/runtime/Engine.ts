@@ -221,7 +221,117 @@ class Engine {
   }
 
   async handleEvent(immediateEvent: VNEvent): Promise<void> {
-    await EngineEvents.handleEvent(this, immediateEvent);
+    console.debug(`Processing event with dual-phase execution: ${immediateEvent.id}`);
+    
+    try {
+      // Phase 1: Simulation - generate action sequence
+      const actionSequence = await this.simulateEvent(immediateEvent);
+      
+      // Phase 2: Playback - execute actions with real user interaction
+      await this.playbackActions(actionSequence);
+      
+      // Event completed successfully
+      this.engineState.currentEvent = null;
+      this.engineState.currentActionIndex = 0;
+      console.debug(`Event ${immediateEvent.id} completed`);
+      
+    } catch (error) {
+      if (error instanceof JumpInterrupt) {
+        console.debug(`Event ${immediateEvent.id} interrupted by jump to ${error.targetEventId}`);
+        // Jump handling will be done by main game loop
+      } else {
+        console.error(`Error processing event ${immediateEvent.id}:`, error);
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Phase 1: Simulate event execution to generate action sequence
+   */
+  private async simulateEvent(event: VNEvent): Promise<VNAction[]> {
+    const actions: VNAction[] = [];
+    this.engineState.isSimulating = true;
+    
+    console.debug(`Simulating event: ${event.id}`);
+    
+    try {
+      const simulationAPI = this.createSimulationAPI(actions);
+      await event.execute(simulationAPI, this.gameState);
+    } catch (jumpInterrupt) {
+      // Expected for choices and custom logic - simulation ends here
+      console.debug(`Simulation ended with jump interrupt`);
+    } finally {
+      this.engineState.isSimulating = false;
+    }
+    
+    console.debug(`Generated ${actions.length} actions from simulation`);
+    return actions;
+  }
+
+  /**
+   * Phase 2: Execute actions with real user interaction
+   */
+  private async playbackActions(actions: VNAction[]): Promise<void> {
+    console.debug(`Playing back ${actions.length} actions`);
+    
+    for (let i = this.engineState.currentActionIndex; i < actions.length; i++) {
+      const action = actions[i];
+      
+      // Record state before action for history
+      this.recordHistory(action);
+      
+      // Execute action with real user interaction
+      await this.executeAction(action);
+      
+      this.engineState.currentActionIndex = i + 1;
+    }
+  }
+
+  /**
+   * Create simulation API that records actions without real execution
+   */
+  private createSimulationAPI(actions: VNAction[]): EngineAPIForEvents {
+    return {
+      async showText(text: string, from?: string): Promise<void> {
+        actions.push({ type: 'showText', text, from });
+        // No waiting in simulation
+      },
+
+      async setBackground(imagePath: string): Promise<void> {
+        actions.push({ type: 'setBackground', imagePath });
+      },
+
+      async setForeground(imagePath: string): Promise<void> {
+        actions.push({ type: 'setForeground', imagePath });
+      },
+
+      async showChoices(choices: Array<Choice>): Promise<string> {
+        actions.push({ type: 'showChoices', choices });
+        
+        // Use historical choice if replaying, otherwise first choice
+        const choiceId = this.getHistoricalChoice() || choices[0].id;
+        const choice = choices.find(c => c.id === choiceId);
+        
+        if (choice?.jump_id) {
+          actions.push({ type: 'jump', eventId: choice.jump_id });
+          throw new JumpInterrupt(choice.jump_id);
+        }
+        
+        return choiceId;
+      },
+
+      async jump(eventId: string): Promise<void> {
+        actions.push({ type: 'jump', eventId });
+        throw new JumpInterrupt(eventId);
+      },
+
+      async runCustomLogic(logicId: string, args: any): Promise<any> {
+        actions.push({ type: 'runCustomLogic', logicId, args });
+        // Custom logic exits event flow
+        throw new JumpInterrupt('EXIT_EVENT');
+      }
+    };
   }
 
   createEventsCopy(): void {
