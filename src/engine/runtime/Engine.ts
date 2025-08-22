@@ -385,9 +385,13 @@ class Engine {
         // Update the engine state copy immediately
         engineStateCopy.dialogue = { text, from: from || 'Narrator' };
         
+        // Set currentStep to match action index within event
+        engineStateCopy.currentStep = actions.length;
+        
         // Create action with complete state snapshot (WITH dialogue)
         actions.push({
           type: 'showText',
+          event_id: engineStateCopy.currentEvent,
           gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
           engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
         });
@@ -414,10 +418,14 @@ class Engine {
         // Update engine state copy
         engineStateCopy.choices = choices;
         
+        // Set currentStep to match action index within event
+        engineStateCopy.currentStep = actions.length;
+        
         // Create action with state snapshot (WITH choices)
         actions.push({
           type: 'showChoices',
           choices,
+          event_id: engineStateCopy.currentEvent,
           gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
           engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
         });
@@ -433,9 +441,13 @@ class Engine {
       },
 
       async jump(eventId: string): Promise<void> {
+        // Set currentStep to match action index within event
+        engineStateCopy.currentStep = actions.length;
+        
         actions.push({
           type: 'jump',
           eventId,
+          event_id: engineStateCopy.currentEvent,
           gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
           engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
         });
@@ -443,11 +455,15 @@ class Engine {
       },
 
       async runCustomLogic(logicId: string, args: any): Promise<any> {
+        // Set currentStep to match action index within event
+        engineStateCopy.currentStep = actions.length;
+        
         // Create action for custom logic (will be executed during navigation)
         actions.push({
           type: 'runCustomLogic',
           logicId,
           args,
+          event_id: engineStateCopy.currentEvent,
           gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
           engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
         });
@@ -663,6 +679,22 @@ class Engine {
       // Move this action to future (so we can redo it later)
       this.historyState.moveToFuture(lastAction);
       
+      // Check if we're moving to a different event (cross-event navigation)
+      const targetEventId = lastAction.event_id;
+      const currentEventId = this.engineState.currentEvent;
+      
+      if (targetEventId && targetEventId !== currentEventId) {
+        console.warn(`GOBACK - Cross-event navigation: ${currentEventId} -> ${targetEventId}`);
+        
+        // Switch event context
+        this.engineState.currentEvent = targetEventId;
+        
+        // Reset current step to match the action's position in the target event
+        if (lastAction.engineStateCopy && typeof lastAction.engineStateCopy.currentStep === 'number') {
+          this.engineState.currentStep = lastAction.engineStateCopy.currentStep;
+        }
+      }
+      
       // We need to restore to the state BEFORE this action
       // Look at the previous action in history to get the "before" state
       if (this.historyState.history.length > 0) {
@@ -701,13 +733,33 @@ class Engine {
     
     console.log(`GOFORWARD: Processing action: ${nextAction.type}`);
     
+    // Check if we're moving to a different event (cross-event navigation)
+    const targetEventId = nextAction.event_id;
+    const currentEventId = this.engineState.currentEvent;
+    
+    if (targetEventId && targetEventId !== currentEventId) {
+      console.warn(`GOFORWARD - Cross-event navigation: ${currentEventId} -> ${targetEventId}`);
+      
+      // Switch event context
+      this.engineState.currentEvent = targetEventId;
+    }
+    
     // Apply the action's pre-calculated state snapshot
-    this.applyActionToEngine(nextAction);
+    try {
+      this.applyActionToEngine(nextAction);
+    } catch (error) {
+      if (error instanceof EngineErrors.JumpInterrupt) {
+        console.log(`GOFORWARD: Jump encountered to ${error.targetEventId}`);
+        // Handle jump during history navigation - the jump will be processed by main game loop
+        // Add this action to history first, then let the jump propagate
+        this.historyState.addBackToHistory(nextAction);
+        throw error; // Re-throw to let main game loop handle the jump
+      }
+      throw error; // Re-throw other errors
+    }
     
     // Add this action to history (it contains the state snapshot)
     this.historyState.addBackToHistory(nextAction);
-    
-    this.engineState.currentStep++;
     
     console.log(`GOFORWARD - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
     console.log(`GOFORWARD - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
