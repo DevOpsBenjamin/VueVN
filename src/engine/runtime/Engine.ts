@@ -392,26 +392,26 @@ class Engine {
           engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
         });
         
-        console.debug(`SIMULATION: showText captured state snapshot`);
+        console.warn(`SIMULATION: showText captured state snapshot`);
       },
 
       async setBackground(imagePath: string): Promise<void> {
         // IMMEDIATE - no action created, just update copy
         engineStateCopy.background = imagePath;
-        console.debug(`SIMULATION: setBackground immediate - ${imagePath}`);
+        console.warn(`SIMULATION: setBackground immediate - ${imagePath}`);
       },
 
       async setForeground(imagePath: string): Promise<void> {
         // IMMEDIATE - no action created, just update copy  
         engineStateCopy.foreground = imagePath;
-        console.debug(`SIMULATION: setForeground immediate - ${imagePath}`);
+        console.warn(`SIMULATION: setForeground immediate - ${imagePath}`);
       },
 
       async showChoices(choices: Array<Choice>): Promise<string> {
         // Update engine state copy
         engineStateCopy.choices = choices;
         
-        // Create action with state snapshot
+        // Create action with state snapshot - this is where simulation should STOP
         actions.push({
           type: 'showChoices',
           choices,
@@ -419,22 +419,11 @@ class Engine {
           engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
         });
         
-        // Use historical choice if replaying, otherwise first choice for simulation
-        const choiceId = this.getHistoricalChoice() || choices[0].id;
-        const choice = choices.find(c => c.id === choiceId);
+        console.warn(`SIMULATION: showChoices captured - simulation should end here`);
         
-        if (choice?.jump_id) {
-          // Create jump action
-          actions.push({
-            type: 'jump',
-            eventId: choice.jump_id,
-            gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
-            engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
-          });
-          throw new EngineErrors.JumpInterrupt(choice.jump_id);
-        }
-        
-        return choiceId;
+        // For simulation, we DON'T make the choice or jump - that happens during navigation
+        // Just return a placeholder and let simulation end naturally
+        throw new EngineErrors.JumpInterrupt('CHOICE_ENCOUNTERED');
       },
 
       async jump(eventId: string): Promise<void> {
@@ -458,7 +447,7 @@ class Engine {
         });
         
         // Return placeholder result for simulation
-        console.debug(`SIMULATION: runCustomLogic placeholder - ${logicId}`);
+        console.warn(`SIMULATION: runCustomLogic placeholder - ${logicId}`);
         return { placeholder: true, logicId };
       }
     };
@@ -749,9 +738,9 @@ class Engine {
       Object.assign(this.gameState, action.gameStateCopy);
       Object.assign(this.engineState, action.engineStateCopy);
       
-      console.debug(`APPLIED STATE SNAPSHOT for ${action.type}`);
-      console.debug(`- Game state restored`);
-      console.debug(`- Engine state restored (dialogue, background, foreground, etc.)`);
+      console.warn(`APPLIED STATE SNAPSHOT for ${action.type}`);
+      console.warn(`- Game state restored`);
+      console.warn(`- Engine state restored (dialogue, background, foreground, etc.)`);
     } else {
       console.warn(`Action ${action.type} missing state snapshots - old format?`, action);
     }
@@ -761,7 +750,7 @@ class Engine {
    * Wait for user navigation input (the main await in dual-phase engine)
    */
   private async waitForNavigation(): Promise<void> {
-    console.debug("WAITING FOR NAVIGATION INPUT...");
+    console.warn("WAITING FOR NAVIGATION INPUT...");
     return new Promise<void>((resolve) => {
       this.navigationAwaiter = resolve;
     });
