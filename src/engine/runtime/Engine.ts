@@ -671,6 +671,16 @@ class Engine {
       return;
     }
 
+    // Cancel any pending awaiters (choice, navigation, etc.)
+    if (this.awaiterResult) {
+      console.warn("GOBACK: Cancelling pending awaiter");
+      this.awaiterResult = null;
+    }
+    if (this.navigationAwaiter) {
+      console.warn("GOBACK: Cancelling pending navigation awaiter");
+      this.navigationAwaiter = null;
+    }
+
     console.warn("Going back in history...");
     
     // Get the last action from history (this is what we want to undo)
@@ -709,8 +719,6 @@ class Engine {
       }
       
       console.warn(`GOBACK - Undid action: ${lastAction.type}`);
-      console.warn(`GOBACK - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
-      console.warn(`GOBACK - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
     }
   }
 
@@ -722,6 +730,16 @@ class Engine {
     if (this.historyState.future.length === 0) {
       console.log("GOFORWARD: End of actions reached - no more future actions");
       return;
+    }
+
+    // Cancel any pending awaiters before moving forward
+    if (this.awaiterResult) {
+      console.warn("GOFORWARD: Cancelling pending awaiter");
+      this.awaiterResult = null;
+    }
+    if (this.navigationAwaiter) {
+      console.warn("GOFORWARD: Cancelling pending navigation awaiter");
+      this.navigationAwaiter = null;
     }
     
     // Get next action from future
@@ -761,8 +779,6 @@ class Engine {
     // Add this action to history (it contains the state snapshot)
     this.historyState.addBackToHistory(nextAction);
     
-    console.log(`GOFORWARD - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
-    console.log(`GOFORWARD - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
     
     // Handle special actions
     if (nextAction.type === 'showChoices') {
@@ -850,7 +866,7 @@ class Engine {
       // After resolving, call goForward for next action
       this.goForward();
     } else {
-      console.debug("No navigation awaiter to resolve");
+      console.warn("No navigation awaiter to resolve");
     }
   }
 }
