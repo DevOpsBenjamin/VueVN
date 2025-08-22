@@ -13,6 +13,7 @@ const intro: VNEvent = {
     await engine.showChoices([
       { text: 'Start the adventure', id: 'start', branch: 'start_adventure' },
       { text: 'Learn more about VueVN', id: 'learn', branch: 'learn_more' },
+      { text: 'Debug MiniGame', id: 'debug', branch: 'debug_minigame' },
     ]);
   },
 
@@ -46,6 +47,21 @@ const intro: VNEvent = {
         state.location = 'bedroom';
         await engine.showText("Great! Let's begin your adventure.");
         await engine.showText("You head to your bedroom to start your journey.");
+      }
+    },
+    
+    debug_minigame: {
+      async execute(engine, state) {
+        // Branch minimale pour tester le mini-jeu directement
+        await engine.showText("Starting debug minigame...");
+        
+        // Lance le mini-jeu - il gère tout lui-même
+        await engine.runCustomLogic('timingMinigame', { 
+          difficulty: 1,
+          context: 'debug_mode'
+        });
+        
+        // Pas de code après - retour à l'intro naturellement
       }
     }
   }
