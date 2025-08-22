@@ -15,7 +15,6 @@ import type {
   Choice 
 } from "./types";
 import { EngineErrors } from '@/generate/runtime';
-const { JumpInterrupt } = EngineErrors;
 import { CustomLogicRegistry } from '@/generate/runtime';
 
 class Engine {
@@ -248,7 +247,7 @@ class Engine {
       console.debug(`Event ${immediateEvent.id} completed`);
       
     } catch (error) {
-      if (error instanceof JumpInterrupt) {
+      if (error instanceof EngineErrors.JumpInterrupt) {
         console.debug(`Event ${immediateEvent.id} interrupted by jump to ${error.targetEventId}`);
         // Jump handling will be done by main game loop
       } else {
@@ -327,7 +326,7 @@ class Engine {
         
         if (choice?.jump_id) {
           actions.push({ type: 'jump', eventId: choice.jump_id });
-          throw new JumpInterrupt(choice.jump_id);
+          throw new EngineErrors.JumpInterrupt(choice.jump_id);
         }
         
         return choiceId;
@@ -335,13 +334,13 @@ class Engine {
 
       async jump(eventId: string): Promise<void> {
         actions.push({ type: 'jump', eventId });
-        throw new JumpInterrupt(eventId);
+        throw new EngineErrors.JumpInterrupt(eventId);
       },
 
       async runCustomLogic(logicId: string, args: any): Promise<any> {
         actions.push({ type: 'runCustomLogic', logicId, args });
         // Custom logic exits event flow
-        throw new JumpInterrupt('EXIT_EVENT');
+        throw new EngineErrors.JumpInterrupt('EXIT_EVENT');
       }
     };
   }
@@ -390,14 +389,14 @@ class Engine {
 
       case 'jump':
         this.jumpToEvent(action.eventId);
-        throw new JumpInterrupt(action.eventId);
+        throw new EngineErrors.JumpInterrupt(action.eventId);
         break;
 
       case 'runCustomLogic':
         const result = await this.executeCustomLogic(action.logicId, action.args);
         this.cacheCustomLogicResult(action.logicId, result);
         // Custom logic exits event flow
-        throw new JumpInterrupt('EXIT_EVENT');
+        throw new EngineErrors.JumpInterrupt('EXIT_EVENT');
         break;
 
       default:
