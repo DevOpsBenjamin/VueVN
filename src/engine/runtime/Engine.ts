@@ -671,11 +671,10 @@ class Engine {
         Object.assign(this.gameState, previousAction.gameStateCopy);
         Object.assign(this.engineState, previousAction.engineStateCopy);
       } else {
-        // No previous action - restore to initial state  
+        // No previous action - stay in current state, just clear UI elements
         this.engineState.dialogue = null;
         this.engineState.choices = null;
-        this.engineState.background = null;
-        this.engineState.foreground = null;
+        // Keep background/foreground - don't reset game state
       }
       
       console.warn(`GOBACK - Undid action: ${lastAction.type}`);
