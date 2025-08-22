@@ -5,6 +5,7 @@ import {
   VNInterruptError,
 } from "@/generate/runtime";
 import { engineStateEnum as ENGINE_STATES } from "@/generate/stores";
+import useHistoryState from '../stores/historyState';
 import type { 
   GameState, 
   EngineState, 
@@ -20,6 +21,7 @@ import { CustomLogicRegistry } from '@/generate/runtime';
 class Engine {
   gameState: GameState;
   engineState: EngineState;
+  historyState: ReturnType<typeof useHistoryState>;
   awaiterResult: ((value: any) => void) | null;
   replayMode: boolean;
   targetStep: number;
@@ -32,6 +34,7 @@ class Engine {
   constructor(gameState: GameState, engineState: EngineState) {
     this.gameState = gameState;
     this.engineState = engineState;
+    this.historyState = useHistoryState();
     this.awaiterResult = null;
     this.replayMode = false;
     this.targetStep = 0;
@@ -39,14 +42,8 @@ class Engine {
     this.customLogicCache = {};
 
     // Initialize new engine state properties for dual-phase execution
-    if (!this.engineState.history) {
-      this.engineState.history = [];
-    }
-    if (!this.engineState.future) {
-      this.engineState.future = [];
-    }
-    if (typeof this.engineState.currentActionIndex === 'undefined') {
-      this.engineState.currentActionIndex = 0;
+    if (typeof this.engineState.currentStep === 'undefined') {
+      this.engineState.currentStep = 0;
     }
     if (typeof this.engineState.isSimulating === 'undefined') {
       this.engineState.isSimulating = false;
@@ -243,7 +240,7 @@ class Engine {
       
       // Event completed successfully
       this.engineState.currentEvent = null;
-      this.engineState.currentActionIndex = 0;
+      this.engineState.currentStep = 0;
       console.debug(`Event ${immediateEvent.id} completed`);
       
     } catch (error) {
@@ -276,7 +273,11 @@ class Engine {
       this.engineState.isSimulating = false;
     }
     
-    console.debug(`Generated ${actions.length} actions from simulation`);
+    // TODO: Remove debug logs when engine is stable - requested for development debugging
+    console.log(`SIMULATED EVENT: ${event.name || event.id}`);
+    console.log(`HISTORY:`, this.historyState.history);
+    console.log(`FUTURE:`, this.historyState.future);
+    
     return actions;
   }
 
@@ -286,7 +287,7 @@ class Engine {
   private async playbackActions(actions: VNAction[]): Promise<void> {
     console.debug(`Playing back ${actions.length} actions`);
     
-    for (let i = this.engineState.currentActionIndex; i < actions.length; i++) {
+    for (let i = this.engineState.currentStep; i < actions.length; i++) {
       const action = actions[i];
       
       // Record state before action for history
@@ -295,7 +296,7 @@ class Engine {
       // Execute action with real user interaction
       await this.executeAction(action);
       
-      this.engineState.currentActionIndex = i + 1;
+      this.engineState.currentStep = i + 1;
     }
   }
 
@@ -408,9 +409,6 @@ class Engine {
    * Record current state and action in history
    */
   private recordHistory(action: VNAction): void {
-    // Clear future when new action taken (no more go-forward)
-    this.engineState.future = [];
-    
     // Create snapshot of current state
     const entry: HistoryEntry = {
       action,
@@ -419,12 +417,7 @@ class Engine {
       timestamp: Date.now()
     };
     
-    this.engineState.history.push(entry);
-    
-    // Limit history size for performance (50 entries max)
-    if (this.engineState.history.length > 50) {
-      this.engineState.history.shift(); // Remove oldest
-    }
+    this.historyState.addToHistory(entry);
   }
 
   /**
@@ -466,7 +459,7 @@ class Engine {
    */
   private jumpToEvent(eventId: string): void {
     this.engineState.currentEvent = eventId;
-    this.engineState.currentActionIndex = 0;
+    this.engineState.currentStep = 0;
     console.debug(`Jumping to event: ${eventId}`);
   }
 
@@ -537,7 +530,7 @@ class Engine {
    * Go back one step in history
    */
   async goBack(): Promise<void> {
-    if (this.engineState.history.length === 0) {
+    if (!this.historyState.canGoBack()) {
       console.warn("No history to go back to");
       return;
     }
@@ -546,27 +539,27 @@ class Engine {
     
     // Save current state to future stack for go-forward
     const currentEntry: HistoryEntry = {
-      action: this.engineState.history[this.engineState.history.length - 1]?.action || { type: 'showText', text: 'current' },
+      action: this.historyState.history[this.historyState.history.length - 1]?.action || { type: 'showText', text: 'current' },
       gameStateBefore: JSON.parse(JSON.stringify(this.gameState)),
       engineStateBefore: JSON.parse(JSON.stringify(this.engineState)),
       timestamp: Date.now()
     };
-    this.engineState.future.push(currentEntry);
+    this.historyState.moveToFuture(currentEntry);
     
     // Get the entry to revert to
-    const lastEntry = this.engineState.history.pop();
+    const lastEntry = this.historyState.moveToHistory();
     if (lastEntry) {
       // Restore state from before the last action
       Object.assign(this.gameState, lastEntry.gameStateBefore);
       
       // Restore engine state but preserve current event flow context
       const currentEvent = this.engineState.currentEvent;
-      const currentActionIndex = this.engineState.currentActionIndex;
+      const currentStep = this.engineState.currentStep;
       Object.assign(this.engineState, lastEntry.engineStateBefore);
       
       // Update current event and action index to reflect reverted state
       this.engineState.currentEvent = lastEntry.engineStateBefore.currentEvent;
-      this.engineState.currentActionIndex = lastEntry.engineStateBefore.currentActionIndex;
+      this.engineState.currentStep = lastEntry.engineStateBefore.currentStep;
       
       // Clear any active UI state
       this.engineState.dialogue = null;
@@ -577,7 +570,7 @@ class Engine {
         props: null
       };
       
-      console.debug(`Went back to before action: ${lastEntry.action.type}. History length: ${this.engineState.history.length}`);
+      console.debug(`Went back to before action: ${lastEntry.action.type}. History length: ${this.historyState.history.length}`);
     }
   }
 
@@ -585,7 +578,7 @@ class Engine {
    * Go forward one step (after going back)
    */
   async goForward(): Promise<void> {
-    if (this.engineState.future.length === 0) {
+    if (!this.historyState.canGoForward()) {
       console.warn("No future to go forward to");
       return;
     }
@@ -593,7 +586,7 @@ class Engine {
     console.debug("Going forward in history...");
     
     // Get the next entry from future stack
-    const nextEntry = this.engineState.future.pop();
+    const nextEntry = this.historyState.moveToHistoryFromFuture();
     if (nextEntry) {
       // Record current state back to history
       this.recordHistory(nextEntry.action);
@@ -627,7 +620,7 @@ class Engine {
         }
       }
       
-      console.debug(`Went forward to action: ${nextEntry.action.type}. Future length: ${this.engineState.future.length}`);
+      console.debug(`Went forward to action: ${nextEntry.action.type}. Future length: ${this.historyState.future.length}`);
     }
   }
 }

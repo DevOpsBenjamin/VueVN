@@ -38,9 +38,7 @@ export interface EngineState {
   initialized: boolean;
   state: string;
   currentEvent: string | null;
-  currentActionIndex: number;
-  history: HistoryEntry[];
-  future: HistoryEntry[];
+  currentStep: number;
   isSimulating: boolean;
   isFastForwarding: boolean;
   resetState: () => void;

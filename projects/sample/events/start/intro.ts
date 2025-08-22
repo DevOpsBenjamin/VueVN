@@ -9,7 +9,7 @@ const intro: VNEvent = {
   async execute(engine, state) {
     await engine.setForeground('assets/images/background/intro/hall.png');
     await engine.showText('Welcome to sample!');
-    state.npc_1.rel +=1;
+    state.npc_1.relation +=1;
     await engine.showText('This is your first event.');
     
     // Test basic choices without automatic jumps (old pattern converted)
