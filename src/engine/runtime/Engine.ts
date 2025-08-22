@@ -691,28 +691,7 @@ class Engine {
    * Main navigation method - go forward to next action and wait for user input
    */
   async goForward(): Promise<void> {
-    // Check if we're going forward in history (redo) vs normal navigation
-    if (this.historyState.canGoForward()) {
-      console.log("GOFORWARD: Restoring from future (redo)");
-      
-      // Get the next entry from future stack
-      const nextEntry = this.historyState.moveToHistoryFromFuture();
-      if (nextEntry) {
-        this.historyState.addBackToHistory(nextEntry);
-        this.applyActionToEngine(nextEntry.action);
-        console.log(`GOFORWARD REDO - Action: ${nextEntry.action.type}`);
-        console.log(`GOFORWARD REDO - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
-        console.log(`GOFORWARD REDO - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
-      }
-      
-      // Wait for next user input unless skip mode
-      if (!this.skipMode) {
-        await this.waitForNavigation();
-      }
-      return;
-    }
-    
-    // Normal forward navigation - move action from future to history
+    // Check if we have any actions in future to process
     if (this.historyState.future.length === 0) {
       console.log("GOFORWARD: End of actions reached - no more future actions");
       return;
@@ -725,7 +704,7 @@ class Engine {
       return;
     }
     
-    console.log(`GOFORWARD NORMAL - Action: ${nextAction.type}`);
+    console.log(`GOFORWARD: Processing action: ${nextAction.type}`);
     
     // Apply the action's pre-calculated state snapshot
     this.applyActionToEngine(nextAction);
@@ -735,8 +714,8 @@ class Engine {
     
     this.engineState.currentStep++;
     
-    console.log(`GOFORWARD NORMAL - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
-    console.log(`GOFORWARD NORMAL - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
+    console.log(`GOFORWARD - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
+    console.log(`GOFORWARD - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
     
     // Handle special actions
     if (nextAction.type === 'showChoices') {
@@ -757,6 +736,8 @@ class Engine {
    * Apply an action's complete state snapshot to current state
    */
   private applyActionToEngine(action: VNAction): void {
+    console.debug(`APPLYING ACTION: ${action.type}`, action);
+    
     if (action.type === 'jump') {
       // Handle jumps separately
       console.log(`APPLYING JUMP to: ${action.eventId}`);
@@ -772,7 +753,7 @@ class Engine {
       console.debug(`- Game state restored`);
       console.debug(`- Engine state restored (dialogue, background, foreground, etc.)`);
     } else {
-      console.warn(`Action ${action.type} missing state snapshots - old format?`);
+      console.warn(`Action ${action.type} missing state snapshots - old format?`, action);
     }
   }
 
