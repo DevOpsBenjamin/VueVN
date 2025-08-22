@@ -13,6 +13,12 @@ const intro: VNEvent = {
     await engine.showText('You can use Arrow Left/Q to go back in history.');
     await engine.showText('You can use Space/Arrow Right/E to continue forward.');
     state.npc_1.relation +=1;
+    if (state.npc_1.relation > 3) {
+      await engine.showText('You are close to npc_1.name');
+    }
+    else {
+      await engine.showText('You are not close enough to npc_1.name');
+    }
     await engine.showText('This is your first event with multiple text entries.');
     await engine.showText('Perfect for testing the go back and go forward functionality.');
     await engine.showText('Each of these text lines should be a separate history entry.');
