@@ -120,6 +120,8 @@ class Engine {
         }
       } else if (e.key === "Space" || e.key === "ArrowRight") {
         this.resolveAwaiter("continue");
+      } else if (e.key === "ArrowLeft") {
+        this.goBack();
       } else {
         console.debug(`Unhandled key: ${e.key}`);
       }
@@ -132,7 +134,10 @@ class Engine {
           console.debug("Click ignored, not in RUNNING state");
         }
       } else {
-        // Optionally: this.resolveAwaiter('back');
+        // Left side click - go back
+        if (this.engineState.state === ENGINE_STATES.RUNNING) {
+          this.goBack();
+        }
       }
     });
   }
