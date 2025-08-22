@@ -30,6 +30,8 @@ class Engine {
     { notReady: VNEvent[]; unlocked: VNEvent[]; locked: VNEvent[] }
   >;
   private customLogicCache: Record<string, any>;
+  private skipMode: boolean = false;
+  private keyboardLayout: 'qwerty' | 'azerty' = 'qwerty';
 
   constructor(gameState: GameState, engineState: EngineState) {
     this.gameState = gameState;
@@ -45,6 +47,9 @@ class Engine {
     if (typeof this.engineState.currentStep === 'undefined') {
       this.engineState.currentStep = 0;
     }
+    
+    // Detect keyboard layout
+    this.detectKeyboardLayout();
     if (typeof this.engineState.isSimulating === 'undefined') {
       this.engineState.isSimulating = false;
     }
@@ -113,6 +118,13 @@ class Engine {
 
   initVNInputHandlers(): void {
     window.addEventListener("keydown", (e) => {
+      // Handle skip mode (Ctrl key)
+      if (e.key === "Control") {
+        this.skipMode = true;
+        console.debug("Skip mode ON");
+        return;
+      }
+      
       if (e.key === "Escape") {
         if (
           this.engineState.initialized &&
@@ -122,16 +134,31 @@ class Engine {
         } else {
           this.engineState.state = ENGINE_STATES.MENU;
         }
-      } else if (e.key === "Space") {
-        this.resolveAwaiter("continue");
-      } else if (e.key === "ArrowRight" && e.shiftKey) {
-        this.goForward();
-      } else if (e.key === "ArrowRight") {
-        this.resolveAwaiter("continue");
+      } else if (e.key === "Space" || e.key === "ArrowRight") {
+        // Forward navigation
+        if (e.shiftKey && e.key === "ArrowRight") {
+          this.goForward(); // History forward
+        } else {
+          this.resolveAwaiter("continue"); // Continue dialogue
+        }
       } else if (e.key === "ArrowLeft") {
+        this.goBack(); // History backward
+      } else if (this.isForwardKey(e.key)) {
+        // E key (QWERTY) or E key (AZERTY) - forward
+        this.resolveAwaiter("continue");
+      } else if (this.isBackwardKey(e.key)) {
+        // Q key (QWERTY) or A key (AZERTY) - backward  
         this.goBack();
       } else {
         console.debug(`Unhandled key: ${e.key}`);
+      }
+    });
+    
+    window.addEventListener("keyup", (e) => {
+      // Handle skip mode release
+      if (e.key === "Control") {
+        this.skipMode = false;
+        console.debug("Skip mode OFF");
       }
     });
     window.addEventListener("click", (e) => {
@@ -148,6 +175,32 @@ class Engine {
         }
       }
     });
+  }
+
+  private detectKeyboardLayout(): void {
+    // Try to detect keyboard layout based on browser language
+    const lang = navigator.language.toLowerCase();
+    if (lang.startsWith('fr')) {
+      this.keyboardLayout = 'azerty';
+      console.debug('Detected AZERTY keyboard layout');
+    } else {
+      this.keyboardLayout = 'qwerty';
+      console.debug('Detected QWERTY keyboard layout');
+    }
+  }
+
+  private isForwardKey(key: string): boolean {
+    // E key works for both layouts
+    return key === 'e' || key === 'E';
+  }
+
+  private isBackwardKey(key: string): boolean {
+    // Q for QWERTY, A for AZERTY (since Q is where A is on AZERTY)
+    if (this.keyboardLayout === 'azerty') {
+      return key === 'a' || key === 'A';
+    } else {
+      return key === 'q' || key === 'Q';
+    }
   }
 
   resolveAwaiter(result: any): void {
@@ -422,8 +475,15 @@ class Engine {
 
   /**
    * Wait for user to continue (right click or space)
+   * Skip mode bypasses this wait
    */
   private async waitForContinue(): Promise<void> {
+    // Skip mode: don't wait, continue immediately
+    if (this.skipMode) {
+      console.debug("Skip mode active: bypassing wait");
+      return Promise.resolve();
+    }
+    
     return new Promise<void>((resolve) => {
       this.awaiterResult = resolve;
     });

@@ -69,6 +69,7 @@ function handleKeyPress(event: KeyboardEvent): void {
   
   if (choiceIndex >= 0 && choiceIndex < engineState.choices.length) {
     event.preventDefault();
+    event.stopPropagation(); // Prevent engine from handling this key
     select(engineState.choices[choiceIndex].id);
   }
 }
