@@ -41,15 +41,12 @@ export interface EngineState {
   currentStep: number;
   isSimulating: boolean;
   isFastForwarding: boolean;
+}
+
+export interface EngineActions {
   resetState: () => void;
 }
 
-export interface GameState {
-  player: { name: string };
-  location: string;
-  flags: Record<string, any>;
-  [key: string]: any;
-}
 
 export interface EngineAPIForEvents {
   showText: (text: string, from?: string) => Promise<void>;

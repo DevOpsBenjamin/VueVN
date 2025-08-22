@@ -3,9 +3,13 @@ import {
   EngineAPI,
   EngineSave,
   VNInterruptError,
+  EngineErrors,
+  CustomLogicRegistry
 } from "@/generate/runtime";
-import { engineStateEnum as ENGINE_STATES } from "@/generate/stores";
-import useHistoryState from '../stores/historyState';
+import { 
+  engineStateEnum as ENGINE_STATES, 
+  historyState as useHistoryState
+} from "@/generate/stores";
 import type { 
   GameState, 
   EngineState, 
@@ -15,8 +19,6 @@ import type {
   EngineAPIForEvents,
   Choice 
 } from "./types";
-import { EngineErrors } from '@/generate/runtime';
-import { CustomLogicRegistry } from '@/generate/runtime';
 
 class Engine {
   gameState: GameState;
@@ -45,28 +47,8 @@ class Engine {
     this.targetStep = 0;
     this.eventCache = {};
     this.customLogicCache = {};
-
-    // Initialize new engine state properties for dual-phase execution
-    if (typeof this.engineState.currentStep === 'undefined') {
-      this.engineState.currentStep = 0;
-    }
-    
-    // Detect keyboard layout
     this.detectKeyboardLayout();
-    if (typeof this.engineState.isSimulating === 'undefined') {
-      this.engineState.isSimulating = false;
-    }
-    if (typeof this.engineState.isFastForwarding === 'undefined') {
-      this.engineState.isFastForwarding = false;
-    }
-    if (!this.engineState.minigame) {
-      this.engineState.minigame = {
-        active: false,
-        type: null,
-        props: null
-      };
-    }
-
+    
     if (typeof window !== "undefined") {
       const w = window as any;
       if (!w.__VN_ENGINE__) {

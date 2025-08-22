@@ -28,8 +28,9 @@ The engine architecture redesign has been successfully implemented:
 5. **Jump-Only Boundaries**: All event transitions happen through jumps for simplicity
 6. **🚨 CRITICAL: Import Strategy for Extensibility**
    - **ALWAYS** use `@/generate/runtime` imports in engine files
+   - **ALWAYS** use `@/generate/types` imports for TypeScript interfaces
    - **NEVER** use relative imports (`./`, `../`) in engine code
-   - This preserves plugin capability - users can customize any engine component through `generate/runtime` without core import conflicts
+   - This preserves plugin capability - users can customize any engine component or type through generated imports without core import conflicts
 
 ## Key Architecture
 
@@ -39,16 +40,41 @@ The engine architecture redesign has been successfully implemented:
 - The `VUEVN_PROJECT` environment variable determines which project is active
 - Projects are isolated but share the same engine runtime
 
-### Code Generation
+### Code Generation System
 - The build system generates TypeScript files from project data using `scripts/generate.cts`
 - Generated files are placed in `src/generate/` and provide type-safe access to project resources
 - Generation happens automatically during development and before builds
+- **Types Generation**: `generate-types-index.cts` creates `src/generate/types.ts` with TypeScript interfaces
+- **Runtime Generation**: Creates component imports, events, stores, and engine modules
+- **Project Override Support**: Projects can override any engine type by placing custom versions in `projects/{name}/types/`
 
 ### Engine Architecture (CURRENT IMPLEMENTATION)
 - **Engine** (`src/engine/runtime/Engine.ts`): Dual-phase execution with simulation + playback
 - **EngineAPIForEvents**: Natural async/await API for event development
 - **History System**: Text-by-text navigation with 50-entry limit and state snapshots
 - **Save/Load**: Mid-event saves with fast-forward replay capability
+- **State Management**: Pinia stores with strict TypeScript interfaces for engine and game state
+
+### State Management with Pinia
+- **Store Pattern**: Use Options API with typed state functions for type safety
+- **Interface Compliance**: All stores must implement their corresponding TypeScript interfaces
+- **Type Generation**: Store interfaces are generated from `src/engine/types/` with project override support
+
+```typescript
+// Recommended Pinia store pattern
+export const useEngineState = defineStore('engineState', {
+  state: (): EngineState => ({
+    background: null,
+    dialogue: null,
+    // ... all interface properties required
+  }),
+  actions: {
+    resetState(): void {
+      // Actions typed separately from state
+    },
+  },
+});
+```
 
 ### Editor Architecture
 - **ProjectEditor.vue**: Main editor interface with file explorer, Monaco editor, and live preview
@@ -80,22 +106,28 @@ npm run build <project-name>
 ## 🚨 Critical Architectural Rules
 
 ### Import Strategy for Plugin System
-**MANDATORY RULE**: All engine files MUST use `@/generate/runtime` imports instead of relative imports.
+**MANDATORY RULES**: 
+1. All engine files MUST use `@/generate/runtime` imports for components
+2. All type definitions MUST use `@/generate/types` imports for interfaces
 
 ```typescript
 // ✅ CORRECT - Allows user customization
 import { Engine, CustomLogicRegistry } from '@/generate/runtime';
+import type { EngineState, Dialogue } from '@/generate/types';
 
 // ❌ WRONG - Prevents user customization  
 import Engine from './Engine';
 import { CustomLogicRegistry } from './CustomLogicRegistry';
+import type EngineState from './types/EngineState';
+import type Dialogue from './types/Dialogue';
 ```
 
 **Why this matters:**
-- Users can override any engine component by customizing `src/generate/runtime.ts`
-- Core engine won't import original versions when user provides custom ones
+- Users can override any engine component or type by placing custom versions in their project
+- Core engine won't import original versions when user provides overrides
 - Enables true plugin/extension capability without import conflicts
-- Maintains clean separation between core and user-customizable parts
+- Projects can customize interfaces (e.g., add `avatar` field to `Dialogue` interface)
+- Type generation system automatically prioritizes project types over engine defaults
 
 ### Documentation Organization
 - **`Claude/`**: All Claude Code documentation and architectural plans
