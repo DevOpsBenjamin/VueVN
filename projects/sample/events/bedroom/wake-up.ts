@@ -5,8 +5,10 @@ const wakeUp: VNEvent = {
   name: "Wake Up",
   conditions: (state) => state.location === "bedroom" && !state.flags.wokeUp,
   async execute(engine, state) {
-    await engine.showText("You wake up in your bedroom.");
+    await engine.setBackground('assets/images/background/intro/hall.png');
+    await engine.showText("You wake up in your bedroom.", "Narrator");
     state.flags.wokeUp = true;
+    await engine.showText("The room is quiet and peaceful.", "Narrator");
   },
 };
 
