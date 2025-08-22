@@ -300,12 +300,16 @@ class Engine {
       // Phase 1: Simulation - generate action sequence with pre-calculated results
       const actionSequence = await this.simulateEvent(immediateEvent);
       
-      // Phase 2: Store actions for navigation and start at first action
-      this.currentActions = actionSequence;
+      // Phase 2: Pre-fill future with all simulated actions for navigation
+      this.historyState.future.splice(0); // Clear any existing future
+      actionSequence.forEach(action => this.historyState.future.push(action));
       this.engineState.currentEvent = immediateEvent.id;
       this.engineState.currentStep = 0;
       
-      // Start navigation (first goForward will show first action and wait)
+      console.log(`PRE-FILLED FUTURE with ${actionSequence.length} actions`);
+      console.log(`FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
+      
+      // Start navigation (first goForward will move action from future to history)
       await this.goForward();
       
       console.debug(`Event ${immediateEvent.id} completed`);
@@ -708,34 +712,39 @@ class Engine {
       return;
     }
     
-    // Normal forward navigation through current actions
-    if (this.engineState.currentStep >= this.currentActions.length) {
-      console.log("GOFORWARD: End of actions reached");
+    // Normal forward navigation - move action from future to history
+    if (this.historyState.future.length === 0) {
+      console.log("GOFORWARD: End of actions reached - no more future actions");
       return;
     }
     
-    const currentAction = this.currentActions[this.engineState.currentStep];
-    console.log(`GOFORWARD NORMAL - Step ${this.engineState.currentStep} - Action: ${currentAction.type}`);
+    // Get next action from future
+    const nextAction = this.historyState.moveToHistoryFromFuture();
+    if (!nextAction) {
+      console.log("GOFORWARD: No action retrieved from future");
+      return;
+    }
     
-    // Record current state in history before applying action
-    this.recordHistory(currentAction);
+    console.log(`GOFORWARD NORMAL - Action: ${nextAction.type}`);
     
-    // Apply the action to engine state
-    this.applyActionToEngine(currentAction);
+    // Apply the action's pre-calculated state snapshot
+    this.applyActionToEngine(nextAction);
     
-    // Move to next step
+    // Add this action to history (it contains the state snapshot)
+    this.historyState.addBackToHistory(nextAction);
+    
     this.engineState.currentStep++;
     
     console.log(`GOFORWARD NORMAL - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
     console.log(`GOFORWARD NORMAL - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
     
     // Handle special actions
-    if (currentAction.type === 'showChoices') {
+    if (nextAction.type === 'showChoices') {
       // For choices, wait for user selection (not skip mode)
       await this.waitForChoice();
-    } else if (currentAction.type === 'runCustomLogic') {
+    } else if (nextAction.type === 'runCustomLogic') {
       // Execute custom logic now (not simulated)
-      await this.executeCustomLogic(currentAction);
+      await this.executeCustomLogic(nextAction);
     } else {
       // Normal actions: wait for user input unless skip mode
       if (!this.skipMode) {
