@@ -1,52 +1,63 @@
 import {
-  EngineEvents,
-  EngineAPI,
   EngineSave,
   VNInterruptError,
   EngineErrors,
-  CustomLogicRegistry
+  SimulateRunner,
+  CustomRegistry,
+  HistoryManager,
+  EventManager,
+  InputManager
 } from "@/generate/runtime";
 import { 
-  engineStateEnum as ENGINE_STATES, 
-  historyState as useHistoryState
-} from "@/generate/stores";
+  EngineStateEnum,
+} from "@/generate/types";
 import type { 
   GameState, 
   EngineState, 
   VNEvent, 
   VNAction, 
-  HistoryEntry, 
-  EngineAPIForEvents,
-  Choice 
-} from "./types";
+  HistoryEntry
+} from "@/generate/types";
 
 class Engine {
   gameState: GameState;
   engineState: EngineState;
-  historyState: ReturnType<typeof useHistoryState>;
+  historyManager: HistoryManager;
+  eventManager: EventManager;
+  inputManager: InputManager;
+
   awaiterResult: ((value: any) => void) | null;
+  /*
   replayMode: boolean;
   targetStep: number;
   eventCache: Record<
     string,
     { notReady: VNEvent[]; unlocked: VNEvent[]; locked: VNEvent[] }
   >;
+
   private customLogicCache: Record<string, any>;
   private skipMode: boolean = false;
   private keyboardLayout: 'qwerty' | 'azerty' = 'qwerty';
   private keyboardDetected: boolean = false;
   private currentActions: VNAction[] = [];
   private navigationAwaiter: ((value: any) => void) | null = null;
+  */
 
   constructor(gameState: GameState, engineState: EngineState) {
+    // State
     this.gameState = gameState;
     this.engineState = engineState;
-    this.historyState = useHistoryState();
+    // Manager
+    this.historyManager = new HistoryManager();
+    this.eventManager = new EventManager();
+    this.inputManager = new InputManager();
+
+    // Other
     this.awaiterResult = null;
-    this.replayMode = false;
-    this.targetStep = 0;
-    this.eventCache = {};
-    this.customLogicCache = {};
+    //this.replayMode = false;
+    //this.targetStep = 0;
+    //this.eventCache = {};
+    //this.customLogicCache = {};
     this.detectKeyboardLayout();
     
     if (typeof window !== "undefined") {
@@ -60,141 +71,15 @@ class Engine {
     }
   }
 
+  //Getting engine from window
   static getInstance(): Engine | undefined {
-    return typeof window !== "undefined"
-      ? ((window as any).__VN_ENGINE__ as Engine)
-      : undefined;
-  }
-
-  // #region Engine API for events and UI
-  setBackground(imagePath: string): void {
-    EngineAPI.setBackground(this, imagePath);
-  }
-
-  setForeground(imagePath: string): void {
-    EngineAPI.setForeground(this, imagePath);
-  }
-
-  async showText(text: string, from = "engine"): Promise<void> {
-    await EngineAPI.showText(this, text, from);
-  }
-
-  async showChoices(
-    choices: Array<{ text: string; id: string }>,
-  ): Promise<string> {
-    return await EngineAPI.showChoices(this, choices);
-  }
-  // #endregion
-
-  // #region SAVE engine
-  startNewGame(): void {
-    EngineSave.startNewGame(this);
-  }
-
-  loadGame(slot: string): Promise<void> {
-    return EngineSave.loadGame(this, slot);
-  }
-
-  saveGame(slot: string, name?: string): void {
-    console.log(`ENGINE CALL: Saving game to slot ${slot}`);
-    EngineSave.saveGame(this, slot, name);
-  }
-  // #endregion
-
-  initVNInputHandlers(): void {
-    window.addEventListener("keydown", (e) => {
-      // Handle skip mode (Ctrl key)
-      if (e.key === "Control") {
-        this.skipMode = true;
-        console.debug("Skip mode ON");
-        return;
+    if (typeof window !== "undefined") {
+      const w = window as any;
+      if (w.__VN_ENGINE__) {
+        return w.__VN_ENGINE__ as Engine
       }
-      
-      if (e.key === "Escape") {
-        if (
-          this.engineState.initialized &&
-          this.engineState.state === ENGINE_STATES.MENU
-        ) {
-          this.engineState.state = ENGINE_STATES.RUNNING;
-        } else {
-          this.engineState.state = ENGINE_STATES.MENU;
-        }
-      } else if (e.key === "Space" || e.key === "ArrowRight") {
-        // Forward navigation
-        if (e.shiftKey && e.key === "ArrowRight") {
-          this.resolveNavigation(); // History forward (redo)
-        } else {
-          this.resolveNavigation(); // Main forward navigation
-        }
-      } else if (e.key === "ArrowLeft") {
-        this.goBack(); // History backward
-      } else if (this.isForwardKey(e.key)) {
-        // E key (works on both layouts) - forward
-        this.resolveNavigation();
-      } else if (this.isBackwardKey(e.key)) {
-        // Q key (QWERTY) or A key (AZERTY) - backward
-        this.goBack();
-      } else if ((e.key === 'q' || e.key === 'Q') && !this.keyboardDetected) {
-        // User pressed Q - they're likely on QWERTY, treat as backward
-        this.keyboardLayout = 'qwerty';
-        this.keyboardDetected = true;
-        console.debug('Detected QWERTY layout (Q key pressed)');
-        this.goBack();
-      } else if ((e.key === 'a' || e.key === 'A') && !this.keyboardDetected) {
-        // User pressed A - they might be on AZERTY trying to press Q, treat as backward
-        this.keyboardLayout = 'azerty';
-        this.keyboardDetected = true;
-        console.debug('Detected AZERTY layout (A key pressed)');
-        this.goBack();
-      } else {
-        console.debug(`Unhandled key: ${e.key}`);
-      }
-    });
-    
-    window.addEventListener("keyup", (e) => {
-      // Handle skip mode release
-      if (e.key === "Control") {
-        this.skipMode = false;
-        console.debug("Skip mode OFF");
-      }
-    });
-    window.addEventListener("click", (e) => {
-      if (e.clientX > window.innerWidth / 2) {
-        if (this.engineState.state === ENGINE_STATES.RUNNING) {
-          this.resolveNavigation(); // Main forward navigation
-        } else {
-          console.debug("Click ignored, not in RUNNING state");
-        }
-      } else {
-        // Left side click - go back
-        if (this.engineState.state === ENGINE_STATES.RUNNING) {
-          this.goBack();
-        }
-      }
-    });
-  }
-
-  private detectKeyboardLayout(): void {
-    // Start with QWERTY as default (most common)
-    this.keyboardLayout = 'qwerty';
-    console.debug('Keyboard layout: Starting with QWERTY (will auto-detect on first Q/A key press)');
-  }
-
-  private isForwardKey(key: string): boolean {
-    // E key works for both layouts
-    return key === 'e' || key === 'E';
-  }
-
-  private isBackwardKey(key: string): boolean {
-    // Only return true if layout is already detected
-    if (!this.keyboardDetected) return false;
-    
-    // Q for QWERTY, A for AZERTY (since Q is where A is on AZERTY)
-    if (this.keyboardLayout === 'azerty') {
-      return key === 'a' || key === 'A';
-    } else {
-      return key === 'q' || key === 'Q';
     }
+    return undefined;
   }
 
   resolveAwaiter(result: any): void {
@@ -224,15 +109,16 @@ class Engine {
   }
 
   async run(): Promise<void> {
-    console.log("Starting Engine...");
     while (true) {
       try {
         await this.runGameLoop();
-      } catch (err) {
+      } 
+      catch (err) {
         if (err instanceof VNInterruptError) {
           console.warn("VN event interrupted, returning to menu or resetting.");
         } else {
           console.error("Engine error:", err);
+          // IN CASE OF ERROR WE WAIT TO LET DEV READ ERROR (WILL BE REMOVED IN PRODUCTION)
           await new Promise((resolve) => setTimeout(resolve, 10000));
         }
       }
@@ -243,12 +129,8 @@ class Engine {
   }
 
   async runGameLoop(): Promise<void> {
-    console.log("Starting Game engine...", this.engineState.state);
     while (this.engineState.state === "RUNNING") {
-      const { immediateEvent, drawableEvents } = await this.getEvents();
-      console.debug(
-        `getEvents returned: immediateEvent=${immediateEvent ? immediateEvent.id : "none"}, drawableEvents=${drawableEvents.length}`,
-      );
+      const { immediateEvent, drawableEvents } = await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
         this.engineState.currentEvent = immediateEvent.id;
         this.engineState.currentStep = 0;
@@ -261,19 +143,6 @@ class Engine {
     }
   }
 
-  findEventById(eventId: string): VNEvent | null {
-    for (const location in this.eventCache) {
-      const cache = this.eventCache[location];
-      for (const list of ["unlocked", "locked", "notReady"] as const) {
-        const found = cache[list].find((ev) => ev.id === eventId);
-        if (found) {
-          return found;
-        }
-      }
-    }
-    console.warn(`Event with id '${eventId}' not found`);
-    return null;
-  }
 
   async handleEvent(immediateEvent: VNEvent): Promise<void> {
     console.debug(`Processing event with dual-phase execution: ${immediateEvent.id}`);
@@ -356,120 +225,6 @@ class Engine {
       
       this.engineState.currentStep = i + 1;
     }
-  }
-
-  /**
-   * Create simulation API that works on state copies and captures full snapshots
-   */
-  private createSimulationAPI(actions: VNAction[], gameStateCopy: any, engineStateCopy: any): EngineAPIForEvents {
-    return {
-      async showText(text: string, from?: string): Promise<void> {
-        // Update the engine state copy immediately
-        engineStateCopy.dialogue = { text, from: from || 'Narrator' };
-        
-        // Set currentStep to match action index within event
-        engineStateCopy.currentStep = actions.length;
-        
-        // Create action with complete state snapshot (WITH dialogue)
-        actions.push({
-          type: 'showText',
-          event_id: engineStateCopy.currentEvent,
-          gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
-          engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
-        });
-        
-        // Clear dialogue after capturing - next action starts clean
-        engineStateCopy.dialogue = null;
-        
-        console.warn(`SIMULATION: showText captured state snapshot and cleared dialogue`);
-      },
-
-      async setBackground(imagePath: string): Promise<void> {
-        // IMMEDIATE - no action created, just update copy
-        engineStateCopy.background = imagePath;
-        console.warn(`SIMULATION: setBackground immediate - ${imagePath}`);
-      },
-
-      async setForeground(imagePath: string): Promise<void> {
-        // IMMEDIATE - no action created, just update copy  
-        engineStateCopy.foreground = imagePath;
-        console.warn(`SIMULATION: setForeground immediate - ${imagePath}`);
-      },
-
-      async showChoices(choices: Array<Choice>): Promise<string> {
-        // Update engine state copy
-        engineStateCopy.choices = choices;
-        
-        // Set currentStep to match action index within event
-        engineStateCopy.currentStep = actions.length;
-        
-        // Create action with state snapshot (WITH choices)
-        actions.push({
-          type: 'showChoices',
-          choices,
-          event_id: engineStateCopy.currentEvent,
-          gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
-          engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
-        });
-        
-        // Clear choices after capturing - clean state for next action
-        engineStateCopy.choices = null;
-        
-        console.warn(`SIMULATION: showChoices captured and cleared - simulation should end here`);
-        
-        // For simulation, we DON'T make the choice or jump - that happens during navigation
-        // Just return a placeholder and let simulation end naturally
-        throw new EngineErrors.JumpInterrupt('CHOICE_ENCOUNTERED');
-      },
-
-      async jump(eventId: string): Promise<void> {
-        // Set currentStep to match action index within event
-        engineStateCopy.currentStep = actions.length;
-        
-        actions.push({
-          type: 'jump',
-          eventId,
-          event_id: engineStateCopy.currentEvent,
-          gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
-          engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
-        });
-        throw new EngineErrors.JumpInterrupt(eventId);
-      },
-
-      async runCustomLogic(logicId: string, args: any): Promise<any> {
-        // Set currentStep to match action index within event
-        engineStateCopy.currentStep = actions.length;
-        
-        // Create action for custom logic (will be executed during navigation)
-        actions.push({
-          type: 'runCustomLogic',
-          logicId,
-          args,
-          event_id: engineStateCopy.currentEvent,
-          gameStateCopy: JSON.parse(JSON.stringify(gameStateCopy)),
-          engineStateCopy: JSON.parse(JSON.stringify(engineStateCopy))
-        });
-        
-        // Return placeholder result for simulation
-        console.warn(`SIMULATION: runCustomLogic placeholder - ${logicId}`);
-        return { placeholder: true, logicId };
-      }
-    };
-  }
-
-  createEventsCopy(): void {
-    EngineEvents.createEventsCopy(this);
-  }
-
-  async getEvents(): Promise<{
-    immediateEvent: VNEvent | null;
-    drawableEvents: VNEvent[];
-  }> {
-    return await EngineEvents.getEvents(this);
-  }
-
-  updateEvents(location?: string): void {
-    EngineEvents.updateEvents(this, location);
   }
 
   /**

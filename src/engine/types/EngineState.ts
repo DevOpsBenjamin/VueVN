@@ -1,19 +1,18 @@
-import type { Dialogue, Choice } from '@/generate/types';
+import type { Dialogue, Choice, CustomArgs } from '@/generate/types';
 
 export default interface EngineState {
+  initialized: boolean;
   background: string | null;
   foreground: string | null;
   dialogue: Dialogue | null;
   choices: Array<Choice> | null;
-  minigame: {
-    active: boolean;
-    type: string | null;
-    props: any;
-  } | null;
-  initialized: boolean;
+  customArgs: CustomArgs | null;
+  jumpEvent: string | null;
   state: string;
   currentEvent: string | null;
   currentStep: number;
+
+  //USE?
   isSimulating: boolean;
   isFastForwarding: boolean;
 }

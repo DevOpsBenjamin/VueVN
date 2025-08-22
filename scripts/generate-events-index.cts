@@ -41,8 +41,8 @@ function walk(dir, base = "", files = {}) {
 }
 
 const filesByLoc = walk(eventsDir);
-let imports = "";
-let eventsBlock = "export const events = {\n";
+let imports = "import type { VNEvent } from '@/generate/types';\n";
+let eventsBlock = "export const events: Record<string, VNEvent[]> = {\n";
 let importCount = 0;
 Object.entries(filesByLoc).forEach(([location, files]) => {
   eventsBlock += `  '${location}': [`;

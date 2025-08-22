@@ -1,5 +1,5 @@
 import type { GameState } from '../engine/runtime/types';
-import { CustomLogicRegistry } from '../engine/runtime/CustomLogicRegistry';
+import { CustomLogicRegistry } from '../engine/runtime/CustomRegistry';
 
 export interface TimingGameResult {
   bonus: number;

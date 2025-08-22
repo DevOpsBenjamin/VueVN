@@ -5,6 +5,4 @@ export default interface HistoryEntry {
   gameStateBefore: GameState;
   engineStateBefore: EngineState;
   timestamp: number;
-  choiceMade?: string;
-  customLogicResult?: any;
 }

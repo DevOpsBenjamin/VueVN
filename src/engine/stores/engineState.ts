@@ -1,9 +1,6 @@
 import { defineStore } from 'pinia';
-import { 
-  engineStateEnum as ENGINE_STATES,
-} from "@/generate/stores";
-
-import type { EngineState } from '@/generate/types';
+import type { EngineState, EngineStateActions } from '@/generate/types';
+import { EngineStateEnum } from '@/generate/types';
 
 export const useEngineState = defineStore('engineState', {
   state: (): EngineState => ({
@@ -13,11 +10,10 @@ export const useEngineState = defineStore('engineState', {
     initialized: false,
     isSimulating: false,
     isFastForwarding: false,
-    state: ENGINE_STATES.MENU,
+    state: EngineStateEnum.MENU,
     currentEvent: null,
     currentStep: 0,
     choices: null,
-    minigame: null,
   }),
   actions: {
     resetState(): void {
@@ -29,11 +25,10 @@ export const useEngineState = defineStore('engineState', {
       this.currentEvent = null;
       this.currentStep = 0;
       this.choices = null;
-      this.minigame = null;
       this.isSimulating = false;
       this.isFastForwarding = false;
     },
-  },
+  } satisfies EngineStateActions,
 });
 
 export default useEngineState;

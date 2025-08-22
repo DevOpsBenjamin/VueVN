@@ -3,7 +3,7 @@
     <div
       v-show="engineState.state === ENGINE_STATES.MENU"
       :style="menuBgStyle"
-      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-50 transition-opacity duration-300"
+      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-60 transition-opacity duration-300"
       :class="{
         'opacity-100': engineState.state === ENGINE_STATES.MENU,
         'opacity-0': engineState.state !== ENGINE_STATES.MENU,
