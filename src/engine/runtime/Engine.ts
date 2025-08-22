@@ -54,6 +54,13 @@ class Engine {
     if (typeof this.engineState.isFastForwarding === 'undefined') {
       this.engineState.isFastForwarding = false;
     }
+    if (!this.engineState.minigame) {
+      this.engineState.minigame = {
+        active: false,
+        type: null,
+        props: null
+      };
+    }
 
     if (typeof window !== "undefined") {
       const w = window as any;
@@ -468,9 +475,51 @@ class Engine {
       throw new Error(`Custom logic '${logicId}' not found`);
     }
 
-    // Execute custom logic - this exits event context
-    const result = await logicFunction(args, this.gameState);
-    return result;
+    // For timing minigame, activate UI state
+    if (logicId === 'timingMinigame') {
+      this.engineState.minigame = {
+        active: true,
+        type: 'timing',
+        props: args
+      };
+      
+      // Wait for minigame result from UI
+      const result = await this.waitForMinigameResult();
+      
+      // Deactivate minigame UI
+      this.engineState.minigame = {
+        active: false,
+        type: null,
+        props: null
+      };
+      
+      // Update game state
+      if (!this.gameState.player.money) {
+        this.gameState.player.money = 0;
+      }
+      this.gameState.player.money += result.reward;
+      
+      if (!this.gameState.flags.lastMinigameResult) {
+        this.gameState.flags.lastMinigameResult = {};
+      }
+      this.gameState.flags.lastMinigameResult = result;
+      
+      console.log(`Timing game completed: ${result.zone} zone, ${result.reward} money earned`);
+      return result;
+    } else {
+      // Execute standard custom logic - this exits event context
+      const result = await logicFunction(args, this.gameState);
+      return result;
+    }
+  }
+
+  /**
+   * Wait for minigame result from UI component
+   */
+  private async waitForMinigameResult(): Promise<any> {
+    return new Promise<any>((resolve) => {
+      this.awaiterResult = resolve;
+    });
   }
 
   /**
