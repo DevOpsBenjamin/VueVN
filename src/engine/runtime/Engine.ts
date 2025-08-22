@@ -655,30 +655,32 @@ class Engine {
       return;
     }
 
-    console.debug("Going back in history...");
+    console.warn("Going back in history...");
     
     // Get the last action from history (this is what we want to undo)
-    const lastEntry = this.historyState.moveToHistory(); // Remove from history
-    if (lastEntry) {
+    const lastAction = this.historyState.moveToHistory(); // Remove from history
+    if (lastAction) {
       // Move this action to future (so we can redo it later)
-      this.historyState.moveToFuture(lastEntry);
+      this.historyState.moveToFuture(lastAction);
       
-      // Restore state to BEFORE this action was executed
-      Object.assign(this.gameState, lastEntry.gameStateBefore);
-      Object.assign(this.engineState, lastEntry.engineStateBefore);
+      // We need to restore to the state BEFORE this action
+      // Look at the previous action in history to get the "before" state
+      if (this.historyState.history.length > 0) {
+        // Get the previous action's state (this becomes our current state)
+        const previousAction = this.historyState.history[this.historyState.history.length - 1];
+        Object.assign(this.gameState, previousAction.gameStateCopy);
+        Object.assign(this.engineState, previousAction.engineStateCopy);
+      } else {
+        // No previous action - restore to initial state  
+        this.engineState.dialogue = null;
+        this.engineState.choices = null;
+        this.engineState.background = null;
+        this.engineState.foreground = null;
+      }
       
-      // Clear any active UI state that might conflict
-      this.engineState.dialogue = null;
-      this.engineState.choices = null;
-      this.engineState.minigame = {
-        active: false,
-        type: null,
-        props: null
-      };
-      
-      console.log(`GOBACK - Action: ${lastEntry.action.type}`);
-      console.log(`GOBACK - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
-      console.log(`GOBACK - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
+      console.warn(`GOBACK - Undid action: ${lastAction.type}`);
+      console.warn(`GOBACK - HISTORY (${this.historyState.history.length}):`, JSON.parse(JSON.stringify(this.historyState.history)));
+      console.warn(`GOBACK - FUTURE (${this.historyState.future.length}):`, JSON.parse(JSON.stringify(this.historyState.future)));
     }
   }
 
