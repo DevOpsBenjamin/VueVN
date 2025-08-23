@@ -10,7 +10,8 @@
     "add-project": "tsx scripts/add-project.cts",
     "dev": "tsx scripts/dev.cts",
     "build": "tsx scripts/build.cts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "npx vue-tsc --noEmit"
   },
   "dependencies": {
     "@he-tree/vue": "^2.9.4",
