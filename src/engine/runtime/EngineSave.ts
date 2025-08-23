@@ -1,5 +1,6 @@
 import { PROJECT_ID } from '@/generate/components';
-import { EngineState, EngineStateEnum } from '@/generate/types'
+import type { EngineState } from '@/generate/types'
+import { EngineStateEnum } from '@/generate/enums'
 import type { Engine } from '@/generate/runtime';
 
 export const startNewGame = async (engine: Engine): Promise<void> => {

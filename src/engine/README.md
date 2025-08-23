@@ -7,13 +7,14 @@ This folder contains the core visual novel display components, stacked using z-i
 | Component           | z-index | Purpose                                 |
 | ------------------- | ------- | --------------------------------------- |
 | Background.vue      | 0       | Main background image                   |
-| Drawing.vue         | 10      | Drawable event layer (characters, etc.) |
-| LocationOverlay.vue | 20      | Location navigation overlay             |
+| LocationOverlay.vue | 10      | Location navigation overlay             |
+| Drawing.vue         | 20      | Drawable event layer (characters, etc.) |
 | Foreground.vue      | 30      | Foreground CGs, special art             |
 | Dialogue.vue        | 40      | Dialogue text box                       |
 | Choice.vue          | 50      | Choices/menus (always on top)           |
-| MainMenu.vue        | 60      | Main menu                               |
-| SaveLoadMenu.vue    | 70      | SaveLoad menu                           |
+| Custom.vue          | 60      | Custom Empty for Anything               |
+| MainMenu.vue        | 80      | Main menu                               |
+| SaveLoadMenu.vue    | 90      | SaveLoad menu                           |
 
 - Always keep this order for a consistent VN experience.
 - Add new overlays (e.g., inventory, menu) above or below as needed, but document them here.

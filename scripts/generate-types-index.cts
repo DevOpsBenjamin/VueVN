@@ -48,7 +48,7 @@ const outDir: string = path.join(__dirname, "../src/generate");
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
 let imports: string = "";
-let exportsBlock: string = "export {\n";
+let exportsBlock: string = "export type {\n";
 
 allTypeNames.forEach((typeName) => {
   let importPath: string;
@@ -62,7 +62,7 @@ allTypeNames.forEach((typeName) => {
     importPath = relPath.startsWith(".") ? relPath : "./" + relPath;
   }
   
-  imports += `import ${typeName} from '${importPath}';\n`;
+  imports += `import type { ${typeName} } from '${importPath}';\n`;
   exportsBlock += `  ${typeName},\n`;
 });
 
@@ -73,4 +73,4 @@ fs.writeFileSync(
   imports + "\n" + exportsBlock,
 );
 
-console.log(`📝 types.ts generated for project: ${currentProject}`);
+console.log(`🔷 types.ts generated for project: ${currentProject}`);

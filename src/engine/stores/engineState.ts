@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import type { EngineState, EngineStateActions } from '@/generate/types';
-import { EngineStateEnum } from '@/generate/types';
+import { EngineStateEnum } from '@/generate/enums';
 
 export const useEngineState = defineStore('engineState', {
   state: (): EngineState => ({

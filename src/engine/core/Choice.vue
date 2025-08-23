@@ -82,9 +82,3 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyPress);
 });
 </script>
-
-<style scoped>
-.z-50 {
-  z-index: 50;
-}
-</style>

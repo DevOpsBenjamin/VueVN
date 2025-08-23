@@ -1,6 +1,6 @@
 import type { EngineState, GameState, VNActionEnum } from '@/generate/types';
 
-export default interface VNAction {
+export interface VNAction {
   type: VNActionEnum;
   event_id: string,
   gameState: GameState,

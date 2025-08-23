@@ -63,4 +63,4 @@ eventsBlock += "};\n";
 const outDir = path.join(__dirname, "../src/generate");
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir);
 fs.writeFileSync(path.join(outDir, "events.ts"), imports + "\n" + eventsBlock);
-console.log("events.ts generated for project", currentProject);
+console.log("🎭 events.ts generated for project", currentProject);

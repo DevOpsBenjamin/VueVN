@@ -26,9 +26,3 @@
 import { engineState as useEngineState } from '@/generate/stores';
 const engineState = useEngineState();
 </script>
-
-<style scoped>
-.z-40 {
-  z-index: 40;
-}
-</style>

@@ -1,4 +1,4 @@
-import { VNActionEnum } from "@/generate/types"
+import { VNActionEnum } from "@/generate/enums"
 import type { CustomArgs, EngineAPI, EngineState, GameState, VNAction } from "@/generate/types"
 
 export default class SimulateRunner implements EngineAPI

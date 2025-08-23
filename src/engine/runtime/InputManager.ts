@@ -1,7 +1,31 @@
+import { EngineStateEnum } from '@/generate/enums';
+import type { EngineState, GameState } from '@/generate/types';
+
 export default class InputManager {
+  private skipMode: boolean = false;
+  private keyboardLayout: 'qwerty' | 'azerty' = 'qwerty';
+  private keyboardDetected: boolean = false;
+  private engineState: EngineState;
+  private gameState: GameState;
+  private resolveNavigation: (() => void) | null = null;
+  private goBackCallback: (() => void) | null = null;
 
-}
+  constructor(engineState: EngineState, gameState: GameState) {
+    this.engineState = engineState;
+    this.gameState = gameState;
+    this.detectKeyboardLayout();
+  }
 
+  setNavigationCallbacks(resolveNavigation: () => void, goBack: () => void): void {
+    this.resolveNavigation = resolveNavigation;
+    this.goBackCallback = goBack;
+  }
+
+  private goBack(): void {
+    if (this.goBackCallback) {
+      this.goBackCallback();
+    }
+  }
 
   initVNInputHandlers(): void {
     window.addEventListener("keydown", (e) => {
@@ -15,24 +39,24 @@ export default class InputManager {
       if (e.key === "Escape") {
         if (
           this.engineState.initialized &&
-          this.engineState.state === ENGINE_STATES.MENU
+          this.engineState.state === EngineStateEnum.MENU
         ) {
-          this.engineState.state = ENGINE_STATES.RUNNING;
+          this.engineState.state = EngineStateEnum.RUNNING;
         } else {
-          this.engineState.state = ENGINE_STATES.MENU;
+          this.engineState.state = EngineStateEnum.MENU;
         }
       } else if (e.key === "Space" || e.key === "ArrowRight") {
         // Forward navigation
         if (e.shiftKey && e.key === "ArrowRight") {
-          this.resolveNavigation(); // History forward (redo)
+          if (this.resolveNavigation) this.resolveNavigation(); // History forward (redo)
         } else {
-          this.resolveNavigation(); // Main forward navigation
+          if (this.resolveNavigation) this.resolveNavigation(); // Main forward navigation
         }
       } else if (e.key === "ArrowLeft") {
         this.goBack(); // History backward
       } else if (this.isForwardKey(e.key)) {
         // E key (works on both layouts) - forward
-        this.resolveNavigation();
+        if (this.resolveNavigation) this.resolveNavigation();
       } else if (this.isBackwardKey(e.key)) {
         // Q key (QWERTY) or A key (AZERTY) - backward
         this.goBack();
@@ -62,14 +86,14 @@ export default class InputManager {
     });
     window.addEventListener("click", (e) => {
       if (e.clientX > window.innerWidth / 2) {
-        if (this.engineState.state === ENGINE_STATES.RUNNING) {
-          this.resolveNavigation(); // Main forward navigation
+        if (this.engineState.state === EngineStateEnum.RUNNING) {
+          if (this.resolveNavigation) this.resolveNavigation(); // Main forward navigation
         } else {
           console.debug("Click ignored, not in RUNNING state");
         }
       } else {
         // Left side click - go back
-        if (this.engineState.state === ENGINE_STATES.RUNNING) {
+        if (this.engineState.state === EngineStateEnum.RUNNING) {
           this.goBack();
         }
       }
@@ -100,3 +124,8 @@ export default class InputManager {
       return key === 'q' || key === 'Q';
     }
   }
+
+  getSkipMode(): boolean {
+    return this.skipMode;
+  }
+}

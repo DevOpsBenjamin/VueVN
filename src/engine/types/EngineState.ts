@@ -1,6 +1,6 @@
 import type { Dialogue, Choice, CustomArgs } from '@/generate/types';
 
-export default interface EngineState {
+export interface EngineState {
   initialized: boolean;
   background: string | null;
   foreground: string | null;

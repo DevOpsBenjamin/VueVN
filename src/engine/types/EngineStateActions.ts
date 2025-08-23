@@ -1,5 +1,5 @@
 import type { EngineState } from '@/generate/types';
 
-export default interface EngineStateActions {
+export interface EngineStateActions {
   resetState(this: EngineState): void;
 }

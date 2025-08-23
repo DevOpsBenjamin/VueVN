@@ -1,12 +1,12 @@
 <template>
   <Transition name="fade">
     <div
-      v-show="engineState.state === ENGINE_STATES.MENU"
+      v-show="engineState.state === EngineStateEnum.MENU"
       :style="menuBgStyle"
-      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-60 transition-opacity duration-300"
+      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-80 transition-opacity duration-300"
       :class="{
-        'opacity-100': engineState.state === ENGINE_STATES.MENU,
-        'opacity-0': engineState.state !== ENGINE_STATES.MENU,
+        'opacity-100': engineState.state === EngineStateEnum.MENU,
+        'opacity-0': engineState.state !== EngineStateEnum.MENU,
       }"
     >
       <div
@@ -60,10 +60,8 @@
 </template>
 
 <script setup>
-import {
-  engineState as useEngineState,
-  engineStateEnum as ENGINE_STATES,
-} from '@/generate/stores';
+import { engineState as useEngineState } from '@/generate/stores';
+import { EngineStateEnum } from '@/generate/enums';
 import { Engine } from '@/generate/runtime';
 const engineState = useEngineState();
 

@@ -93,4 +93,4 @@ fs.writeFileSync(
   path.join(outDir, "components.ts"),
   imports + "\n" + projectIdDecl + "\n" + exportsBlock,
 );
-console.log(`components.ts generated for project: ${currentProject}`);
+console.log(`🧩 components.ts generated for project: ${currentProject}`);

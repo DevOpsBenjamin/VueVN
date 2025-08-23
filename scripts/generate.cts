@@ -30,10 +30,10 @@ function run(script: string): void {
 }
 
 // Run all generation scripts
-run("generate-types-index.cts");
 run("generate-components-index.cts");
 run("generate-engine-index.cts");
 run("generate-events-index.cts");
+run("generate-types-index.cts");
 
 // Mode watch (dev)
 if (process.argv.includes("--watch")) {
@@ -56,10 +56,10 @@ if (process.argv.includes("--watch")) {
   watcher.on("all", (event: string, filePath: string) => {
     console.log(`🔄 File ${event}: ${filePath}`);
 
-    run("generate-types-index.cts");
     run("generate-components-index.cts");
     run("generate-engine-index.cts");
     run("generate-events-index.cts");
+    run("generate-types-index.cts");
   });
 
   watcher.on("error", (error: Error) => {

@@ -32,6 +32,14 @@ The engine architecture redesign has been successfully implemented:
    - **NEVER** use relative imports (`./`, `../`) in engine code
    - This preserves plugin capability - users can customize any engine component or type through generated imports without core import conflicts
 
+7. **🚨 CRITICAL: File Size and Separation of Concerns**
+   - **NEVER** create files larger than 200-300 lines
+   - **ALWAYS** split functionality into focused, single-responsibility classes/managers
+   - **PREFER** composition over large monolithic classes
+   - When a class has multiple responsibilities, immediately refactor into separate managers
+   - Example: Engine.ts should orchestrate managers, not implement all functionality itself
+   - **Rule of thumb**: If a file needs more than 5-6 different method categories, split it
+
 ## Key Architecture
 
 ### Project System
@@ -49,9 +57,15 @@ The engine architecture redesign has been successfully implemented:
 - **Project Override Support**: Projects can override any engine type by placing custom versions in `projects/{name}/types/`
 
 ### Engine Architecture (CURRENT IMPLEMENTATION)
-- **Engine** (`src/engine/runtime/Engine.ts`): Dual-phase execution with simulation + playback
-- **EngineAPIForEvents**: Natural async/await API for event development
-- **History System**: Text-by-text navigation with 50-entry limit and state snapshots
+- **Engine** (`src/engine/runtime/Engine.ts`): Dual-phase execution with simulation + playback, manager-based architecture
+- **Manager System**: Separated concerns into focused managers:
+  - **HistoryManager**: Text-by-text navigation with 50-entry limit
+  - **ActionExecutor**: Executes VNActions with custom logic support  
+  - **WaitManager**: Handles user input waiting and navigation interrupts
+  - **NavigationManager**: Manages go back/forward with state restoration
+  - **EventManager**: Loads and manages VNEvents
+  - **InputManager**: Handles keyboard shortcuts and user interaction
+- **EngineAPIForEvents**: Natural async/await API for event development (via SimulateRunner)
 - **Save/Load**: Mid-event saves with fast-forward replay capability
 - **State Management**: Pinia stores with strict TypeScript interfaces for engine and game state
 
@@ -91,17 +105,18 @@ npm install
 # Create a new project
 npm run add-project <project-name>
 
-# Start development server for a project
+# Start development server for a project (with debug delays and file watching)
 npm run dev <project-name>
 
 # Build a project for production
 npm run build <project-name>
 ```
 
-### Project Structure
-- **Development**: Uses `scripts/dev.cts` which runs generation and Vite concurrently
-- **Build**: Uses `scripts/build.cts` which generates files, builds with Vite, and copies assets
-- **Generation**: Automatically creates TypeScript interfaces and imports from project data
+### Project Structure & Build System
+- **Development**: Uses `scripts/dev.cts` which runs TypeScript generation and Vite concurrently with file watching
+- **Build**: Uses `scripts/build.cts` which generates files, builds with Vite, and copies project assets to dist
+- **Generation**: `scripts/generate.cts` orchestrates all generation scripts and watches for file changes during development
+- **Asset Serving**: Vite serves project-specific assets from `projects/{name}/assets/` at `/assets/` during development
 
 ## 🚨 Critical Architectural Rules
 
@@ -129,6 +144,10 @@ import type Dialogue from './types/Dialogue';
 - Projects can customize interfaces (e.g., add `avatar` field to `Dialogue` interface)
 - Type generation system automatically prioritizes project types over engine defaults
 
+## 🤖 Coordinator Architecture
+
+**Main Claude acts as COORDINATOR only** - delegates all specialized tasks to sub-agents defined in `.claude/agents/`. See individual agent files for detailed capabilities and usage patterns.
+
 ### Documentation Organization
 - **`Claude/`**: All Claude Code documentation and architectural plans
 - **`Claude/DEVELOPMENT_WORKFLOW.md`**: Development procedures and commit strategies
@@ -152,35 +171,35 @@ import type Dialogue from './types/Dialogue';
 - Additional minigame types and custom logic
 - Project management and deployment tools
 
-## Development Commands
+## Testing and Quality Assurance
 
-```bash
-# Install dependencies
-npm install
+**Note**: The project currently has no formal test suite. Testing is done manually using the `sample` project which includes three test events:
+- `after-intro.ts`: Basic text and background testing
+- `choice-event.ts`: Choice navigation testing  
+- `timing-event.ts`: Minigame and custom logic testing
 
-# Create a new project
-npm run add-project <project-name>
-
-# Start development server (with debug delays)
-npm run dev <project-name>
-
-# Build a project for production
-npm run build <project-name>
-```
+Future development should consider adding:
+- Unit tests for individual managers
+- Integration tests for the dual-phase engine
+- E2E tests for the complete visual novel flow
 
 ## Architecture Files (Current Implementation)
 
-### Core Files
-- `src/engine/runtime/Engine.ts`: Current engine (with debug delays)
-- `src/engine/runtime/EngineAPI.ts`: Current event API
-- `scripts/generate.cts`: Build system that generates TypeScript modules
-- `projects/sample/`: Test project for development
+### Core Runtime Files
+- `src/engine/runtime/Engine.ts`: Main engine orchestrator (with debug delays in development)
+- `src/engine/runtime/HistoryManager.ts`: Go back/forward navigation with state snapshots
+- `src/engine/runtime/ActionExecutor.ts`: VNAction execution with custom logic support
+- `src/engine/runtime/NavigationManager.ts`: State restoration and navigation coordination  
+- `src/engine/runtime/WaitManager.ts`: User input waiting and promise management
+- `src/engine/runtime/SimulateRunner.ts`: Event simulation API for dual-phase execution
+- `scripts/generate.cts`: Build system orchestrator for TypeScript generation
+- `projects/sample/`: Complete test project demonstrating all engine features
 
 ### Key Concepts
-- **Project Isolation**: Each VN is completely separate in `projects/`
-- **Code Generation**: TypeScript files generated from project structure
-- **Environment Variable**: `VUEVN_PROJECT` controls active project
-- **Asset Serving**: Vite serves project-specific assets during development
+- **Project Isolation**: Each VN is completely separate in `projects/` with own config, assets, and code
+- **Code Generation**: TypeScript files auto-generated from project structure with hot-reload during development  
+- **Environment Variable**: `VUEVN_PROJECT` controls active project for all operations
+- **Asset Serving**: Vite middleware serves project-specific assets from `projects/{name}/assets/` at `/assets/` URL
 
 ### Event Development (Current)
 Events use the new EngineAPIForEvents interface for natural async/await development:
@@ -214,6 +233,13 @@ The `sample` project serves as both:
 - Test project for engine development and feature validation
 
 ## Runtime Requirements
-- Node.js >= 22.0.0
-- Valid `config.json` in each project
+- Node.js >= 22.0.0 
+- Valid `config.json` in each project (see `projects/sample/config.json` for reference)
 - TypeScript compilation through Vite build system
+- Environment variable `VUEVN_PROJECT` must be set for all operations
+
+## Important Notes for Development
+- **Debug Delays**: The current Engine.ts includes debug delays (20-second sleeps) for development debugging
+- **File Watching**: Development server automatically regenerates TypeScript files when engine or project files change
+- **Manager Architecture**: Engine delegates all responsibilities to focused managers - avoid adding functionality directly to Engine.ts
+- **Custom Logic**: Minigames and complex interactions should use the CustomRegistry system and exit event flow via jumps

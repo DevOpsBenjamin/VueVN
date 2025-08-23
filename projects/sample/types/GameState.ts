@@ -1,5 +1,5 @@
 // Sample project GameState override
-export default interface GameState {
+export interface GameState {
   player: { 
     name: string;
     level: number;

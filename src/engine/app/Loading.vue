@@ -1,6 +1,6 @@
 <template>
   <div
-    v-show="engineState.state === ENGINE_STATES.LOADING"
+    v-show="engineState.state === EngineStateEnum.LOADING"
     class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-100 z-[100]"
   >
     <div
@@ -13,10 +13,8 @@
 </template>
 
 <script setup>
-import {
-  engineState as useEngineState,
-  engineStateEnum as ENGINE_STATES,
-} from '@/generate/stores';
+import { engineState as useEngineState } from '@/generate/stores';
+import { EngineStateEnum } from '@/generate/enums';
 
 const engineState = useEngineState();
 </script>

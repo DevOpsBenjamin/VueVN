@@ -1,4 +1,4 @@
-export default interface CustomArgs {
+export interface CustomArgs {
   id: string;
   args: any;
 }

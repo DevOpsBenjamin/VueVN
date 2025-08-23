@@ -2,11 +2,12 @@
   <div id="game-root" class="engine-content">
     <!-- Layered VN components -->
     <Background />
-    <Drawing />
     <LocationOverlay />
+    <Drawing />
     <Foreground />
     <Dialogue />
     <Choice />
+    <Custom />
   </div>
 </template>
 
@@ -18,6 +19,7 @@ import {
   Foreground,
   Dialogue,
   Choice,
+  Custom
 } from '@/generate/components';
 </script>
 

@@ -2,18 +2,18 @@
   <Transition name="fade">
     <div
       v-show="
-        engineState.state === ENGINE_STATES.SAVE ||
-        engineState.state === ENGINE_STATES.LOAD
+        engineState.state === EngineStateEnum.SAVE ||
+        engineState.state === EngineStateEnum.LOAD
       "
       :style="menuBgStyle"
-      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-70 transition-opacity duration-300"
+      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-90 transition-opacity duration-300"
       :class="{
         'opacity-100':
-          engineState.state === ENGINE_STATES.SAVE ||
-          engineState.state === ENGINE_STATES.LOAD,
+          engineState.state === EngineStateEnum.SAVE ||
+          engineState.state === EngineStateEnum.LOAD,
         'opacity-0':
-          engineState.state !== ENGINE_STATES.SAVE &&
-          engineState.state !== ENGINE_STATES.LOAD,
+          engineState.state !== EngineStateEnum.SAVE &&
+          engineState.state !== EngineStateEnum.LOAD,
       }"
     >
       <div
@@ -90,10 +90,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import {
-  engineState as useEngineState,
-  engineStateEnum as ENGINE_STATES,
-} from "@/generate/stores";
+import { engineState as useEngineState } from "@/generate/stores";
+import { EngineStateEnum } from '@/generate/enums';
 const engineState = useEngineState();
 import { PROJECT_ID } from "@/generate/components";
 

@@ -1,4 +1,4 @@
-export const enum ENGINE_STATES {
+const enum EngineStateEnum {
   LOADING = "LOADING",
   RUNNING = "RUNNING",
   MENU = "MENU",
@@ -8,4 +8,4 @@ export const enum ENGINE_STATES {
   LOAD = "LOAD",
 }
 
-export default ENGINE_STATES;
+export default EngineStateEnum;

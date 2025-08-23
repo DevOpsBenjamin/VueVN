@@ -1,6 +1,6 @@
 import type { GameState, EngineAPI, Branch } from '@/generate/types';
 
-export default interface VNEvent {
+export interface VNEvent {
   id: string;
   name: string;
   conditions: (state: GameState) => boolean;

@@ -1,4 +1,4 @@
-export const enum VN_ACTION_TYPES {
+const enum VNActionEnum {
   SHOW_TEXT = "showText",
   SET_BACKGROUND = "setBackground",
   SET_FOREGROUND = "setForeground",
@@ -7,4 +7,4 @@ export const enum VN_ACTION_TYPES {
   RUN_CUSTOM = "runCustom",
 }
 
-export default VN_ACTION_TYPES;
+export default VNActionEnum;
