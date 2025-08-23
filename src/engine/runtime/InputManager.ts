@@ -2,135 +2,162 @@ import { EngineStateEnum } from '@/generate/enums';
 import type { EngineState, GameState } from '@/generate/types';
 import type NavigationManager from './NavigationManager';
 
+type KeyboardLayout = 'qwerty' | 'azerty' | 'unknown';
+
 export default class InputManager {
-  private skipMode: boolean = false;
-  private keyboardLayout: 'qwerty' | 'azerty' = 'qwerty';
-  private keyboardDetected: boolean = false;
+  private skipMode = false;
+  private keyboardLayout: KeyboardLayout = 'unknown';
   private engineState: EngineState;
   private gameState: GameState;
-  private navigationManager: NavigationManager | null = null;
+  private navigationManager: NavigationManager;
 
-  constructor(engineState: EngineState, gameState: GameState) {
+  // keep references so we can remove listeners later
+  private readonly keyDownHandler = (e: KeyboardEvent) => this.handleKeyDown(e);
+  private readonly keyUpHandler = (e: KeyboardEvent) => this.handleKeyUp(e);
+  private readonly clickHandler = (e: MouseEvent) => this.handleClick(e);
+  
+  constructor(
+    engineState: EngineState,
+    gameState: GameState,
+    navigationManager: NavigationManager
+  ) {
     this.engineState = engineState;
     this.gameState = gameState;
-    this.detectKeyboardLayout();
-  }
-
-  setNavigationManager(navigationManager: NavigationManager): void {
     this.navigationManager = navigationManager;
   }
 
-  private async goBack(): Promise<void> {
-    if (this.navigationManager) {
-      await this.navigationManager.goBack();
-    }
+  /** Attach listeners */
+  init(): void {
+    window.addEventListener('keydown', this.keyDownHandler);
+    window.addEventListener('keyup', this.keyUpHandler);
+    window.addEventListener('click', this.clickHandler);
   }
 
-  private resolveContinue(): void {
-    if (this.navigationManager) {
-      this.navigationManager.resolveContinue();
-    }
+  /** Detach listeners (call on teardown) */
+  destroy(): void {
+    window.removeEventListener('keydown', this.keyDownHandler);
+    window.removeEventListener('keyup', this.keyUpHandler);
+    window.removeEventListener('click', this.clickHandler);
   }
 
-  initVNInputHandlers(): void {
-    window.addEventListener("keydown", (e) => {
-      // Handle skip mode (Ctrl key)
-      if (e.key === "Control") {
-        this.skipMode = true;
-        console.debug("Skip mode ON");
-        return;
-      }
-      
-      if (e.key === "Escape") {
-        if (
-          this.engineState.initialized &&
-          this.engineState.state === EngineStateEnum.MENU
-        ) {
-          this.engineState.state = EngineStateEnum.RUNNING;
-        } else {
-          this.engineState.state = EngineStateEnum.MENU;
-        }
-      } else if (e.key === "Space" || e.key === "ArrowRight") {
-        // Forward navigation
-        if (e.shiftKey && e.key === "ArrowRight") {
-          this.resolveContinue(); // History forward (redo)
-        } else {
-          this.resolveContinue(); // Main forward navigation
-        }
-      } else if (e.key === "ArrowLeft") {
-        this.goBack(); // History backward
-      } else if (this.isForwardKey(e.key)) {
-        // E key (works on both layouts) - forward
-        this.resolveContinue();
-      } else if (this.isBackwardKey(e.key)) {
-        // Q key (QWERTY) or A key (AZERTY) - backward
-        this.goBack();
-      } else if ((e.key === 'q' || e.key === 'Q') && !this.keyboardDetected) {
-        // User pressed Q - they're likely on QWERTY, treat as backward
-        this.keyboardLayout = 'qwerty';
-        this.keyboardDetected = true;
-        console.debug('Detected QWERTY layout (Q key pressed)');
-        this.goBack();
-      } else if ((e.key === 'a' || e.key === 'A') && !this.keyboardDetected) {
-        // User pressed A - they might be on AZERTY trying to press Q, treat as backward
-        this.keyboardLayout = 'azerty';
-        this.keyboardDetected = true;
-        console.debug('Detected AZERTY layout (A key pressed)');
-        this.goBack();
-      } else {
-        console.debug(`Unhandled key: ${e.key}`);
-      }
-    });
-    
-    window.addEventListener("keyup", (e) => {
-      // Handle skip mode release
-      if (e.key === "Control") {
-        this.skipMode = false;
-        console.debug("Skip mode OFF");
-      }
-    });
-    window.addEventListener("click", (e) => {
-      if (e.clientX > window.innerWidth / 2) {
-        if (this.engineState.state === EngineStateEnum.RUNNING) {
-          this.resolveContinue(); // Main forward navigation
-        } else {
-          console.debug("Click ignored, not in RUNNING state");
-        }
-      } else {
-        // Left side click - go back
-        if (this.engineState.state === EngineStateEnum.RUNNING) {
-          this.goBack();
-        }
-      }
-    });
-  }
-
-  private detectKeyboardLayout(): void {
-    // Start with QWERTY as default (most common)
-    this.keyboardLayout = 'qwerty';
-    console.debug('Keyboard layout: Starting with QWERTY (will auto-detect on first Q/A key press)');
-  }
-
-
-  
-  private isForwardKey(key: string): boolean {
-    // E key works for both layouts
-    return key === 'e' || key === 'E';
-  }
-
-  private isBackwardKey(key: string): boolean {
-    // Only return true if layout is already detected
-    if (!this.keyboardDetected) return false;
-    
-    // Q for QWERTY, A for AZERTY (since Q is where A is on AZERTY)
-    if (this.keyboardLayout === 'azerty') {
-      return key === 'a' || key === 'A';
-    } else {
-      return key === 'q' || key === 'Q';
-    }
-  }
-
+  /** Public getter (kept for compatibility) */
   getSkipMode(): boolean {
     return this.skipMode;
+  }
+
+  // -------------------------
+  // Event handlers
+  // -------------------------
+  private handleKeyDown(e: KeyboardEvent): void {
+    // Skip mode (hold Control)
+    if (e.key === 'Control') {
+      if (!this.skipMode) {
+        this.skipMode = true;
+        console.warn('Skip mode ON');
+      }
+      return;
+    }
+
+    if (e.key == 'Escape') {
+      this.toggleMenu();
+      return;
+    }
+
+    if (this.isForwardKey(e)) {
+      this.forward();
+      return;
+    }
+    if (this.isBackwardKey(e)) {
+      this.backward();
+      return;
+    }
+  }
+
+  private handleKeyUp(e: KeyboardEvent): void {
+    if (e.key === 'Control') {
+      if (this.skipMode) {
+        this.skipMode = false;
+        console.warn('Skip mode OFF');
+      }
+    }
+  }
+
+  private handleClick(e: MouseEvent): void {
+    // Only react to clicks while running
+    if (this.engineState.state !== EngineStateEnum.RUNNING) {
+      console.debug('Click ignored, not in RUNNING state');
+      return;
+    }
+
+    const isRightHalf = e.clientX > window.innerWidth / 2;
+    if (isRightHalf) {
+      this.forward();
+    } else {
+      this.backward();
+    }
+  }
+
+  // -------------------------
+  // Helpers (navigation)
+  // -------------------------
+  private async backward(): Promise<void> {
+    await this.navigationManager.goBack();
+  }
+
+  private forward(): void {
+    this.navigationManager.resolveContinue();
+  }
+
+  private toggleMenu(): void {
+    if (this.engineState.initialized && this.engineState.state === EngineStateEnum.MENU) {
+      this.engineState.state = EngineStateEnum.RUNNING;
+    } else {
+      this.engineState.state = EngineStateEnum.MENU;
+    }
+  }
+
+  // -------------------------
+  // Helpers (keyboard intent)
+  // -------------------------
+  /** Keys that always mean "forward" (independent of layout) */
+  private isForwardKey(e: KeyboardEvent): boolean {
+    // E works well on both QWERTY/AZERTY
+    return e.key === 'e' 
+        || e.key === 'E' 
+        || e.key == 'Space'
+        || e.key == 'ArrowRight';
+  }
+  
+  /**
+   * Centralizes *all* logic for backward intent + first-hit layout detection.
+   * Returns true if the current key should be treated as "backward".
+   */
+  private isBackwardKey(e: KeyboardEvent): boolean {
+    const key = e.key;
+    if (key == 'ArrowLeft') {
+      return true;
+    }
+    
+    // Layout already known
+    if (this.keyboardLayout === 'azerty') {
+      return key === 'a' || key === 'A';
+    }
+    if (this.keyboardLayout === 'qwerty') {
+      // QWERTY
+      return key === 'q' || key === 'Q';
+    }
+
+    // If we haven't detected layout yet, detect on first Q/A press.
+    if (this.keyboardLayout === 'unknown') {
+      if (key === 'q' || key === 'Q') {
+        this.keyboardLayout = 'qwerty';
+        return true; // treat as backward immediately
+      }
+      if (key === 'a' || key === 'A') {
+        this.keyboardLayout = 'azerty';
+        return true; // treat as backward immediately
+      }
+    }
+    return false;
   }
 }

@@ -4,19 +4,18 @@ import { EngineStateEnum } from '@/generate/enums'
 import type { Engine } from '@/generate/runtime';
 
 export const startNewGame = async (engine: Engine): Promise<void> => {
-  engine.cancelAwaiter();
   engine.engineState.state = EngineStateEnum.LOADING;
   await new Promise((resolve) => setTimeout(resolve, 100));
   engine.gameState.resetGame();
   //engine.engineState.resetState();
   engine.historyManager.resetHistory();
   engine.eventManager.resetEvents(engine.gameState);
+  engine.navigationManager.cancelWaiters();
   engine.engineState.initialized = true;
   engine.engineState.state = EngineStateEnum.RUNNING;
 };
 
 export const loadGame = async (engine: Engine, slot: string): Promise<void> => {
-  engine.cancelAwaiter();
   const raw = localStorage.getItem(`Save_${PROJECT_ID}_${slot}`);
   if (!raw) {
     throw new Error('No save found');
@@ -30,6 +29,14 @@ export const loadGame = async (engine: Engine, slot: string): Promise<void> => {
   engine.historyManager.loadHistoryData(data.historyState);
   // Restore engine state
   Object.assign(engine.engineState.state, data.engineState);
+
+  engine.navigationManager.cancelWaiters();
+  if (engine.engineState.currentEvent != null) {
+    const event = engine.eventManager.findEventById(engine.engineState.currentEvent);
+    if (event != null) {
+      await engine.actionExecutor.runEvent(event);
+    }
+  }
 };
 
 export const saveGame = (engine: Engine, slot: string, name?: string): void => {

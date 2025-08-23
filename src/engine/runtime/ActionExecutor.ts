@@ -23,14 +23,15 @@ export default class ActionExecutor {
 
   async executeEvent(event: VNEvent): Promise<void> {
     await this.simulateEvent(event.execute);
-    
+    await this.runEvent(event);
+  }
+  
+  async runEvent(event: VNEvent): Promise<void>{
     while (this.historyManager.getFutureLength() > 0) {
       const action = this.historyManager.getFirstFutureAction();
       if (!action) {
         break;
       }
-      // FIRST WE MAKE THE PLAYING ACTION TO PAST
-      this.historyManager.moveFirstFutureToHistory();
       this.restoreStateFromAction(action);
       
       await this.executeAction(event, action);
@@ -64,7 +65,7 @@ export default class ActionExecutor {
   private async executeAction(event: VNEvent, action: VNAction): Promise<void> {
     switch (action.type) {
       case VNActionEnum.SHOW_TEXT:
-        await this.navigationManager.waitForContinue();
+        await this.handleTextAction(event, action);
         break;
 
       case VNActionEnum.SHOW_CHOICES:
@@ -90,10 +91,17 @@ export default class ActionExecutor {
     }
   }
 
+  private async handleTextAction(event: VNEvent, action: VNAction): Promise<void> {
+    await this.navigationManager.waitForContinue();
+    // FIRST WE MAKE THE PLAYING ACTION TO PAST
+    this.historyManager.moveFirstFutureToHistory();
+  }
+
   // Handle choice actions and return chosen choice ID
   private async handleChoiceAction(event: VNEvent, action: VNAction): Promise<void> {
     // Wait for user choice    
     const choiceId = await this.navigationManager.waitForChoice();
+    this.historyManager.moveFirstFutureToHistory();
     
     // SIMULATE CHOICE
     if (choiceId && event.branches?.[choiceId]) {

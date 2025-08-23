@@ -37,24 +37,11 @@ class Engine {
     // Initialize managers (order matters for dependencies)
     this.historyManager = new HistoryManager();
     this.eventManager = new EventManager();
-    this.inputManager = new InputManager(engineState, gameState);
     
     // Initialize NavigationManager first (ActionExecutor needs it)
-    this.navigationManager = new NavigationManager(
-      engineState, 
-      gameState, 
-      this.historyManager, 
-      null as any // Will be set after ActionExecutor is created
-    );
-    
-    // Initialize ActionExecutor with NavigationManager
+    this.navigationManager = new NavigationManager(engineState, gameState, this.historyManager);    
+    this.inputManager = new InputManager(engineState, gameState, this.navigationManager);
     this.actionExecutor = new ActionExecutor(engineState, gameState, this.historyManager, this.navigationManager);
-    
-    // Update NavigationManager with ActionExecutor reference
-    (this.navigationManager as any).actionExecutor = this.actionExecutor;
-    
-    // Setup NavigationManager reference in InputManager
-    this.inputManager.setNavigationManager(this.navigationManager);
     
     // Initialize window reference
     if (typeof window !== "undefined") {
@@ -63,7 +50,7 @@ class Engine {
         console.debug("Initializing VN Engine instance");
         w.VueVN = this.gameState;
         w.__VN_ENGINE__ = this;
-        this.inputManager.initVNInputHandlers();
+        this.inputManager.init();
       }
     }
   }
