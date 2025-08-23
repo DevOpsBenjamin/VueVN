@@ -93,15 +93,12 @@ export default class ActionExecutor {
 
   private async handleTextAction(event: VNEvent, action: VNAction): Promise<void> {
     await this.navigationManager.waitForContinue();
-    // FIRST WE MAKE THE PLAYING ACTION TO PAST
-    this.historyManager.moveFirstFutureToHistory();
   }
 
   // Handle choice actions and return chosen choice ID
   private async handleChoiceAction(event: VNEvent, action: VNAction): Promise<void> {
     // Wait for user choice    
     const choiceId = await this.navigationManager.waitForChoice();
-    this.historyManager.moveFirstFutureToHistory();
     
     // SIMULATE CHOICE
     if (choiceId && event.branches?.[choiceId]) {

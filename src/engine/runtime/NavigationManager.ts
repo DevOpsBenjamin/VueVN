@@ -49,12 +49,6 @@ export default class NavigationManager {
 
   // Smart waiting methods for ActionExecutor
   async waitForContinue(): Promise<void> {
-    // If continueWaiter is null, we're in navigation mode - auto-resolve
-    if (this.continueWaiter === null) {
-      console.debug("NavigationManager: Auto-resolving continue (navigation mode)");
-      return Promise.resolve();
-    }
-    
     // Normal mode - actually wait for user input
     console.debug("NavigationManager: Waiting for user continue");
     return new Promise<void>((resolve) => {
@@ -67,8 +61,6 @@ export default class NavigationManager {
     console.debug("NavigationManager: Waiting for user choice");
     return new Promise<string>((resolve) => {
       this.choiceWaiter = resolve;
-      // Clear continueWaiter when we start waiting for choice
-      this.continueWaiter = null;
     });
   }
 
