@@ -22,21 +22,24 @@ export default class ActionExecutor {
   }
 
   async executeEvent(event: VNEvent): Promise<void> {
+    console.log("executeEvent :");
+    console.log(event);
     await this.simulateEvent(event.execute);
     await this.runEvent(event);
   }
   
   async runEvent(event: VNEvent): Promise<void>{
-    while (this.historyManager.getFutureLength() > 0) {
-      const action = this.historyManager.getPresent();
-      if (!action) {
-        break;
-      }
-      this.restoreStateFromAction(action);
-      
+    console.log("start runEvent");
+    console.log(this.historyManager.getFutureLength());
+    let action = this.historyManager.getPresent()
+    while (action != null) {
+      console.log("loop");
+      this.restoreStateFromAction(action);      
       await this.executeAction(event, action);
+      action = this.historyManager.getPresent()
     }
     this.historyManager.resetHistory()
+    console.log("end runEvent");
   }
 
   // Generic simulation method that works with both events and branches
@@ -48,6 +51,7 @@ export default class ActionExecutor {
     try {
       await executeFunction(simulator, gameStateCopy);
       this.historyManager.setFuture(simulator.actions);
+      this.historyManager.goForward();
     } catch (error) {
       console.error('Simulation error:', error);
     }
