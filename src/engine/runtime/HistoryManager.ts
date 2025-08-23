@@ -81,4 +81,21 @@ export default class HistoryManager {
     this.history = data.history || [];
     this.future = data.future || [];
   }
+
+  // New methods for ActionExecutor
+  getFirstFutureAction(): VNAction | null {
+    return this.future.length > 0 ? this.future[0] : null;
+  }
+
+  moveFirstFutureToHistory(): void {
+    const action = this.future.shift();
+    if (action) {
+      this.history.push(action);
+      
+      // Limit history size for performance
+      if (this.history.length > this.maxHistorySize) {
+        this.history.shift();
+      }
+    }
+  }
 }

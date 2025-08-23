@@ -1,114 +1,102 @@
-import { CustomRegistry } from '@/generate/runtime';
+import { SimulateRunner, HistoryManager, WaitManager } from '@/generate/runtime';
 import { VNActionEnum } from '@/generate/enums';
-import type { VNAction, EngineState, GameState } from '@/generate/types';
+import type { VNAction, EngineState, GameState, VNEvent, EngineAPI } from '@/generate/types';
 
 export default class ActionExecutor {
   private engineState: EngineState;
   private gameState: GameState;
+  private historyManager: HistoryManager;
+  private waitManager: WaitManager;
   private customLogicCache: Record<string, any> = {};
   
-  constructor(engineState: EngineState, gameState: GameState) {
+  constructor(
+    engineState: EngineState, 
+    gameState: GameState, 
+    historyManager: HistoryManager,
+    waitManager: WaitManager
+  ) {
     this.engineState = engineState;
     this.gameState = gameState;
+    this.historyManager = historyManager;
+    this.waitManager = waitManager;
   }
 
-  async executeAction(action: VNAction, waitForContinue: () => Promise<void>, waitForChoice: () => Promise<string>): Promise<void> {
+  async executeEvent(event: VNEvent): Promise<void> {
+    await this.simulateEvent(event.execute);
+    
+    while (this.historyManager.getFutureLength() > 0) {
+      const action = this.historyManager.getFirstFutureAction();
+      if (!action) {
+        break;
+      }
+      // FIRST WE MAKE THE PLAYING ACTION TO PAST
+      this.historyManager.moveFirstFutureToHistory();
+      this.restoreStateFromAction(action);
+      
+      await this.executeAction(event, action);
+    }
+  }
+
+  // Generic simulation method that works with both events and branches
+  private async simulateEvent(executeFunction: (engine: EngineAPI, state: GameState) => Promise<void>): Promise<void> {
+    const gameStateCopy = JSON.parse(JSON.stringify(this.gameState));
+    const engineStateCopy = JSON.parse(JSON.stringify(this.engineState));    
+    const simulator = new SimulateRunner(gameStateCopy, engineStateCopy, "simulation");
+    
+    try {
+      await executeFunction(simulator, gameStateCopy);
+      this.historyManager.setFuture(simulator.actions);
+    } catch (error) {
+      console.error('Simulation error:', error);
+    }
+  }
+
+  // Restore game and engine state from an action's stored state
+  private restoreStateFromAction(action: VNAction): void {
+    if (action.gameState && action.engineState) {
+      Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
+      Object.assign(this.engineState, JSON.parse(JSON.stringify(action.engineState)));
+    }
+  }
+  
+  // Execute a single action - ONLY handle user input, state is already restored
+  private async executeAction(event: VNEvent, action: VNAction): Promise<void> {
     switch (action.type) {
       case VNActionEnum.SHOW_TEXT:
-        await waitForContinue();
+        await this.waitManager.waitForContinue();
         break;
+
       case VNActionEnum.SHOW_CHOICES:
-        //const choiceId = await waitForChoice();
+        await this.handleChoiceAction(event, action);
         break;
+
+      /*
       case VNActionEnum.JUMP:
-        //this.jumpToEvent(action.eventId);
+        // Jump should exit the current event execution
+        this.engineState.currentEvent = action.engineState.jumpEvent;
+        this.engineState.currentStep = 0;
+        throw new Error('JumpInterrupt'); // This will be caught by engine
         break;
+
       case VNActionEnum.RUN_CUSTOM:
-        //const result = await this.executeCustomLogic(action.logicId, action.args);
-        //this.cacheCustomLogicResult(action.logicId, result);
+        // TODO: Custom logic - temporarily disabled for minimal implementation
+        console.log('Custom logic skipped for now');
         break;
+      */
+
       default:
         break;
     }
   }
 
-  /*
-  private jumpToEvent(eventId: string): void {
-    this.engineState.currentEvent = eventId;
-    this.engineState.currentStep = 0;
-    console.debug(`Jumping to event: ${eventId}`);
-  }
-
-  private async executeCustomLogic(logicId: string, args: any): Promise<any> {
-    const logicFunction = CustomRegistry.get(logicId);
-    if (!logicFunction) {
-      throw new Error(`Custom logic '${logicId}' not found`);
-    }
-
-    // For timing minigame, activate UI state
-    if (logicId === 'timingMinigame') {
-      this.engineState.minigame = {
-        active: true,
-        type: 'timing',
-        props: args
-      };
-      
-      // Wait for minigame result from UI
-      const result = await this.waitForMinigameResult();
-      
-      // Deactivate minigame UI
-      this.engineState.minigame = {
-        active: false,
-        type: null,
-        props: null
-      };
-      
-      // Update game state
-      if (!this.gameState.player.money) {
-        this.gameState.player.money = 0;
-      }
-      this.gameState.player.money += result.reward || 0;
-      
-      if (!this.gameState.flags.lastMinigameResult) {
-        this.gameState.flags.lastMinigameResult = {};
-      }
-      this.gameState.flags.lastMinigameResult[logicId] = result;
-      
-      return result;
-    }
-
-    // Execute other custom logic
-    return await logicFunction(args, this.gameState);
-  }
-
-  private async waitForMinigameResult(): Promise<any> {
-    return new Promise<any>((resolve) => {
-      // This would be resolved by the minigame component
-      // For now, return a mock result
-      setTimeout(() => resolve({ reward: 10, success: true }), 1000);
-    });
-  }
-
-  private cacheCustomLogicResult(logicId: string, result: any): void {
-    this.customLogicCache[logicId] = result;
-    console.debug(`Cached custom logic result for ${logicId}:`, result);
-  }
-
-  applyActionToEngine(action: VNAction): void {
-    console.debug(`APPLYING ACTION TO ENGINE: ${action.type}`);
+  // Handle choice actions and return chosen choice ID
+  private async handleChoiceAction(event: VNEvent, action: VNAction): Promise<void> {
+    // Wait for user choice    
+    const choiceId = await this.waitManager.waitForChoice();
     
-    if (action.type === 'jump') {
-      this.jumpToEvent(action.eventId);
-      return;
+    // SIMULATE CHOICE
+    if (choiceId && event.branches?.[choiceId]) {
+      await this.simulateEvent(event.branches[choiceId].execute);
     }
-
-    if (action.gameStateCopy && action.engineStateCopy) {
-      // Copy game state
-      Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameStateCopy)));
-      
-      // Copy engine state (except currentStep which we manage ourselves)
-      const { currentStep, ...engineStateToCopy } = action.engineStateCopy;
-      Object.assign(this.engineState, engineStateToCopy);
-    }
-  }*/
+  }
 }

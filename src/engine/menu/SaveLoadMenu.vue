@@ -102,8 +102,8 @@ const saves = ref({});
 const saveNames = ref({});
 
 const mode = computed(() => {
-  if (engineState.state === ENGINE_STATES.SAVE) return "save";
-  if (engineState.state === ENGINE_STATES.LOAD) return "load";
+  if (engineState.state === EngineStateEnum.SAVE) return "save";
+  if (engineState.state === EngineStateEnum.LOAD) return "load";
   return "save"; // fallback
 });
 

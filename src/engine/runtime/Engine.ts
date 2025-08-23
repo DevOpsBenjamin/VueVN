@@ -1,4 +1,5 @@
 import {
+  EngineSave,
   VNInterruptError,
   EngineErrors,
   SimulateRunner,
@@ -18,6 +19,7 @@ import type {
 } from "@/generate/types";
 
 class Engine {
+  // #region DEFINITION
   gameState: GameState;
   engineState: EngineState;
   
@@ -38,7 +40,7 @@ class Engine {
     this.historyManager = new HistoryManager();
     this.eventManager = new EventManager();
     this.waitManager = new WaitManager();
-    this.actionExecutor = new ActionExecutor(engineState, gameState);
+    this.actionExecutor = new ActionExecutor(engineState, gameState, this.historyManager, this.waitManager);
     this.inputManager = new InputManager(engineState, gameState);
     this.navigationManager = new NavigationManager(
       engineState, 
@@ -75,6 +77,21 @@ class Engine {
     }
     return undefined;
   }
+  // #endregion
+  
+  // #region SAVE engine
+  startNewGame(): void {
+    EngineSave.startNewGame(this);
+  }
+
+  loadGame(slot: string): Promise<void> {
+    return EngineSave.loadGame(this, slot);
+  }
+
+  saveGame(slot: string, name?: string): void {
+    EngineSave.saveGame(this, slot, name);
+  }
+  // #endregion
 
   // Delegate methods to WaitManager
   resolveAwaiter(result: any): void {
@@ -89,6 +106,7 @@ class Engine {
     this.waitManager.cleanAwaiter();
   }
 
+  // #region LOOP ENGINE
   // Main engine loop
   async run(): Promise<void> {
     while (true) {
@@ -111,14 +129,6 @@ class Engine {
 
   async runGameLoop(): Promise<void> {
     while (this.engineState.state === EngineStateEnum.RUNNING) {
-      //IF AFTER A JUMP WE SHOULD RUN AN EVENT
-      if (this.engineState.currentEvent != null)
-      {
-        const event = this.eventManager.findEventById(this.engineState.currentEvent)
-        if (event != null) {
-          await this.handleEvent(event);
-        }
-      }
       const { immediateEvent, drawableEvents } = await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
         await this.handleEvent(immediateEvent);
@@ -131,49 +141,21 @@ class Engine {
       await new Promise((resolve) => setTimeout(resolve, 20000));
     }
   }
+  // #endregion
+  
 
+  // #region Event EXECUTOR
   async handleEvent(immediateEvent: VNEvent): Promise<void> {    
     try {
-      // Phase 1: Simulation - generate action sequence
-      const actionSequence = await this.simulateEvent(immediateEvent);      
-      // Phase 2: Playback - execute actions with user interaction  
-      await this.playbackActions(actionSequence);      
+      // ActionExecutor handles everything: simulation + playback + choice branches
+      await this.actionExecutor.executeEvent(immediateEvent);
     } catch (error) {
         console.error('Event execution error:', error);
         throw error;
     }
   }
 
-  private async simulateEvent(event: VNEvent): Promise<VNAction[]> {    
-    this.engineState.currentEvent = event.id;
-    this.engineState.currentStep = 0;
-    // Create simulation runner with copies of current state
-    const gameStateCopy = JSON.parse(JSON.stringify(this.gameState));
-    const engineStateCopy = JSON.parse(JSON.stringify(this.engineState));
-    
-    const simulator = new SimulateRunner(gameStateCopy, engineStateCopy, event.id);
-    
-    try {
-      // Run event simulation to capture all actions
-      await event.execute(simulator, gameStateCopy);
-      return simulator.actions;
-    } catch (error) {
-      console.error('Simulation error:', error);
-      return [];
-    }
-  }
-
-  private async playbackActions(actions: VNAction[]): Promise<void> {
-    this.historyManager.setFuture(actions);
-    for (const action of actions) {      
-      // Execute action with real user interaction
-      await this.actionExecutor.executeAction(
-        action,
-        () => this.waitManager.waitForContinue(),
-        () => this.waitManager.waitForChoice()
-      );
-    }
-  }
+  // #endregion
 }
 
 export default Engine;
