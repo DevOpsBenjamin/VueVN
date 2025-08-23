@@ -1,27 +1,27 @@
 import { EngineErrors } from '@/generate/runtime';
 import type { VNAction, EngineState, GameState, HistoryEntry } from '@/generate/types';
 import type HistoryManager from './HistoryManager';
-import type WaitManager from './WaitManager';
 import type ActionExecutor from './ActionExecutor';
 
 export default class NavigationManager {
   private engineState: EngineState;
   private gameState: GameState;
   private historyManager: HistoryManager;
-  private waitManager: WaitManager;
   private actionExecutor: ActionExecutor;
+  
+  // Waiter state for smart navigation
+  private continueWaiter: ((value: void) => void) | null = null;
+  private choiceWaiter: ((value: string) => void) | null = null;
 
   constructor(
     engineState: EngineState, 
     gameState: GameState, 
     historyManager: HistoryManager,
-    waitManager: WaitManager,
     actionExecutor: ActionExecutor
   ) {
     this.engineState = engineState;
     this.gameState = gameState;
     this.historyManager = historyManager;
-    this.waitManager = waitManager;
     this.actionExecutor = actionExecutor;
   }
 
@@ -31,9 +31,8 @@ export default class NavigationManager {
       return;
     }
 
-    // Cancel any pending awaiters (choice, navigation, etc.)
-    this.waitManager.cancelAwaiter();
-    this.waitManager.cancelNavigationAwaiter();
+    // Cancel any pending waiters
+    this.cancelWaiters();
 
     console.warn("Going back in history...");
     
@@ -82,9 +81,8 @@ export default class NavigationManager {
       return;
     }
 
-    // Cancel any pending awaiters before moving forward
-    this.waitManager.cancelAwaiter();
-    this.waitManager.cancelNavigationAwaiter();
+    // Cancel any pending waiters before moving forward
+    this.cancelWaiters();
 
     const nextAction = this.historyManager.goForward();
     if (!nextAction) {
@@ -110,17 +108,56 @@ export default class NavigationManager {
       console.error("Error applying action during goForward:", error);
     }
 
-    // Handle choice actions - wait for user interaction
-    if (nextAction.type === 'showChoices') {
-      this.engineState.choices = nextAction.choices;
-      
-      // Only wait for new choice if not in skip mode
-      if (!this.waitManager.getSkipMode()) {
-        await this.waitManager.waitForChoice();
-      }
-      
-      // Continue to next action after choice
-      await this.waitManager.waitForNavigation();
+    // Note: This old logic is now handled by ActionExecutor's executeEvent flow
+    // goForward is now mainly for manual navigation, not action execution
+  }
+
+  // Smart waiting methods for ActionExecutor
+  async waitForContinue(): Promise<void> {
+    // If continueWaiter is null, we're in navigation mode - auto-resolve
+    if (this.continueWaiter === null) {
+      console.debug("NavigationManager: Auto-resolving continue (navigation mode)");
+      return Promise.resolve();
     }
+    
+    // Normal mode - actually wait for user input
+    console.debug("NavigationManager: Waiting for user continue");
+    return new Promise<void>((resolve) => {
+      this.continueWaiter = resolve;
+    });
+  }
+
+  async waitForChoice(): Promise<string> {
+    // Choice always waits, but sets choiceWaiter state
+    console.debug("NavigationManager: Waiting for user choice");
+    return new Promise<string>((resolve) => {
+      this.choiceWaiter = resolve;
+      // Clear continueWaiter when we start waiting for choice
+      this.continueWaiter = null;
+    });
+  }
+
+  // Methods to resolve waiters (called by user input handlers)
+  resolveContinue(): void {
+    if (this.continueWaiter) {
+      console.debug("NavigationManager: Resolving continue");
+      this.continueWaiter();
+      this.continueWaiter = null;
+    }
+  }
+
+  resolveChoice(choiceId: string): void {
+    if (this.choiceWaiter) {
+      console.debug(`NavigationManager: Resolving choice with: ${choiceId}`);
+      this.choiceWaiter(choiceId);
+      this.choiceWaiter = null;
+    }
+  }
+
+  // Cancel waiters for navigation
+  cancelWaiters(): void {
+    console.debug("NavigationManager: Cancelling all waiters");
+    this.continueWaiter = null;
+    this.choiceWaiter = null;
   }
 }

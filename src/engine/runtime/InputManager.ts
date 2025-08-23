@@ -1,5 +1,6 @@
 import { EngineStateEnum } from '@/generate/enums';
 import type { EngineState, GameState } from '@/generate/types';
+import type NavigationManager from './NavigationManager';
 
 export default class InputManager {
   private skipMode: boolean = false;
@@ -7,8 +8,7 @@ export default class InputManager {
   private keyboardDetected: boolean = false;
   private engineState: EngineState;
   private gameState: GameState;
-  private resolveNavigation: (() => void) | null = null;
-  private goBackCallback: (() => void) | null = null;
+  private navigationManager: NavigationManager | null = null;
 
   constructor(engineState: EngineState, gameState: GameState) {
     this.engineState = engineState;
@@ -16,14 +16,19 @@ export default class InputManager {
     this.detectKeyboardLayout();
   }
 
-  setNavigationCallbacks(resolveNavigation: () => void, goBack: () => void): void {
-    this.resolveNavigation = resolveNavigation;
-    this.goBackCallback = goBack;
+  setNavigationManager(navigationManager: NavigationManager): void {
+    this.navigationManager = navigationManager;
   }
 
-  private goBack(): void {
-    if (this.goBackCallback) {
-      this.goBackCallback();
+  private async goBack(): Promise<void> {
+    if (this.navigationManager) {
+      await this.navigationManager.goBack();
+    }
+  }
+
+  private resolveContinue(): void {
+    if (this.navigationManager) {
+      this.navigationManager.resolveContinue();
     }
   }
 
@@ -48,15 +53,15 @@ export default class InputManager {
       } else if (e.key === "Space" || e.key === "ArrowRight") {
         // Forward navigation
         if (e.shiftKey && e.key === "ArrowRight") {
-          if (this.resolveNavigation) this.resolveNavigation(); // History forward (redo)
+          this.resolveContinue(); // History forward (redo)
         } else {
-          if (this.resolveNavigation) this.resolveNavigation(); // Main forward navigation
+          this.resolveContinue(); // Main forward navigation
         }
       } else if (e.key === "ArrowLeft") {
         this.goBack(); // History backward
       } else if (this.isForwardKey(e.key)) {
         // E key (works on both layouts) - forward
-        if (this.resolveNavigation) this.resolveNavigation();
+        this.resolveContinue();
       } else if (this.isBackwardKey(e.key)) {
         // Q key (QWERTY) or A key (AZERTY) - backward
         this.goBack();
@@ -87,7 +92,7 @@ export default class InputManager {
     window.addEventListener("click", (e) => {
       if (e.clientX > window.innerWidth / 2) {
         if (this.engineState.state === EngineStateEnum.RUNNING) {
-          if (this.resolveNavigation) this.resolveNavigation(); // Main forward navigation
+          this.resolveContinue(); // Main forward navigation
         } else {
           console.debug("Click ignored, not in RUNNING state");
         }

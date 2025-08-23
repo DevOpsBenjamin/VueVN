@@ -1,4 +1,4 @@
-import { SimulateRunner, HistoryManager, WaitManager } from '@/generate/runtime';
+import { SimulateRunner, HistoryManager, NavigationManager } from '@/generate/runtime';
 import { VNActionEnum } from '@/generate/enums';
 import type { VNAction, EngineState, GameState, VNEvent, EngineAPI } from '@/generate/types';
 
@@ -6,19 +6,19 @@ export default class ActionExecutor {
   private engineState: EngineState;
   private gameState: GameState;
   private historyManager: HistoryManager;
-  private waitManager: WaitManager;
+  private navigationManager: NavigationManager;
   private customLogicCache: Record<string, any> = {};
   
   constructor(
     engineState: EngineState, 
     gameState: GameState, 
     historyManager: HistoryManager,
-    waitManager: WaitManager
+    navigationManager: NavigationManager
   ) {
     this.engineState = engineState;
     this.gameState = gameState;
     this.historyManager = historyManager;
-    this.waitManager = waitManager;
+    this.navigationManager = navigationManager;
   }
 
   async executeEvent(event: VNEvent): Promise<void> {
@@ -35,6 +35,7 @@ export default class ActionExecutor {
       
       await this.executeAction(event, action);
     }
+    this.historyManager.resetHistory()
   }
 
   // Generic simulation method that works with both events and branches
@@ -63,7 +64,7 @@ export default class ActionExecutor {
   private async executeAction(event: VNEvent, action: VNAction): Promise<void> {
     switch (action.type) {
       case VNActionEnum.SHOW_TEXT:
-        await this.waitManager.waitForContinue();
+        await this.navigationManager.waitForContinue();
         break;
 
       case VNActionEnum.SHOW_CHOICES:
@@ -92,7 +93,7 @@ export default class ActionExecutor {
   // Handle choice actions and return chosen choice ID
   private async handleChoiceAction(event: VNEvent, action: VNAction): Promise<void> {
     // Wait for user choice    
-    const choiceId = await this.waitManager.waitForChoice();
+    const choiceId = await this.navigationManager.waitForChoice();
     
     // SIMULATE CHOICE
     if (choiceId && event.branches?.[choiceId]) {

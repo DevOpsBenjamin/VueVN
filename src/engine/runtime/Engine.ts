@@ -7,7 +7,6 @@ import {
   EventManager,
   InputManager,
   ActionExecutor,
-  WaitManager,
   NavigationManager
 } from "@/generate/runtime";
 import { EngineStateEnum } from "@/generate/enums";
@@ -28,7 +27,6 @@ class Engine {
   eventManager: EventManager;
   inputManager: InputManager;
   actionExecutor: ActionExecutor;
-  waitManager: WaitManager;
   navigationManager: NavigationManager;
 
   constructor(gameState: GameState, engineState: EngineState) {
@@ -36,25 +34,27 @@ class Engine {
     this.gameState = gameState;
     this.engineState = engineState;
     
-    // Initialize managers
+    // Initialize managers (order matters for dependencies)
     this.historyManager = new HistoryManager();
     this.eventManager = new EventManager();
-    this.waitManager = new WaitManager();
-    this.actionExecutor = new ActionExecutor(engineState, gameState, this.historyManager, this.waitManager);
     this.inputManager = new InputManager(engineState, gameState);
+    
+    // Initialize NavigationManager first (ActionExecutor needs it)
     this.navigationManager = new NavigationManager(
       engineState, 
       gameState, 
       this.historyManager, 
-      this.waitManager, 
-      this.actionExecutor
+      null as any // Will be set after ActionExecutor is created
     );
     
-    // Setup callbacks
-    this.inputManager.setNavigationCallbacks(
-      () => this.waitManager.resolveNavigation(() => this.navigationManager.goForward()),
-      () => this.navigationManager.goBack()
-    );
+    // Initialize ActionExecutor with NavigationManager
+    this.actionExecutor = new ActionExecutor(engineState, gameState, this.historyManager, this.navigationManager);
+    
+    // Update NavigationManager with ActionExecutor reference
+    (this.navigationManager as any).actionExecutor = this.actionExecutor;
+    
+    // Setup NavigationManager reference in InputManager
+    this.inputManager.setNavigationManager(this.navigationManager);
     
     // Initialize window reference
     if (typeof window !== "undefined") {
@@ -93,17 +93,17 @@ class Engine {
   }
   // #endregion
 
-  // Delegate methods to WaitManager
-  resolveAwaiter(result: any): void {
-    this.waitManager.resolveAwaiter(result);
+  // Delegate methods to NavigationManager  
+  resolveContinue(): void {
+    this.navigationManager.resolveContinue();
   }
 
-  cancelAwaiter(): void {
-    this.waitManager.cancelAwaiter();
+  resolveChoice(choiceId: string): void {
+    this.navigationManager.resolveChoice(choiceId);
   }
 
-  cleanAwaiter(): void {
-    this.waitManager.cleanAwaiter();
+  cancelWaiters(): void {
+    this.navigationManager.cancelWaiters();
   }
 
   // #region LOOP ENGINE
@@ -154,7 +154,6 @@ class Engine {
         throw error;
     }
   }
-
   // #endregion
 }
 
