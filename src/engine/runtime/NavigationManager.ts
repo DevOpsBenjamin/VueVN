@@ -39,7 +39,8 @@ export default class NavigationManager {
 
   async goForward(): Promise<void> {
     if (!this.historyManager.canGoForward()) {
-       console.warn("Can't goForward..."); 
+        console.warn("Can't goForward..."); 
+        this.resolveContinue();
       return;
     }
     console.warn("Going forward ...");
@@ -49,22 +50,9 @@ export default class NavigationManager {
       Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
       Object.assign(this.engineState, JSON.parse(JSON.stringify(action.engineState)));
     }
-    this.resolveContinue();
   }
 
-  async makeChoice(choiceId: string): Promise<void> {    
-    if (!this.historyManager.canGoForward()) {
-       console.warn("Can't goForward for choice..."); 
-      return;
-    }
-    console.warn("Going forward for choice...");
-    const action = this.historyManager.goForward();
-    console.warn(action);
-    console.warn(action);
-    if (action && action.gameState && action.engineState) {
-      Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
-      Object.assign(this.engineState, JSON.parse(JSON.stringify(action.engineState)));
-    }
+  async makeChoice(choiceId: string): Promise<void> {
     this.resolveChoice(choiceId);
   }
 
