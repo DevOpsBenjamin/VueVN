@@ -1,5 +1,5 @@
-import type { GameState } from '../engine/runtime/types';
-import { CustomLogicRegistry } from '../engine/runtime/CustomRegistry';
+import type { GameState } from '@/generate/types';
+import { CustomRegistry } from '@/generate/runtime';
 
 export interface TimingGameResult {
   bonus: number;
@@ -65,15 +65,17 @@ export class TimingGame {
 }
 
 // Register the timing minigame with the custom logic registry
-CustomLogicRegistry.register('timingMinigame', async (args, gameState: GameState) => {
+CustomRegistry.register('timingMinigame', async (args, gameState: GameState) => {
   const game = new TimingGame(args.difficulty || 1, args.reward || 100);
   const result = await game.play();
   
   // Update game state based on result
+  /*
   if (!gameState.player.money) {
     gameState.player.money = 0;
   }
   gameState.player.money += result.reward;
+  */
   
   if (!gameState.flags.lastMinigameResult) {
     gameState.flags.lastMinigameResult = {};

@@ -12,7 +12,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { engineState as useEngineState } from '@/generate/stores';
 import { EngineStateEnum } from '@/generate/enums';
 

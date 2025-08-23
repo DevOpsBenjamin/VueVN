@@ -1,4 +1,4 @@
-import type { VNEvent } from '@/engine/runtime/types';
+import type { VNEvent } from '@/generate/types';
 
 const afterIntro: VNEvent = {
   id: 'after-intro',
@@ -14,9 +14,9 @@ const afterIntro: VNEvent = {
     await engine.showText('What would you like to do?');
     
     const choice = await engine.showChoices([
-      { text: 'Explore the room', id: 'explore', branch: 'explore_room' },
-      { text: 'Check your phone', id: 'phone', branch: 'check_phone' },
-      { text: 'Go back to sleep', id: 'sleep', branch: 'go_sleep' }
+      { text: 'Explore the room', branch: 'explore_room' },
+      { text: 'Check your phone', branch: 'check_phone' },
+      { text: 'Go back to sleep', branch: 'go_sleep' }
     ]);
   },
 

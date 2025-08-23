@@ -59,7 +59,7 @@
   </Transition>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { engineState as useEngineState } from '@/generate/stores';
 import { EngineStateEnum } from '@/generate/enums';
 import { Engine } from '@/generate/runtime';
@@ -71,11 +71,11 @@ function newGame() {
 }
 
 function continueGame() {
-  engineState.state = ENGINE_STATES.RUNNING;
+  engineState.state = EngineStateEnum.RUNNING;
 }
 
 function loadGame() {
-  engineState.state = ENGINE_STATES.LOAD;
+  engineState.state = EngineStateEnum.LOAD;
 }
 
 function openSettings() {
@@ -83,7 +83,7 @@ function openSettings() {
 }
 
 function saveGame() {
-  engineState.state = ENGINE_STATES.SAVE;
+  engineState.state = EngineStateEnum.SAVE;
 }
 
 const menuBgStyle = {

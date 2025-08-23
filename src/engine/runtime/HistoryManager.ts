@@ -3,6 +3,7 @@ import { mapActions } from 'pinia';
 
 export default class HistoryManager {
   private history: VNAction[] = [];
+  private present: VNAction | null = null;
   private future: VNAction[] = [];
   private readonly maxHistorySize = 50;
 
@@ -17,19 +18,8 @@ export default class HistoryManager {
   resetHistory(): void {
     console.debug('Resetting history');
     this.history = [];
+    this.present = null;
     this.future = [];
-  }
-
-  addToHistory(entry: VNAction): void {
-    // Clear future when new action taken (no more go-forward)
-    this.future = [];
-    
-    this.history.push(entry);
-    
-    // Limit history size for performance (50 entries max)
-    if (this.history.length > this.maxHistorySize) {
-      this.history.shift(); // Remove oldest
-    }
   }
 
   canGoBack(): boolean {
@@ -40,18 +30,31 @@ export default class HistoryManager {
     return this.future.length > 0;
   }
 
+  // New methods for ActionExecutor
+  getPresent(): VNAction | null {
+    return this.present || null;
+  }
+
   goBack(): VNAction | null {
     const entry = this.history.pop();
     if (entry) {
-      this.future.unshift(entry); // Add to BEGINNING of future (first to be retrieved)
+      if (this.present != null)
+      {
+        this.future.unshift(this.present);
+      }
+      this.present = entry;
     }
     return entry || null;
   }
 
   goForward(): VNAction | null {
     const entry = this.future.shift(); // Take FIRST item, not last
-    if (entry) {
-      this.history.push(entry);
+    if (entry) {      
+      if (this.present != null)
+      {
+        this.history.push(this.present);
+      }
+      this.present = entry;
     }
     return entry || null;
   }
@@ -80,22 +83,5 @@ export default class HistoryManager {
   loadHistoryData(data: { history: VNAction[], future: VNAction[] }): void {
     this.history = data.history || [];
     this.future = data.future || [];
-  }
-
-  // New methods for ActionExecutor
-  getFirstFutureAction(): VNAction | null {
-    return this.future.length > 0 ? this.future[0] : null;
-  }
-
-  moveFirstFutureToHistory(): void {
-    const action = this.future.shift();
-    if (action) {
-      this.history.push(action);
-      
-      // Limit history size for performance
-      if (this.history.length > this.maxHistorySize) {
-        this.history.shift();
-      }
-    }
   }
 }

@@ -1,4 +1,5 @@
-import type { EngineState, GameState, VNActionEnum } from '@/generate/types';
+import type { EngineState, GameState } from '@/generate/types';
+import { VNActionEnum } from '@/generate/enums';
 
 export interface VNAction {
   type: VNActionEnum;

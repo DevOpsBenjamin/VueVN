@@ -1,4 +1,4 @@
-import type { VNEvent } from '@/engine/runtime/types';
+import type { VNEvent } from '@/generate/types';
 
 const timingEvent: VNEvent = {
   id: 'timing-event',
@@ -13,10 +13,12 @@ const timingEvent: VNEvent = {
     await engine.showText("Maybe if you can match the timing, something will happen?");
     
     // Le mini-jeu gère tout lui-même - pas de code après
+    /*
     await engine.runCustomLogic('timingMinigame', { 
       difficulty: 2,
       context: 'alarm_clock' // Context pour que le mini-jeu sache quoi faire
     });
+    */
     
     // ❌ PLUS DE CODE ICI - le mini-jeu gère ses conséquences
     // L'événement se termine ici, le game loop redémarre après le mini-jeu

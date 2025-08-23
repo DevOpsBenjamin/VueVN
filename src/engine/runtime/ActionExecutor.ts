@@ -28,7 +28,7 @@ export default class ActionExecutor {
   
   async runEvent(event: VNEvent): Promise<void>{
     while (this.historyManager.getFutureLength() > 0) {
-      const action = this.historyManager.getFirstFutureAction();
+      const action = this.historyManager.getPresent();
       if (!action) {
         break;
       }
@@ -105,6 +105,8 @@ export default class ActionExecutor {
       //Choice done we set null for next simulation step
       this.engineState.choices = null;
       await this.simulateEvent(event.branches[choiceId].execute);
+    } else {
+      console.warn('A choice have been made not in exepected list');
     }
   }
 }

@@ -1,4 +1,4 @@
-import type { VNEvent } from '@/engine/runtime/types';
+import type { VNEvent } from '@/generate/types';
 
 const choiceEvent: VNEvent = {
   id: 'choice-event',
@@ -15,9 +15,9 @@ const choiceEvent: VNEvent = {
     await engine.showText("This could be the moment that changes everything.");
     
     const choice = await engine.showChoices([
-      { text: 'Open the door immediately', id: 'open', branch: 'open_door' },
-      { text: 'Ask who it is first', id: 'ask', branch: 'ask_first' },
-      { text: 'Pretend nobody is home', id: 'hide', branch: 'pretend_away' }
+      { text: 'Open the door immediately', branch: 'open_door' },
+      { text: 'Ask who it is first', branch: 'ask_first' },
+      { text: 'Pretend nobody is home', branch: 'pretend_away' }
     ]);
   },
 

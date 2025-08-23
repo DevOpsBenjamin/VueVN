@@ -71,7 +71,7 @@ fs.writeFileSync(
 console.log(`📄 Created: projects/${projectName}/config.json`);
 
 // 2. Example start event
-const startEventContent: string = `import type { VNEvent } from '@/engine/runtime/types';
+const startEventContent: string = `import type { VNEvent } from '@/generate/types';
 
 const intro: VNEvent = {
   id: 'intro',
@@ -115,7 +115,7 @@ fs.writeFileSync(
 console.log(`📄 Created: projects/${projectName}/events/start/intro.ts`);
 
 // 3. Example bedroom event
-const bedroomEventContent: string = `import type { VNEvent } from "@/engine/runtime/types";
+const bedroomEventContent: string = `import type { VNEvent } from '@/generate/types';
 
 const wakeUp: VNEvent = {
   id: 'wake_up',

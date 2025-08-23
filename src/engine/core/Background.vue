@@ -9,7 +9,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { engineState as useEngineState } from '@/generate/stores';
 const engineState = useEngineState();

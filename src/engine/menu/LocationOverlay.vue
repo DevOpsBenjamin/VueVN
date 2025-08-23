@@ -6,6 +6,6 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // Will later render location move buttons
 </script>

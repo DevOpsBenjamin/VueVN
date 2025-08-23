@@ -24,11 +24,13 @@ export default class NavigationManager {
 
   async goBack(): Promise<void> {
     if (!this.historyManager.canGoBack()) {
+       console.warn("Can't goBack..."); 
       return;
     }
     console.warn("Going back in history...");    
     // Get the last action from history (this is what we want to undo)
     const action = this.historyManager.goBack();
+    console.warn(action);
     if (action && action.gameState && action.engineState) {
       Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
       Object.assign(this.engineState, JSON.parse(JSON.stringify(action.engineState)));
@@ -37,15 +39,33 @@ export default class NavigationManager {
 
   async goForward(): Promise<void> {
     if (!this.historyManager.canGoForward()) {
+       console.warn("Can't goForward..."); 
       return;
     }
     console.warn("Going forward ...");
     const action = this.historyManager.goForward();
+    console.warn(action);
     if (action && action.gameState && action.engineState) {
       Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
       Object.assign(this.engineState, JSON.parse(JSON.stringify(action.engineState)));
     }
     this.resolveContinue();
+  }
+
+  async makeChoice(choiceId: string): Promise<void> {    
+    if (!this.historyManager.canGoForward()) {
+       console.warn("Can't goForward for choice..."); 
+      return;
+    }
+    console.warn("Going forward for choice...");
+    const action = this.historyManager.goForward();
+    console.warn(action);
+    console.warn(action);
+    if (action && action.gameState && action.engineState) {
+      Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
+      Object.assign(this.engineState, JSON.parse(JSON.stringify(action.engineState)));
+    }
+    this.resolveChoice(choiceId);
   }
 
   // Smart waiting methods for ActionExecutor

@@ -58,7 +58,7 @@ import { engineState as useEngineState } from "@/generate/stores";
 const engineState = useEngineState();
 
 function select(id: string): void {
-  Engine.getInstance()?.navigationManager.resolveChoice(id);
+  Engine.getInstance()?.navigationManager.makeChoice(id);
 }
 
 function handleKeyPress(event: KeyboardEvent): void {
