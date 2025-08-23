@@ -13,6 +13,6 @@ export interface EngineState {
   currentStep: number;
 
   //USE?
-  isSimulating: boolean;
-  isFastForwarding: boolean;
+  //isSimulating: boolean;
+  //isFastForwarding: boolean;
 }

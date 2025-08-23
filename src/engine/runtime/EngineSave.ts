@@ -27,7 +27,7 @@ export const loadGame = async (engine: Engine, slot: string): Promise<void> => {
   Object.assign(engine.gameState.$state, data.gameState);  
   engine.eventManager.resetEvents(engine.gameState);
   //LoadHistory
-  engine.historyManager.load(data.historyState);
+  engine.historyManager.loadHistoryData(data.historyState);
   // Restore engine state
   Object.assign(engine.engineState.state, data.engineState);
 };
@@ -38,10 +38,7 @@ export const saveGame = (engine: Engine, slot: string, name?: string): void => {
   engineStateCopy.state = EngineStateEnum.RUNNING;
 
   // Save history state separately
-  const historyStateCopy = {
-    history: engine.historyManager.history,
-    future: engine.historyManager.future
-  };
+  const historyStateCopy = engine.historyManager.getHistoryData();
   
   const data = {
     name: name || `Save ${slot}`,

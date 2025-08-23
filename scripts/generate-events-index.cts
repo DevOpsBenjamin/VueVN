@@ -50,7 +50,8 @@ Object.entries(filesByLoc).forEach(([location, files]) => {
     const varName = `event${importCount++}`;
     const relPath = path
       .relative(path.join(__dirname, "../src/generate"), f)
-      .replace(/\\/g, "/");
+      .replace(/\\/g, "/")
+      .replace(/\.ts$/, "");
     imports += `import ${varName} from '${
       relPath.startsWith(".") ? relPath : "../" + relPath
     }';\n`;

@@ -8,12 +8,14 @@ export const useEngineState = defineStore('engineState', {
     foreground: null,
     dialogue: null,
     initialized: false,
-    isSimulating: false,
-    isFastForwarding: false,
+    //isSimulating: false,
+    //isFastForwarding: false,
     state: EngineStateEnum.MENU,
     currentEvent: null,
     currentStep: 0,
     choices: null,
+    customArgs: null,
+    jumpEvent: null
   }),
   actions: {
     resetState(): void {
@@ -25,8 +27,8 @@ export const useEngineState = defineStore('engineState', {
       this.currentEvent = null;
       this.currentStep = 0;
       this.choices = null;
-      this.isSimulating = false;
-      this.isFastForwarding = false;
+      //this.isSimulating = false;
+      //this.isFastForwarding = false;
     },
   } satisfies EngineStateActions,
 });

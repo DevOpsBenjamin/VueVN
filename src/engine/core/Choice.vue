@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
-import Engine from "@/engine/runtime/Engine";
+import { Engine } from "@/generate/runtime";
 import { engineState as useEngineState } from "@/generate/stores";
 
 const engineState = useEngineState();

@@ -73,13 +73,13 @@ Object.entries(groups).forEach(([group, relPaths]) => {
     let abs: string, importPath: string;
     if (projectFiles[rel]) {
       abs = projectFiles[rel];
-      // Path relative to outDir
-      const relPath = path.relative(outDir, abs).replace(/\\/g, "/");
+      // Path relative to outDir, remove .ts extension
+      const relPath = path.relative(outDir, abs).replace(/\\/g, "/").replace(/\.ts$/, "");
       importPath = relPath.startsWith(".") ? relPath : "./" + relPath;
     } else {
       abs = engineFiles[rel];
-      // Path relative to outDir
-      const relPath = path.relative(outDir, abs).replace(/\\/g, "/");
+      // Path relative to outDir, remove .ts extension
+      const relPath = path.relative(outDir, abs).replace(/\\/g, "/").replace(/\.ts$/, "");
       importPath = relPath.startsWith(".") ? relPath : "./" + relPath;
     }
     imports += `import ${finalVarName} from '${importPath}';\n`;
