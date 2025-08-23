@@ -105,7 +105,7 @@ export default class InputManager {
   }
 
   private forward(): void {
-    this.navigationManager.resolveContinue();
+    this.navigationManager.goForward();
   }
 
   private toggleMenu(): void {

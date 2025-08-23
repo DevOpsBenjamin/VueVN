@@ -1,4 +1,4 @@
-import type { VNEvent } from '@/engine/runtime/types';
+import type { VNEvent } from '@/generate/types';
 
 const intro: VNEvent = {
   id: 'intro',
@@ -10,10 +10,15 @@ const intro: VNEvent = {
   async execute(engine, state) {
     await engine.setForeground('assets/images/background/intro/hall.png');
     await engine.showText('Welcome to VueVN game sample! You can either start directly or learn about the framework');
+
+    await engine.showText('First text', 'Narrator');
+    await engine.showText('Second text', 'Narrator');
+    await engine.showText('Third text', 'Narrator');
+
     await engine.showChoices([
-      { text: 'Start the adventure', id: 'start', branch: 'start_adventure' },
-      { text: 'Learn more about VueVN', id: 'learn', branch: 'learn_more' },
-      { text: 'Debug MiniGame', id: 'debug', branch: 'debug_minigame' },
+      { text: 'Start the adventure', branch: 'start_adventure' },
+      { text: 'Learn more about VueVN', branch: 'learn_more' },
+      { text: 'Debug MiniGame', branch: 'debug_minigame' },
     ]);
   },
 
@@ -25,8 +30,8 @@ const intro: VNEvent = {
         await engine.showText("It supports branching storylines, custom logic, and mini-games!");
         await engine.showText("You can now read about key binding or start your adventure.");
         await engine.showChoices([
-          { text: 'Start the adventure', id: 'start', branch: 'start_adventure' },
-          { text: 'Learn about KeyBinding', id: 'learn_key', branch: 'learn_key' },
+          { text: 'Start the adventure', branch: 'start_adventure' },
+          { text: 'Learn about KeyBinding', branch: 'learn_key' },
         ]);
       }
     },
@@ -54,13 +59,13 @@ const intro: VNEvent = {
       async execute(engine, state) {
         // Branch minimale pour tester le mini-jeu directement
         await engine.showText("Starting debug minigame...");
-        
+        /*
         // Lance le mini-jeu - il gère tout lui-même
         await engine.runCustomLogic('timingMinigame', { 
           difficulty: 1,
           context: 'debug_mode'
         });
-        
+        */
         // Pas de code après - retour à l'intro naturellement
       }
     }

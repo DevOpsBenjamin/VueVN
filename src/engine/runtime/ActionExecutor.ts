@@ -102,6 +102,8 @@ export default class ActionExecutor {
     
     // SIMULATE CHOICE
     if (choiceId && event.branches?.[choiceId]) {
+      //Choice done we set null for next simulation step
+      this.engineState.choices = null;
       await this.simulateEvent(event.branches[choiceId].execute);
     }
   }

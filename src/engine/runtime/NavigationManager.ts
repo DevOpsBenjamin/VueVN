@@ -45,6 +45,7 @@ export default class NavigationManager {
       Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
       Object.assign(this.engineState, JSON.parse(JSON.stringify(action.engineState)));
     }
+    this.resolveContinue();
   }
 
   // Smart waiting methods for ActionExecutor

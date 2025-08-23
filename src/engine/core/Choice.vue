@@ -9,8 +9,8 @@
         <div class="flex flex-col space-y-3">
           <button
             v-for="(choice, index) in engineState.choices"
-            :key="choice.id"
-            @click="select(choice.id)"
+            :key="choice.branch"
+            @click="select(choice.branch)"
             class="choice-button group relative overflow-hidden rounded-xl px-6 py-4 text-left transition-all duration-300 ease-out transform hover:scale-[1.02] hover:-translate-y-1"
             :class="`choice-${index + 1}`"
           >
@@ -70,7 +70,7 @@ function handleKeyPress(event: KeyboardEvent): void {
   if (choiceIndex >= 0 && choiceIndex < engineState.choices.length) {
     event.preventDefault();
     event.stopPropagation(); // Prevent engine from handling this key
-    select(engineState.choices[choiceIndex].id);
+    select(engineState.choices[choiceIndex].branch);
   }
 }
 
