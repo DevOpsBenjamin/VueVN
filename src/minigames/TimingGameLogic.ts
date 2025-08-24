@@ -77,10 +77,7 @@ CustomRegistry.register('timingMinigame', async (args, gameState: GameState) => 
   gameState.player.money += result.reward;
   */
   
-  if (!gameState.flags.lastMinigameResult) {
-    gameState.flags.lastMinigameResult = {};
-  }
-  gameState.flags.lastMinigameResult = result;
+  gameState.lastMinigameResult = result;
   
   console.log(`Timing game completed: ${result.zone} zone, ${result.reward} money earned`);
   

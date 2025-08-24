@@ -1,25 +1,31 @@
 import { defineStore } from "pinia";
-import { baseGameState } from "@/generate/stores";
-import { npc_1 } from "@/generate/npcs";
-const { BASE_GAME_STATE } = baseGameState;
+import { neighbor } from "@/generate/npcs";
+import type { GameState, GameStateActions } from "@/generate/types";
 
-const useGameState = defineStore("gameState", {
-  state: () => ({
-    ...BASE_GAME_STATE,
-    npc_1,
+export const useGameState = defineStore("gameState", {
+  state: (): GameState => ({
+    player: { name: "" },
+    location: "start",
+    flags: {},
+    neighbor,
     myCustomField: "",
-    myCustomArray: [] as string[],
+    myCustomArray: [],
+    lastMinigameResult: undefined,
   }),
   actions: {
-    resetGame() {
+    resetGame(): void {
+      console.debug('Resetting game state');
       Object.assign(this, {
-        ...BASE_GAME_STATE,
-        npc_1,
+        player: { name: "" },
+        location: "start", 
+        flags: {},
+        neighbor,
         myCustomField: "",
         myCustomArray: [],
+        lastMinigameResult: undefined,
       });
     },
-  },
+  } satisfies GameStateActions,
 });
 
 export default useGameState;

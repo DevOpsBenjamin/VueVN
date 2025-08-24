@@ -25,7 +25,7 @@ const choiceEvent: VNEvent = {
     open_door: {
       async execute(engine, state) {
         state.flags.majorChoiceMade = true;
-        state.character.personality = 'brave';
+        state.player.personality = 'brave';
         state.location = 'hallway';
         await engine.showText("You boldly open the door without hesitation.");
         await engine.showText("Standing there is a mysterious figure in a dark coat...");
@@ -36,7 +36,7 @@ const choiceEvent: VNEvent = {
     ask_first: {
       async execute(engine, state) {
         state.flags.majorChoiceMade = true;
-        state.character.personality = 'cautious';
+        state.player.personality = 'cautious';
         state.location = 'hallway';
         await engine.showText("'Who is it?' you call out cautiously.");
         await engine.showText("'A friend,' comes the cryptic reply.");
@@ -47,7 +47,7 @@ const choiceEvent: VNEvent = {
     pretend_away: {
       async execute(engine, state) {
         state.flags.majorChoiceMade = true;
-        state.character.personality = 'secretive';
+        state.player.personality = 'secretive';
         await engine.showText("You stay very quiet, hoping they'll go away.");
         await engine.showText("After a few minutes, you hear footsteps leaving.");
         await engine.showText("But you notice they slipped something under your door...");

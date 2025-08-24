@@ -1,7 +1,5 @@
-import { EngineErrors } from '@/generate/runtime';
-import type { VNAction, EngineState, GameState } from '@/generate/types';
-import type HistoryManager from './HistoryManager';
-import type ActionExecutor from './ActionExecutor';
+import type { EngineState, GameState } from '@/generate/types';
+import { HistoryManager } from '@/generate/runtime';
 
 export default class NavigationManager {
   private engineState: EngineState;
