@@ -1,5 +1,4 @@
-import type { GameState } from './GameState';
-import type { GameStateActions } from './GameStateActions';
+import type { GameState, GameStateActions } from '@/generate/types';
 
 // Pinia store type that combines GameState interface + store methods + GameStateActions
 export type GameStateStore = GameState & {
