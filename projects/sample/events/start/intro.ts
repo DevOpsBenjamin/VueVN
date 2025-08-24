@@ -9,7 +9,10 @@ const intro: VNEvent = {
   
   async execute(engine, state) {
     await engine.setForeground('assets/images/background/intro/hall.png');
-    await engine.showText('Welcome to VueVN game sample! You can either start directly or learn about the framework');
+    const multiline_text = `Welcome to VueVN game sample!
+This project is to help developer of game to understand the structure of the game.
+You can either start directly or learn about the framework`;
+    await engine.showText(multiline_text);
     await engine.showChoices([
       { text: 'Start the adventure', branch: 'start_adventure' },
       { text: 'Learn more about VueVN', branch: 'learn_more' },
@@ -32,13 +35,13 @@ const intro: VNEvent = {
     },
     learn_key: {
       async execute(engine, state) {       
-        await engine.showText('This VN engine is thinked for playing one hand (left hand only wink wink).');
-        await engine.showText('You can use Space/Arrow Right/E to continue forward.'); 
-        await engine.showText('You can use Arrow Left/Q to go back in history.');
-        await engine.showText('Perfect for testing the go back and go forward functionality.');
-        await engine.showText('Each of these text lines should be a separate history entry.');
-        await engine.showText('You can hold Ctrl To pass until choice');
-        await engine.showText("For demo purpose this will end the event after this text and you will go back to intro.");
+        await engine.showText('This VN engine is thinked for playing one hand (left hand only wink wink).', 'System');
+        await engine.showText('You can use Space/Arrow Right/E to continue forward.', 'System'); 
+        await engine.showText('You can use Arrow Left/Q to go back in history.', 'System');
+        await engine.showText('Perfect for testing the go back and go forward functionality.', 'System');
+        await engine.showText('Each of these text lines should be a separate history entry.', 'System');
+        await engine.showText('You can hold Ctrl To pass until choice', 'System');
+        await engine.showText("For demo purpose this will end the event after this text and you will go back to intro.", 'System');
       }
     },    
     start_adventure: {
