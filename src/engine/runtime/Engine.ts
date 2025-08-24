@@ -131,10 +131,6 @@ class Engine {
         // No event to draw no loopUntil either a Action Or a DrawableClick.
         await this.navigationManager.actionManager.wait();
       }
-      
-      // DEBUG: Sleep for debugging
-      console.warn("SLEEP FOR DEBUG");
-      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
 
