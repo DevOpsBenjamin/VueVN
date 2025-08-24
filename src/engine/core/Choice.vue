@@ -59,7 +59,7 @@ const engineState = useEngineState();
 
 function select(id: string): void {
   console.log("SELECT CHOICE: ", id);
-  Engine.getInstance()?.navigationManager.makeChoice(id);
+  Engine.getInstance()?.navigationManager.resolveChoice(id);
 }
 
 function handleKeyPress(event: KeyboardEvent): void {

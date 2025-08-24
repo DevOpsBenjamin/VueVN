@@ -13,7 +13,7 @@ export const startNewGame = async (engine: Engine): Promise<void> => {
   
   engine.historyManager.resetHistory();
   engine.eventManager.resetEvents(engine.gameState);
-  engine.navigationManager.cancelWaiters();
+  engine.navigationManager.rejectWaiters();
   engine.engineState.initialized = true;
   engine.engineState.state = EngineStateEnum.RUNNING;
 };
@@ -33,7 +33,7 @@ export const loadGame = async (engine: Engine, slot: number): Promise<void> => {
   // Restore engine state using Pinia $state (properly typed)
   Object.assign(engine.engineState.$state, data.engineState);
 
-  engine.navigationManager.cancelWaiters();
+  engine.navigationManager.rejectWaiters();
   if (engine.engineState.currentEvent != null) {
     const event = engine.eventManager.findEventById(engine.engineState.currentEvent);
     if (event != null) {

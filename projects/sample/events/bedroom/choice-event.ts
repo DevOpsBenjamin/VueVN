@@ -8,7 +8,7 @@ const choiceEvent: VNEvent = {
   locked: (state) => state.flags.majorChoiceMade,
   
   async execute(engine, state) {
-    await engine.setBackground('assets/images/background/bedroom/morning.png');
+    engine.setBackground('assets/images/background/bedroom/morning.png');
     await engine.showText('You find yourself in your cozy bedroom.');
     await engine.showText('Sunlight streams through the window.');
     await engine.showText("As you contemplate your next move... You hear a knock at your door.");
