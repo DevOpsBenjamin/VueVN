@@ -45,11 +45,12 @@ import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import { loadMonaco } from "@/editor/utils/monacoLoader.js";
 
 // Editor container refs
-const engineEditorContainer = ref(null);
-const gameEditorContainer = ref(null);
+const engineEditorContainer = ref<HTMLElement | null>(null);
+const gameEditorContainer = ref<HTMLElement | null>(null);
 
-let engineEditorInstance = null;
-let gameEditorInstance = null;
+// Monaco editor instances
+let engineEditorInstance: any = null;
+let gameEditorInstance: any = null;
 
 // Simulated composables
 import {
@@ -60,7 +61,7 @@ import {
 const engineState = useEngineState();
 const gameState = useGameState();
 
-async function createEditor(container, initialValue, language = "json") {
+async function createEditor(container: HTMLElement, initialValue: string, language = "json") {
   await loadMonaco();
   return window.monaco.editor.create(container, {
     value: initialValue,
@@ -104,14 +105,18 @@ watch(
 );
 
 onMounted(async () => {
-  engineEditorInstance = await createEditor(
-    engineEditorContainer.value,
-    JSON.stringify(engineState, null, 2),
-  );
-  gameEditorInstance = await createEditor(
-    gameEditorContainer.value,
-    JSON.stringify(gameState, null, 2),
-  );
+  if (engineEditorContainer.value) {
+    engineEditorInstance = await createEditor(
+      engineEditorContainer.value,
+      JSON.stringify(engineState, null, 2),
+    );
+  }
+  if (gameEditorContainer.value) {
+    gameEditorInstance = await createEditor(
+      gameEditorContainer.value,
+      JSON.stringify(gameState, null, 2),
+    );
+  }
 });
 
 onBeforeUnmount(() => {

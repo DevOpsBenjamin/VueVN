@@ -15,8 +15,8 @@ import { Game } from '@/generate/components';
 const wrapperStyle = computed(() => ({
   '--aspect-ratio': '2 / 1',
   'background-color': '#1a1a1a', // Dark background for the engine area
-  position: 'relative',
-  overflow: 'hidden',
+  position: 'relative' as const,
+  overflow: 'hidden' as const,
   width: '100%',
   height: '100%',
   'max-width': '100%',
