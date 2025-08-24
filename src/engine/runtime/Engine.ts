@@ -115,15 +115,9 @@ class Engine {
   async runGameLoop(): Promise<void> {
     while (this.engineState.state === EngineStateEnum.RUNNING) {
       // Clean state at start of each loop iteration
-      this.cleanState();
-      
+      this.cleanState();      
       // Handle location-based logic
-      await this.handleLocation();
-      
-      
-      // DEBUG: Sleep for debugging
-      console.warn("SLEEP FOR DEBUG");
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await this.handleLocation();   
 
       const { immediateEvent, drawableEvents } = await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
@@ -132,8 +126,15 @@ class Engine {
         this.eventManager.updateEventsCache(this.gameState)
       } else if (drawableEvents.length > 0) {
         // Handle drawable events if needed
+        await this.navigationManager.waitAction();
+      } else {
+        // No event to draw no loopUntil either a Action Or a DrawableClick.
+        await this.navigationManager.waitAction();
       }
       
+      // DEBUG: Sleep for debugging
+      console.warn("SLEEP FOR DEBUG");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
 

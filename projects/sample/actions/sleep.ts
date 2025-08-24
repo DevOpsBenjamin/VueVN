@@ -1,5 +1,5 @@
 import { TimeHelper } from '@/generate/runtime';
-import type { GameState, Action } from '@/generate/types';
+import type { Action } from '@/generate/types';
 
 const sleep: Action = {
     id: "sleep",

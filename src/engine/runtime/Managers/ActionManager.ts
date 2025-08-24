@@ -2,23 +2,40 @@ import type { GameState, Action } from '@/generate/types';
 import * as actions from '@/generate/actions';
 
 export default class ActionManager {
-    private actions: Action[];
+    private actionDico: Record<string, Action> = {};
 
     constructor() {
-        this.actions = this.initializeActions();
+        this.buildActionsRecords();
     }
 
-    private initializeActions(): Action[] {
-        return [
-        ];
+    private validateAction(obj: any): obj is Action {
+        return obj && 
+               typeof obj.id === 'string' &&
+               typeof obj.name === 'string' &&
+               typeof obj.unlocked === 'function' &&
+               typeof obj.execute === 'function';
+    }
+
+    buildActionsRecords() {
+        this.actionDico = {};
+        for (const actionName in actions) {
+            try {
+                const current = (actions as any)[actionName] as Action;
+                if (this.validateAction(current)) {
+                    this.actionDico[current.id] = current;
+                }
+            } catch (e) {
+                console.warn(`Invalid action: ${actionName}`, e);
+            }
+        }
     }
 
     getAccessibleActions(gameState: GameState): Action[] {
-        return this.actions.filter(action => action.unlocked(gameState));
+        return Object.values(this.actionDico).filter(action => action.unlocked(gameState));
     }
 
     executeAction(actionId: string, gameState: GameState): void {
-        const action = this.actions.find(a => a.id === actionId);
+        const action = this.actionDico[actionId];
         
         if (!action) {
             throw new Error(`[ActionManager] Unknown action id: "${actionId}"`);

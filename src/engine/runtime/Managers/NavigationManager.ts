@@ -1,5 +1,5 @@
 import type { EngineState, GameState } from '@/generate/types';
-import { HistoryManager, NavigationCancelledError } from '@/generate/runtime';
+import { HistoryManager, NavigationCancelledError, ActionError } from '@/generate/runtime';
   
 type Waiter<T> = {
   resolve: (value: T) => void;
@@ -11,10 +11,6 @@ export default class NavigationManager {
   private gameState: GameState;
   private historyManager: HistoryManager;
 
-  // Waiter state for smart navigation
-  private continueWaiter: Waiter<void> | null = null;
-  private choiceWaiter: Waiter<string> | null = null;
-
   constructor(
     engineState: EngineState, 
     gameState: GameState, 
@@ -25,17 +21,7 @@ export default class NavigationManager {
     this.historyManager = historyManager;
   }
 
-  rejectWaiters() {
-    if (this.choiceWaiter) {
-      this.choiceWaiter.reject(new NavigationCancelledError());
-      this.choiceWaiter = null;
-    }
-    if (this.continueWaiter) {
-      this.continueWaiter.reject(new NavigationCancelledError());
-      this.continueWaiter = null;
-    }
-  }
-
+  // #region Navigation methode
   async goForward(): Promise<void> {
     if (this.continueWaiter) {
       console.warn("Going forward ...");
@@ -45,13 +31,14 @@ export default class NavigationManager {
     else if (this.choiceWaiter && this.historyManager.canGoForward()) {
       //Case of choice already shown and history having a previous done choice
       this.historyManager.goForward();
-      this.rejectWaiters();
+      this.rejectChoiceWaiter();
     }
     else {      
-      this.rejectWaiters();
+      this.rejectContinueWaiter();
+      this.rejectChoiceWaiter();
     }
   }
-
+  
   async goBack(): Promise<void> {
     if (!this.historyManager.canGoBack()) {
       console.warn("Can't goBack..."); 
@@ -60,31 +47,34 @@ export default class NavigationManager {
       console.warn("Going back in history...");
       this.historyManager.goBack();
     }
-    this.rejectWaiters();
+    this.rejectContinueWaiter();
+    this.rejectChoiceWaiter();
   }
+  // #endregion
+
+
+
+  // #region Continue
+  private continueWaiter: Waiter<void> | null = null;
 
   // Smart waiting methods for ActionExecutor
   async waitForContinue(): Promise<void> {
-    if (this.continueWaiter) {
-      this.rejectWaiters();
-    }
+    //REJECT IF EXISTE
+    this.rejectContinueWaiter();
+    
     // Normal mode - actually wait for user input
     console.warn("waitForContinue");
     return new Promise<void>((resolve, reject) => {
       this.continueWaiter = { resolve, reject };
     });
   }
-
-  async waitForChoice(): Promise<string> {
+  
+  rejectContinueWaiter() {
     if (this.continueWaiter) {
-      this.rejectWaiters();
+      this.continueWaiter.reject(new NavigationCancelledError());
+      this.continueWaiter = null;
     }
-    // Choice always waits, but sets choiceWaiter state
-    console.warn("waitForChoice");
-    return new Promise<string>((resolve, reject) => {
-      this.choiceWaiter = { resolve, reject };
-    });
-  }
+  }  
 
   // Methods to resolve waiters (called by user input handlers)
   resolveContinue(): void {
@@ -97,6 +87,28 @@ export default class NavigationManager {
       console.error('resolveContinue without waiter')
     }
   }
+  // #endregion
+  
+  // #region Choice
+  private choiceWaiter: Waiter<string> | null = null;
+
+  async waitForChoice(): Promise<string> {
+    //REJECT IF EXISTE
+    this.rejectChoiceWaiter();
+    
+    // Choice always waits, but sets choiceWaiter state
+    console.warn("waitForChoice");
+    return new Promise<string>((resolve, reject) => {
+      this.choiceWaiter = { resolve, reject };
+    });
+  }
+
+  rejectChoiceWaiter() {
+    if (this.choiceWaiter) {
+      this.choiceWaiter.reject(new NavigationCancelledError());
+      this.choiceWaiter = null;
+    }
+  }  
 
   resolveChoice(choiceId: string): void {
     if (this.choiceWaiter) {
@@ -108,4 +120,38 @@ export default class NavigationManager {
       console.error('resolveChoice without waiter')
     }
   }
+  // #endregion
+
+  // #region Action
+  private actionWaiter: Waiter<void> | null = null; 
+
+  //For LessLooping
+  async waitAction(): Promise<void> {
+    this.rejectActionWaiter();
+    
+    // Wait for user input (can be action/location change/drawable event click)
+    console.warn("waitAction");
+    return new Promise<void>((resolve, reject) => {
+      this.actionWaiter = { resolve, reject };
+    });
+  }
+
+  rejectActionWaiter() {
+    if (this.actionWaiter) {
+      this.actionWaiter.reject(new ActionError());
+      this.actionWaiter = null;
+    }
+  }
+  
+  resolveAction(): void {
+    if (this.actionWaiter) {
+      console.warn("NavigationManager: Resolving action");
+      this.actionWaiter.resolve();
+      this.actionWaiter = null;
+    }
+    else {
+      console.error('resolveAction without waiter')
+    }
+  }
+  // #endregion
 }
