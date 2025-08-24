@@ -6,8 +6,8 @@ const bedroom: Location = {
   baseBackground: "assets/images/background/bedroom/morning.png",
   timeBackgrounds: [
     {
-      check: (state) => state.gameTime.hour > 18 || state.gameTime.hour < 5,
-      value: "assets/images/background/bedroom/morning.png",
+      check: (state) => state.gameTime.hour > 20 || state.gameTime.hour < 5,
+      value: "assets/images/background/bedroom/night.png",
     }
   ],
   accessibleLocations: [],

@@ -4,12 +4,12 @@ import { hallway, bedroom } from '@/generate/locations';
 const choiceEvent: VNEvent = {
   id: 'choice-event',
   name: 'Important Decision',
+  foreground: 'assets/images/background/bedroom/morning.png',
   conditions: (state) => state.location_id === bedroom.id,
   unlocked: (state) => state.flags.introSeen && (state.flags.exploredRoom || state.flags.checkedPhone),
   locked: (state) => state.flags.majorChoiceMade,
   
   async execute(engine, state) {
-    engine.setForeground('assets/images/background/bedroom/morning.png');
     await engine.showText('You find yourself in your cozy bedroom.');
     await engine.showText('Sunlight streams through the window.');
     await engine.showText("As you contemplate your next move... You hear a knock at your door.");

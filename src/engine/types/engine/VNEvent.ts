@@ -18,6 +18,12 @@ export interface VNEvent {
   name: string;
   
   /** 
+   * Foreground image to display when event starts.
+   * Automatically set by ActionExecutor before event execution.
+   */
+  foreground: string;
+  
+  /** 
    * Runtime conditions that must be true for event to execute.
    * Called every frame when event is unlocked.
    * Use for dynamic conditions like time, location, etc.

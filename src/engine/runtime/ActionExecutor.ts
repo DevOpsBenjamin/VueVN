@@ -24,6 +24,10 @@ export default class ActionExecutor {
   async executeEvent(event: VNEvent): Promise<void> {
     console.log("executeEvent :");
     console.log(event);
+    
+    // Set foreground image at start of event
+    this.engineState.foreground = event.foreground;
+    
     await this.simulateEvent(event.execute);
     await this.runEvent(event);
   }

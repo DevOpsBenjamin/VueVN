@@ -4,12 +4,12 @@ import { bedroom } from '@/generate/locations';
 const afterIntro: VNEvent = {
   id: 'after-intro',
   name: 'After Introduction',
+  foreground: 'assets/images/background/bedroom/morning.png',
   conditions: (state) => state.location_id === bedroom.id,
   unlocked: (state) => state.flags.introSeen,
   locked: (state) => state.flags.introAct,
   
   async execute(engine, state) {
-    engine.setForeground('assets/images/background/bedroom/morning.png');
     await engine.showText('You find yourself in your cozy bedroom.');
     await engine.showText('Sunlight streams through the window.');
     await engine.showText('What would you like to do?');
