@@ -9,59 +9,63 @@ import {
   ActionExecutor,
   NavigationManager,
   LocationManager,
-  ActionManager
-} from "@/generate/runtime";
-import { EngineStateEnum } from "@/generate/enums";
-import type { 
-  GameState, 
-  EngineState, 
-  VNEvent, 
+  ActionManager,
+} from '@/generate/runtime';
+import { EngineStateEnum } from '@/generate/enums';
+import type {
+  GameState,
+  EngineState,
+  VNEvent,
   VNAction,
   GameStateStore,
-  EngineStateStore
-} from "@/generate/types";
+  EngineStateStore,
+} from '@/generate/types';
 
 class Engine {
   // #region DEFINITION
   gameState: GameStateStore;
   engineState: EngineStateStore;
-  
+
   // Managers
   historyManager: HistoryManager;
   locationManager: LocationManager;
   actionManager: ActionManager;
   eventManager: EventManager;
-  inputManager: InputManager | null = null;;
+  inputManager: InputManager | null = null;
   actionExecutor: ActionExecutor;
   navigationManager: NavigationManager;
   private static instance: Engine | null = null;
   private gameRoot: HTMLElement;
 
   constructor(
-    gameState: GameStateStore, 
+    gameState: GameStateStore,
     engineState: EngineStateStore,
     gameRoot: HTMLElement
-    ) {
+  ) {
     // State
     this.gameState = gameState;
     this.engineState = engineState;
     this.gameRoot = gameRoot;
-    
+
     // Initialize managers (order matters for dependencies)
     this.historyManager = new HistoryManager();
     this.eventManager = new EventManager();
     this.locationManager = new LocationManager();
     this.actionManager = new ActionManager();
-    
+
     // Initialize NavigationManager first (ActionExecutor needs it)
-    this.navigationManager = new NavigationManager(this.historyManager);    
-    this.actionExecutor = new ActionExecutor(engineState, gameState, this.historyManager, this.navigationManager);
-    
-    
+    this.navigationManager = new NavigationManager(this.historyManager);
+    this.actionExecutor = new ActionExecutor(
+      engineState.$state,
+      gameState.$state,
+      this.historyManager,
+      this.navigationManager
+    );
+
     // Initialize window reference
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const w = window as any;
-      w.VueVN = this.gameState;
+      w.VueVN = this.gameState.$state;
     }
     Engine.instance = this;
   }
@@ -69,14 +73,15 @@ class Engine {
   static getInstance(): Engine | null {
     return this.instance;
   }
-  
-  setRootHTML (root: HTMLElement): void  {
-    this.gameRoot = root; 
+
+  setRootHTML(root: HTMLElement): void {
+    this.gameRoot = root;
     this.inputManager = new InputManager(
-      this.engineState, 
-      this.gameState, 
-      this.navigationManager, 
-      this.gameRoot);
+      this.engineState,
+      this.gameState,
+      this.navigationManager,
+      this.gameRoot
+    );
     this.inputManager.init();
   }
 
@@ -85,7 +90,7 @@ class Engine {
     return Math.floor(rect.height / 8);
   }
   // #endregion
-  
+
   // #region SAVE engine
   startNewGame(): void {
     EngineSave.startNewGame(this);
@@ -108,9 +113,9 @@ class Engine {
         await this.runGameLoop();
       } catch (err) {
         if (err instanceof VNInterruptError) {
-          console.warn("VN event interrupted, returning to menu or resetting.");
+          console.warn('VN event interrupted, returning to menu or resetting.');
         } else {
-          console.error("Engine error:", err);
+          console.error('Engine error:', err);
           // DEBUG: Wait for dev to read error (will be removed in production)
           await new Promise((resolve) => setTimeout(resolve, 10000));
         }
@@ -126,11 +131,12 @@ class Engine {
       // Calculate and update all engine info
       await this.calculateInfo();
 
-      const { immediateEvent, drawableEvents } = await this.eventManager.getEvents(this.gameState);
+      const { immediateEvent, drawableEvents } =
+        await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
         await this.handleEvent(immediateEvent);
         //After event we always reset cache cause some variable (flags) can have changed
-        this.eventManager.updateEventsCache(this.gameState)
+        this.eventManager.updateEventsCache(this.gameState);
       } else if (drawableEvents.length > 0) {
         // Handle drawable events if needed
         await this.navigationManager.actionManager.wait();
@@ -149,10 +155,10 @@ class Engine {
   private async calculateInfo(): Promise<void> {
     // Reset state first
     this.cleanState();
-    
+
     // Handle location logic (background, time-based backgrounds)
     await this.handleLocation();
-    
+
     // Update action manager with current available actions
     this.updateActions();
   }
@@ -167,7 +173,7 @@ class Engine {
     this.engineState.foreground = null;
     this.engineState.dialogue = null;
     this.engineState.choices = null;
-    
+
     // Clear any other transient state that shouldn't persist between loops
     // TODO: Add other fields that need cleaning each loop
   }
@@ -178,13 +184,18 @@ class Engine {
    */
   private async handleLocation(): Promise<void> {
     try {
-      const currentLocation = this.locationManager.findLocationById(this.gameState.location_id);
-      
+      const currentLocation = this.locationManager.findLocationById(
+        this.gameState.location_id
+      );
+
       // Set base background
       this.engineState.background = currentLocation.baseBackground;
-      
+
       // Check for time-based background overrides
-      if (currentLocation.timeBackgrounds && currentLocation.timeBackgrounds.length > 0) {
+      if (
+        currentLocation.timeBackgrounds &&
+        currentLocation.timeBackgrounds.length > 0
+      ) {
         for (const timeBackground of currentLocation.timeBackgrounds) {
           if (timeBackground.check(this.gameState)) {
             this.engineState.background = timeBackground.value;
@@ -208,13 +219,13 @@ class Engine {
   // #endregion
 
   // #region Event EXECUTOR
-  async handleEvent(immediateEvent: VNEvent): Promise<void> {    
+  async handleEvent(immediateEvent: VNEvent): Promise<void> {
     try {
       // ActionExecutor handles everything: simulation + playback + choice branches
       await this.actionExecutor.executeEvent(immediateEvent);
     } catch (error) {
-        console.error('Event execution error:', error);
-        throw error;
+      console.error('Event execution error:', error);
+      throw error;
     }
   }
   // #endregion
