@@ -80,19 +80,6 @@ class Engine {
   }
   // #endregion
 
-  // Delegate methods to NavigationManager  
-  resolveContinue(): void {
-    this.navigationManager.resolveContinue();
-  }
-
-  resolveChoice(choiceId: string): void {
-    this.navigationManager.resolveChoice(choiceId);
-  }
-
-  cancelWaiters(): void {
-    this.navigationManager.cancelWaiters();
-  }
-
   // #region LOOP ENGINE
   // Main engine loop
   async run(): Promise<void> {
@@ -119,13 +106,15 @@ class Engine {
       const { immediateEvent, drawableEvents } = await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
         await this.handleEvent(immediateEvent);
-      } else {
+        //After event we always reset cache cause some variable can have changed
+        this.eventManager.updateEventsCache(this.gameState)
+      } else if (drawableEvents.length > 0) {
         // Handle drawable events if needed
       }
       
       // DEBUG: Sleep for debugging
       console.warn("SLEEP FOR DEBUG");
-      await new Promise((resolve) => setTimeout(resolve, 20000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
   // #endregion

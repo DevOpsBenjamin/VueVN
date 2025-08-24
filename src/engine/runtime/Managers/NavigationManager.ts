@@ -1,14 +1,19 @@
 import type { EngineState, GameState } from '@/generate/types';
-import { HistoryManager } from '@/generate/runtime';
+import { HistoryManager, NavigationCancelledError } from '@/generate/runtime';
+  
+type Waiter<T> = {
+  resolve: (value: T) => void;
+  reject: (reason: NavigationCancelledError) => void;
+};
 
 export default class NavigationManager {
   private engineState: EngineState;
   private gameState: GameState;
   private historyManager: HistoryManager;
-  
+
   // Waiter state for smart navigation
-  private continueWaiter: ((value: void) => void) | null = null;
-  private choiceWaiter: ((value: string) => void) | null = null;
+  private continueWaiter: Waiter<void> | null = null;
+  private choiceWaiter: Waiter<string> | null = null;
 
   constructor(
     engineState: EngineState, 
@@ -20,58 +25,61 @@ export default class NavigationManager {
     this.historyManager = historyManager;
   }
 
-  async goBack(): Promise<void> {
-    if (!this.historyManager.canGoBack()) {
-       console.warn("Can't goBack..."); 
-      return;
+  rejectWaiters() {
+    if (this.choiceWaiter) {
+      this.choiceWaiter.reject(new NavigationCancelledError());
+      this.choiceWaiter = null;
     }
-    console.warn("Going back in history...");    
-    // Get the last action from history (this is what we want to undo)
-    this.historyManager.goBack();
-    const action = this.historyManager.getPresent();
-    if (action && action.gameState && action.engineState) {
-      Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
-      Object.assign(this.engineState, JSON.parse(JSON.stringify(action.engineState)));
+    if (this.continueWaiter) {
+      this.continueWaiter.reject(new NavigationCancelledError());
+      this.continueWaiter = null;
     }
   }
 
   async goForward(): Promise<void> {
     if (this.continueWaiter) {
       console.warn("Going forward ...");
+      this.historyManager.goForward();
       this.resolveContinue();
     }
-    else {
-      if (!this.historyManager.canGoForward()) {
-          console.warn("Can't goForward..."); 
-        return;
-      }
+    else if (this.choiceWaiter)
+    {
       this.historyManager.goForward();
-      const action = this.historyManager.getPresent();
-      if (action && action.gameState && action.engineState) {
-        Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
-        Object.assign(this.engineState, JSON.parse(JSON.stringify(action.engineState)));
-      }
+      this.rejectWaiters();
     }
   }
 
-  async makeChoice(choiceId: string): Promise<void> {
-    this.resolveChoice(choiceId);
+  async goBack(): Promise<void> {
+    if (!this.historyManager.canGoBack()) {
+      console.warn("Can't goBack..."); 
+    }
+    else {
+      console.warn("Going back in history...");
+      this.historyManager.goBack();
+    }
+    this.rejectWaiters();
   }
 
   // Smart waiting methods for ActionExecutor
   async waitForContinue(): Promise<void> {
+    if (this.continueWaiter) {
+      this.rejectWaiters();
+    }
     // Normal mode - actually wait for user input
-    console.debug("NavigationManager: Waiting for user continue");
-    return new Promise<void>((resolve) => {
-      this.continueWaiter = resolve;
+    console.warn("waitForContinue");
+    return new Promise<void>((resolve, reject) => {
+      this.continueWaiter = { resolve, reject };
     });
   }
 
   async waitForChoice(): Promise<string> {
+    if (this.continueWaiter) {
+      this.rejectWaiters();
+    }
     // Choice always waits, but sets choiceWaiter state
-    console.debug("NavigationManager: Waiting for user choice");
-    return new Promise<string>((resolve) => {
-      this.choiceWaiter = resolve;
+    console.warn("waitForChoice");
+    return new Promise<string>((resolve, reject) => {
+      this.choiceWaiter = { resolve, reject };
     });
   }
 
@@ -79,24 +87,22 @@ export default class NavigationManager {
   resolveContinue(): void {
     if (this.continueWaiter) {
       console.warn("NavigationManager: Resolving continue");
-      this.continueWaiter();
+      this.continueWaiter.resolve();
       this.continueWaiter = null;
+    }
+    else {
+      console.error('resolveContinue without waiter')
     }
   }
 
   resolveChoice(choiceId: string): void {
-    console.log('resolveChoice')
     if (this.choiceWaiter) {
       console.warn(`NavigationManager: Resolving choice with: ${choiceId}`);
-      this.choiceWaiter(choiceId);
+      this.choiceWaiter.resolve(choiceId);
       this.choiceWaiter = null;
     }
-  }
-
-  // Cancel waiters for navigation
-  cancelWaiters(): void {
-    console.debug("NavigationManager: Cancelling all waiters");
-    this.continueWaiter = null;
-    this.choiceWaiter = null;
+    else {
+      console.error('resolveChoice without waiter')
+    }
   }
 }
