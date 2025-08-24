@@ -17,13 +17,16 @@ npm install
 # Create a new project
 npm run add-project <project-name>
 
+# Update project template (copies latest engine files to projects)
+npm run update-template
+
 # Start development server for a project (with hot-reload and file watching)
 npm run dev <project-name>
 
 # Build a project for production
 npm run build <project-name>
 
-# Type checking
+# Type checking (may fail but builds still work)
 npm run check
 ```
 
@@ -31,20 +34,29 @@ npm run check
 
 ### Project System
 - Individual visual novels stored in `projects/` directory
-- Each project has `config.json`, events, assets, and components
+- Each project has `config.json`, events, assets, components, stores, types
 - `VUEVN_PROJECT` environment variable determines active project
 - Projects are isolated but share the same engine runtime
+- Project structure: `events/`, `assets/`, `components/`, `stores/`, `types/`, `locations/`, `npcs/`
 
-### Dual-Phase Engine
+### Dual-Phase Engine Architecture
 - **Simulation Phase**: Events execute to generate action sequences
 - **Playback Phase**: Actions replay with user interaction
-- **Manager-Based**: Engine delegates to specialized managers (HistoryManager, ActionExecutor, etc.)
+- **Manager-Based**: Engine delegates to specialized managers:
+  - `HistoryManager`: Save/load and text-by-text navigation
+  - `ActionExecutor`: Action playback and state management  
+  - `EventManager`: Event execution and jumping
+  - `NavigationManager`: Menu and UI state management
+  - `InputManager`: User input handling
+  - `SimulateRunner`: Event simulation orchestration
 - **Natural Development**: Standard async/await TypeScript code for events
 
 ### Code Generation System
 - Build system generates TypeScript files from project data using `scripts/generate.cts`
 - Generated files in `src/generate/` provide type-safe access to project resources
 - Automatic generation during development with file watching
+- Individual generators: `generate-types-index.cts`, `generate-events-index.cts`, `generate-components-index.cts`, `generate-engine-index.cts`
+- Generates: runtime exports, type definitions, event registrations, component registrations
 
 ## 🚨 Critical Import Rules
 
@@ -75,16 +87,25 @@ This preserves plugin capability - users can override any engine component throu
 - `Claude/DEVELOPMENT_WORKFLOW.md` - Development procedures and commit strategies
 - `Claude/PROJECT_REPORT.md` - Comprehensive codebase analysis
 
-## Testing and Current Issues
+## Development Workflow
 
+### Testing Strategy
+No formal test suite - testing done via `sample` project with test events:
+- `projects/sample/events/start/intro.ts`: Basic narrative flow
+- `projects/sample/events/bedroom/morning/after-intro.ts`: Text and background testing
+- `projects/sample/events/bedroom/choice-event.ts`: Choice navigation testing  
+- `projects/sample/events/bedroom/timing-event.ts`: Minigame and custom logic testing
+
+### Build System Architecture
+- `scripts/dev.cts`: Development server with hot-reload and file watching
+- `scripts/build.cts`: Production builds with Vite single-file plugin
+- `scripts/generate.cts`: Master code generation orchestrator
+- `scripts/copy-assets.cts`: Asset handling during builds
+- All scripts require `VUEVN_PROJECT` environment variable
+
+### Current Status
 **Build Status:** ✅ Production builds succeed (120.89 kB output)  
 **Type Status:** ⚠️ TypeScript errors in UI components (build still works)
-
-No formal test suite - testing done via `sample` project with test events:
-- `after-intro.ts`: Basic text and background testing
-- `choice-event.ts`: Choice navigation testing  
-- `timing-event.ts`: Minigame and custom logic testing
-- `intro.ts`: Basic narrative flow
 
 **Known Issues:**
 - TypeScript errors in SaveLoadMenu.vue, Game.vue, and other UI components
