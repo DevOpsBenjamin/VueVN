@@ -4,6 +4,7 @@
     <Background />
     <LocationOverlay />
     <ActionOverlay />
+    <TopBarOverlay />
     <Drawing />
     <Foreground />
     <Dialogue />
@@ -17,6 +18,7 @@ import {
   Background,
   LocationOverlay,
   ActionOverlay,
+  TopBarOverlay,
   Drawing,
   Foreground,
   Dialogue,
