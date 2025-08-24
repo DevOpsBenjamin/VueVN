@@ -1,14 +1,11 @@
-import type { Neighbor_NPC, Player } from '@/generate/types';
-
+import type { Neighbor_NPC, Mother_NPC, Player, GameTime, Location } from '@/generate/types';
 // Sample project specific GameState
 export interface GameState {
   player: Player;
-  location: string;
+  location_id: string;
+  gameTime: GameTime;
   flags: Record<string, boolean>;
-  // Sample project specific properties (matching gameState.ts store)
+  //Some typed NPC
   neighbor: Neighbor_NPC;
-  myCustomField: string;
-  myCustomArray: string[];
-  // Minigame results (should not be in flags)
-  lastMinigameResult?: any;
+  mother: Mother_NPC;
 }

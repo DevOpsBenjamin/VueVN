@@ -11,19 +11,14 @@
 import { ref, onMounted } from 'vue';
 import { SaveLoadMenu, MainMenu, Engine, Loading } from '@/generate/components';
 import { Engine as EngineCore } from '@/generate/runtime';
-import {
-  engineState as useEngineState,
-  gameState as useGameState,
-} from '@/generate/stores';
 
-const engineState = useEngineState();
-const gameState = useGameState();
 const gameRoot = ref<HTMLElement | null>(null);
 
 onMounted(async () => {
-  if (!EngineCore.getInstance()) {
-    // Pinia stores are now properly typed as GameStateStore & EngineStateStore
-    const engine = new EngineCore(gameState, engineState, gameRoot.value!);
+  const engine = EngineCore.getInstance();
+  if (engine) {
+    // Update the gameRoot reference to the actual DOM element
+    engine.setRootHTML(gameRoot.value!);
     await engine.run();
   }
 });

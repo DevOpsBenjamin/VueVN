@@ -3,6 +3,7 @@
     <!-- Layered VN components -->
     <Background />
     <LocationOverlay />
+    <ActionOverlay />
     <Drawing />
     <Foreground />
     <Dialogue />
@@ -15,6 +16,7 @@
 import {
   Background,
   LocationOverlay,
+  ActionOverlay,
   Drawing,
   Foreground,
   Dialogue,

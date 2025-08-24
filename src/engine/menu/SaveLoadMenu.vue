@@ -6,7 +6,7 @@
         engineState.state === EngineStateEnum.LOAD
       "
       :style="menuBgStyle"
-      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-90 transition-opacity duration-300"
+      class="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-90 transition-all duration-500"
       :class="{
         'opacity-100':
           engineState.state === EngineStateEnum.SAVE ||
@@ -16,71 +16,114 @@
           engineState.state !== EngineStateEnum.LOAD,
       }"
     >
-      <div
-        class="bg-gray-900 text-white rounded-lg w-full max-w-3xl p-4 flex flex-col items-center"
-      >
-        <h2 class="text-xl font-bold mb-4 text-center">
-          {{ mode === "save" ? "Save Game" : "Load Game" }}
-        </h2>
-        <div class="grid grid-cols-4 grid-rows-2 gap-4 mb-6">
-          <div
-            v-for="slot in visibleSlots"
-            :key="slot"
-            class="bg-gray-800 rounded shadow p-2 flex flex-col items-center"
-          >
-            <div class="w-full text-center mb-1">
-              <span class="font-semibold">
-                {{ saves[slot]?.name || `Slot ${slot}` }}
-              </span>
-            </div>
-            <div class="w-full text-xs text-gray-400 mb-2 text-center">
-              <span v-if="saves[slot]">{{
-                formatDate(saves[slot].timestamp)
-              }}</span>
-            </div>
-            <div class="w-full flex flex-col items-center">
-              <template v-if="mode === 'save'">
-                <input
-                  v-model="saveNames[slot]"
-                  placeholder="Save name..."
-                  class="mb-1 px-2 py-1 rounded bg-gray-700 text-white w-full text-sm"
-                />
-                <button
-                  @click="save(slot)"
-                  class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm w-full"
-                >
-                  Save
-                </button>
-              </template>
-              <template v-else>
-                <button
-                  :disabled="!saves[slot]"
-                  @click="load(slot)"
-                  class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm w-full disabled:opacity-50"
-                >
-                  Load
-                </button>
-              </template>
+      <!-- Main panel with glass morphism -->
+      <div class="bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl">
+        <!-- Header with gradient -->
+        <div class="p-6 pb-4 text-center border-b border-white/10">
+          <h2 class="text-2xl font-bold text-white mb-2 tracking-wide">
+            {{ mode === "save" ? "Save Game" : "Load Game" }}
+          </h2>
+          <div class="w-16 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded mx-auto"></div>
+        </div>
+
+        <!-- Save slots grid -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <div class="grid grid-cols-4 gap-4 w-full">
+            <div
+              v-for="slot in visibleSlots"
+              :key="slot"
+              class="group relative overflow-hidden rounded-lg bg-black/20 backdrop-blur-sm border border-white/10 hover:border-white/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+            >
+              <!-- Slot content -->
+              <div class="p-4 flex flex-col h-full min-h-[180px]">
+                <!-- Slot header -->
+                <div class="mb-3">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-white/60 text-[10px] font-mono uppercase tracking-wider">Slot {{ slot }}</span>
+                    <div v-if="saves[slot]" class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+                  </div>
+                  <h3 class="text-white font-medium text-sm truncate leading-tight">
+                    {{ saves[slot]?.name || `Empty Slot` }}
+                  </h3>
+                </div>
+
+                <!-- Timestamp -->
+                <div class="mb-3 flex-grow">
+                  <span v-if="saves[slot]" class="text-white/40 text-[10px] font-mono leading-tight">
+                    {{ formatDate(saves[slot].timestamp) }}
+                  </span>
+                  <span v-else class="text-white/20 text-[10px] italic">No save data</span>
+                </div>
+
+                <!-- Action section -->
+                <div class="space-y-2 mt-auto">
+                  <template v-if="mode === 'save'">
+                    <!-- Save name input -->
+                    <input
+                      v-model="saveNames[slot]"
+                      placeholder="Save name..."
+                      class="w-full px-3 py-1.5 text-xs rounded-md bg-black/30 border border-white/20 text-white placeholder-white/30 focus:border-blue-400 focus:ring-1 focus:ring-blue-400/20 focus:outline-none transition-all duration-300"
+                      @keydown="handleInputKeydown"
+                      @keyup.stop
+                      @keypress.stop
+                    />
+                    <!-- Save button -->
+                    <button
+                      @click="save(slot)"
+                      class="w-full px-3 py-2 text-xs bg-gradient-to-r from-green-600/90 to-emerald-600/90 hover:from-green-500/90 hover:to-emerald-500/90 text-white rounded-md font-medium transition-all duration-300 hover:scale-[1.02] border border-green-500/20"
+                    >
+                      💾 Save
+                    </button>
+                  </template>
+                  <template v-else>
+                    <!-- Load button -->
+                    <button
+                      :disabled="!saves[slot]"
+                      @click="load(slot)"
+                      class="w-full px-3 py-2 text-xs bg-gradient-to-r from-blue-600/90 to-purple-600/90 hover:from-blue-500/90 hover:to-purple-500/90 disabled:from-gray-600/30 disabled:to-gray-500/30 text-white rounded-md font-medium transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100 border border-blue-500/20 disabled:border-gray-500/10"
+                    >
+                      {{ saves[slot] ? '📂 Load' : 'Empty' }}
+                    </button>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Hover gradient overlay -->
+              <div class="absolute inset-0 bg-gradient-to-t from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none rounded-lg"></div>
             </div>
           </div>
         </div>
-        <div class="flex flex-col items-center w-full">
-          <div class="flex justify-between items-center w-full mb-2">
+
+        <!-- Navigation controls -->
+        <div class="p-4 border-t border-white/10 flex items-center justify-center">
+          <div class="flex items-center gap-4">
             <button
               @click="prevPage"
               :disabled="page === 0"
-              class="px-3 py-1 rounded bg-gray-700 disabled:opacity-50"
+              class="flex items-center px-4 py-2 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 disabled:border-white/10 text-white rounded-lg text-sm font-medium transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             >
+              <span class="mr-1">⬅️</span>
               Prev
             </button>
-            <span>Page {{ page + 1 }}</span>
+
+            <!-- Page indicator -->
+            <div class="px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white/80 font-mono text-sm">
+              {{ page + 1 }} / {{ Math.ceil(maxSlots / slotsPerPage) }}
+            </div>
+
             <button
               @click="nextPage"
               :disabled="(page + 1) * slotsPerPage >= maxSlots"
-              class="px-3 py-1 rounded bg-gray-700 disabled:opacity-50"
+              class="flex items-center px-4 py-2 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 disabled:border-white/10 text-white rounded-lg text-sm font-medium transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             >
               Next
+              <span class="ml-1">➡️</span>
             </button>
+          </div>
+          
+          <!-- Close hint -->
+          <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-white/30 text-xs">
+            Press ESC to close
           </div>
         </div>
       </div>
@@ -160,6 +203,15 @@ function prevPage() {
 }
 function nextPage() {
   if ((page.value + 1) * slotsPerPage < maxSlots) page.value++;
+}
+
+function handleInputKeydown(event: KeyboardEvent) {
+  // Allow ESC to bubble up to close the menu
+  if (event.key === 'Escape') {
+    return;
+  }
+  // Stop all other keys from triggering navigation
+  event.stopPropagation();
 }
 
 onMounted(loadSaves);

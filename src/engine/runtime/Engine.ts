@@ -7,7 +7,9 @@ import {
   EventManager,
   InputManager,
   ActionExecutor,
-  NavigationManager
+  NavigationManager,
+  LocationManager,
+  ActionManager
 } from "@/generate/runtime";
 import { EngineStateEnum } from "@/generate/enums";
 import type { 
@@ -26,8 +28,10 @@ class Engine {
   
   // Managers
   historyManager: HistoryManager;
+  locationManager: LocationManager;
+  actionManager: ActionManager;
   eventManager: EventManager;
-  inputManager: InputManager;
+  inputManager: InputManager | null = null;;
   actionExecutor: ActionExecutor;
   navigationManager: NavigationManager;
   private static instance: Engine | null = null;
@@ -46,12 +50,13 @@ class Engine {
     // Initialize managers (order matters for dependencies)
     this.historyManager = new HistoryManager();
     this.eventManager = new EventManager();
+    this.locationManager = new LocationManager();
+    this.actionManager = new ActionManager();
     
     // Initialize NavigationManager first (ActionExecutor needs it)
-    this.navigationManager = new NavigationManager(engineState, gameState, this.historyManager);    
-    this.inputManager = new InputManager(engineState, gameState, this.navigationManager, gameRoot);
+    this.navigationManager = new NavigationManager(this.historyManager);    
     this.actionExecutor = new ActionExecutor(engineState, gameState, this.historyManager, this.navigationManager);
-    this.inputManager.init();
+    
     
     // Initialize window reference
     if (typeof window !== "undefined") {
@@ -63,6 +68,21 @@ class Engine {
 
   static getInstance(): Engine | null {
     return this.instance;
+  }
+  
+  setRootHTML (root: HTMLElement): void  {
+    this.gameRoot = root; 
+    this.inputManager = new InputManager(
+      this.engineState, 
+      this.gameState, 
+      this.navigationManager, 
+      this.gameRoot);
+    this.inputManager.init();
+  }
+
+  getGameSize(): number {
+    const rect = this.gameRoot.getBoundingClientRect();
+    return Math.floor(rect.height / 8);
   }
   // #endregion
   
@@ -103,6 +123,9 @@ class Engine {
 
   async runGameLoop(): Promise<void> {
     while (this.engineState.state === EngineStateEnum.RUNNING) {
+      // Calculate and update all engine info
+      await this.calculateInfo();
+
       const { immediateEvent, drawableEvents } = await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
         await this.handleEvent(immediateEvent);
@@ -110,15 +133,79 @@ class Engine {
         this.eventManager.updateEventsCache(this.gameState)
       } else if (drawableEvents.length > 0) {
         // Handle drawable events if needed
+        await this.navigationManager.actionManager.wait();
+      } else {
+        // No event to draw no loopUntil either a Action Or a DrawableClick.
+        await this.navigationManager.actionManager.wait();
       }
-      
-      // DEBUG: Sleep for debugging
-      console.warn("SLEEP FOR DEBUG");
-      await new Promise((resolve) => setTimeout(resolve, 10000));
     }
   }
+
+  // #region STATE MANAGEMENT
+  /**
+   * Calculate and update all engine information for the current loop iteration.
+   * Orchestrates state reset, location handling, and action management.
+   */
+  private async calculateInfo(): Promise<void> {
+    // Reset state first
+    this.cleanState();
+    
+    // Handle location logic (background, time-based backgrounds)
+    await this.handleLocation();
+    
+    // Update action manager with current available actions
+    this.updateActions();
+  }
+
+  /**
+   * Clean state at the beginning of each loop iteration.
+   * Resets important UI fields that should be cleared between events.
+   */
+  private cleanState(): void {
+    // Clear visual elements
+    this.engineState.background = null;
+    this.engineState.foreground = null;
+    this.engineState.dialogue = null;
+    this.engineState.choices = null;
+    
+    // Clear any other transient state that shouldn't persist between loops
+    // TODO: Add other fields that need cleaning each loop
+  }
+
+  /**
+   * Handle location-specific logic.
+   * Sets background from current location and applies time-based backgrounds if applicable.
+   */
+  private async handleLocation(): Promise<void> {
+    try {
+      const currentLocation = this.locationManager.findLocationById(this.gameState.location_id);
+      
+      // Set base background
+      this.engineState.background = currentLocation.baseBackground;
+      
+      // Check for time-based background overrides
+      if (currentLocation.timeBackgrounds && currentLocation.timeBackgrounds.length > 0) {
+        for (const timeBackground of currentLocation.timeBackgrounds) {
+          if (timeBackground.check(this.gameState)) {
+            this.engineState.background = timeBackground.value;
+            break; // Use first matching time background
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[Engine] Error handling location:', error);
+    }
+  }
+
+  /**
+   * Update action manager by building list of currently accessible actions.
+   * This ensures action overlay shows up-to-date available actions.
+   */
+  private updateActions(): void {
+    // Update ActionManager's internal accessible actions list
+    this.actionManager.updateAccessibleActions(this.gameState);
+  }
   // #endregion
-  
 
   // #region Event EXECUTOR
   async handleEvent(immediateEvent: VNEvent): Promise<void> {    
