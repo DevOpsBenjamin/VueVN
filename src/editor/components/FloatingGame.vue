@@ -43,7 +43,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useEditorState } from '@/editor/stores/editorState';
 import { Game } from '@/generate/components';

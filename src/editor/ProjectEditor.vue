@@ -24,7 +24,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted } from "vue";
 import { loadMonaco } from "@/editor/utils/monacoLoader.js";
 import MonacoEditor from "@/editor/components/MonacoEditor.vue";

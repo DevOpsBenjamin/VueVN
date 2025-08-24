@@ -40,7 +40,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import { loadMonaco } from "@/editor/utils/monacoLoader.js";
 
