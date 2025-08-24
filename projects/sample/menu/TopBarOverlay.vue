@@ -5,8 +5,16 @@
         {{ formattedDate }}
       </div>
       <div class="flex gap-2">
-        <button class="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded">Inventory</button>
-        <button class="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded">Phone</button>
+        <button
+          class="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded"
+        >
+          Inventory
+        </button>
+        <button
+          class="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded"
+        >
+          Phone
+        </button>
       </div>
     </div>
   </div>
@@ -20,10 +28,9 @@ const gameState = useGameState();
 
 const formattedDate = computed(() => {
   const { year, month, day, hour } = gameState.gameTime;
-  const y = String(year);
   const m = String(month).padStart(2, '0');
   const d = String(day).padStart(2, '0');
   const h = String(hour).padStart(2, '0');
-  return `${y}-${m}-${d} ${h}:00`;
+  return `${m}-${d} ${h}:00`;
 });
 </script>
