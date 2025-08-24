@@ -8,12 +8,13 @@
   },
   "scripts": {
     "add-project": "tsx scripts/add-project.cts",
+    "update-template": "tsx scripts/update-template.cts",
     "dev": "tsx scripts/dev.cts",
     "build": "tsx scripts/build.cts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "npx vue-tsc --noEmit"
   },
   "dependencies": {
-    "@he-tree/vue": "^2.9.4",
     "autoprefixer": "^10.4.21",
     "lodash": "^4.17.21",
     "monaco-editor": "^0.52.2",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@types/node": "^24.2.1",
     "@vitejs/plugin-vue": "^6.0.0",
+    "adm-zip": "^0.5.16",
     "chokidar-cli": "^3.0.0",
     "concurrently": "^9.2.0",
     "fs-extra": "^11.3.0",

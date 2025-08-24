@@ -1,141 +1,101 @@
 import {
-  EngineEvents,
-  EngineAPI,
   EngineSave,
   VNInterruptError,
+  EngineErrors,
+  SimulateRunner,
+  HistoryManager,
+  EventManager,
+  InputManager,
+  ActionExecutor,
+  NavigationManager
 } from "@/generate/runtime";
-import { engineStateEnum as ENGINE_STATES } from "@/generate/stores";
-import type { GameState, EngineState, VNEvent } from "./types";
+import { EngineStateEnum } from "@/generate/enums";
+import type { 
+  GameState, 
+  EngineState, 
+  VNEvent, 
+  VNAction,
+  GameStateStore,
+  EngineStateStore
+} from "@/generate/types";
 
 class Engine {
-  gameState: GameState;
-  engineState: EngineState;
-  awaiterResult: ((value: any) => void) | null;
-  replayMode: boolean;
-  targetStep: number;
-  eventCache: Record<
-    string,
-    { notReady: VNEvent[]; unlocked: VNEvent[]; locked: VNEvent[] }
-  >;
+  // #region DEFINITION
+  gameState: GameStateStore;
+  engineState: EngineStateStore;
+  
+  // Managers
+  historyManager: HistoryManager;
+  eventManager: EventManager;
+  inputManager: InputManager;
+  actionExecutor: ActionExecutor;
+  navigationManager: NavigationManager;
+  private static instance: Engine | null = null;
+  private gameRoot: HTMLElement;
 
-  constructor(gameState: GameState, engineState: EngineState) {
+  constructor(
+    gameState: GameStateStore, 
+    engineState: EngineStateStore,
+    gameRoot: HTMLElement
+    ) {
+    // State
     this.gameState = gameState;
     this.engineState = engineState;
-    this.awaiterResult = null;
-    this.replayMode = false;
-    this.targetStep = 0;
-    this.eventCache = {};
-
+    this.gameRoot = gameRoot;
+    
+    // Initialize managers (order matters for dependencies)
+    this.historyManager = new HistoryManager();
+    this.eventManager = new EventManager();
+    
+    // Initialize NavigationManager first (ActionExecutor needs it)
+    this.navigationManager = new NavigationManager(engineState, gameState, this.historyManager);    
+    this.inputManager = new InputManager(engineState, gameState, this.navigationManager, gameRoot);
+    this.actionExecutor = new ActionExecutor(engineState, gameState, this.historyManager, this.navigationManager);
+    this.inputManager.init();
+    
+    // Initialize window reference
     if (typeof window !== "undefined") {
       const w = window as any;
-      if (!w.__VN_ENGINE__) {
-        console.debug("Initializing VN Engine instance");
-        w.VueVN = this.gameState;
-        w.__VN_ENGINE__ = this;
-        this.initVNInputHandlers();
-      }
+      w.VueVN = this.gameState;
     }
+    Engine.instance = this;
   }
 
-  static getInstance(): Engine | undefined {
-    return typeof window !== "undefined"
-      ? ((window as any).__VN_ENGINE__ as Engine)
-      : undefined;
-  }
-
-  // #region Engine API for events and UI
-  setBackground(imagePath: string): void {
-    EngineAPI.setBackground(this, imagePath);
-  }
-
-  setForeground(imagePath: string): void {
-    EngineAPI.setForeground(this, imagePath);
-  }
-
-  async showText(text: string, from = "engine"): Promise<void> {
-    await EngineAPI.showText(this, text, from);
-  }
-
-  async showChoices(
-    choices: Array<{ text: string; id: string }>,
-  ): Promise<string> {
-    return await EngineAPI.showChoices(this, choices);
+  static getInstance(): Engine | null {
+    return this.instance;
   }
   // #endregion
-
+  
   // #region SAVE engine
   startNewGame(): void {
     EngineSave.startNewGame(this);
   }
 
-  loadGame(slot: string): Promise<void> {
+  loadGame(slot: number): Promise<void> {
     return EngineSave.loadGame(this, slot);
   }
 
-  saveGame(slot: string, name?: string): void {
-    console.log(`ENGINE CALL: Saving game to slot ${slot}`);
+  saveGame(slot: number, name?: string): void {
     EngineSave.saveGame(this, slot, name);
   }
   // #endregion
 
-  initVNInputHandlers(): void {
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        if (
-          this.engineState.initialized &&
-          this.engineState.state === ENGINE_STATES.MENU
-        ) {
-          this.engineState.state = ENGINE_STATES.RUNNING;
-        } else {
-          this.engineState.state = ENGINE_STATES.MENU;
-        }
-      } else if (e.key === "Space" || e.key === "ArrowRight") {
-        this.resolveAwaiter("continue");
-      } else {
-        console.debug(`Unhandled key: ${e.key}`);
-      }
-    });
-    window.addEventListener("click", (e) => {
-      if (e.clientX > window.innerWidth / 2) {
-        if (this.engineState.state === ENGINE_STATES.RUNNING) {
-          this.resolveAwaiter("continue");
-        } else {
-          console.debug("Click ignored, not in RUNNING state");
-        }
-      } else {
-        // Optionally: this.resolveAwaiter('back');
-      }
-    });
+  // Delegate methods to NavigationManager  
+  resolveContinue(): void {
+    this.navigationManager.resolveContinue();
   }
 
-  resolveAwaiter(result: any): void {
-    if (this.awaiterResult) {
-      console.debug("Resolving awaiter with result:", result);
-      this.awaiterResult(result);
-      this.cleanAwaiter();
-    } else {
-      console.debug("No awaiter to resolve");
-    }
+  resolveChoice(choiceId: string): void {
+    this.navigationManager.resolveChoice(choiceId);
   }
 
-  cancelAwaiter(): void {
-    if (this.awaiterResult) {
-      console.debug("Cancelling awaiter");
-      this.awaiterResult(Promise.reject(new VNInterruptError()));
-      this.cleanAwaiter();
-    } else {
-      console.debug("No awaiter to cancel");
-    }
+  cancelWaiters(): void {
+    this.navigationManager.cancelWaiters();
   }
 
-  cleanAwaiter(): void {
-    this.awaiterResult = null;
-    this.engineState.dialogue = null;
-    (this.engineState as any).choices = null;
-  }
-
+  // #region LOOP ENGINE
+  // Main engine loop
   async run(): Promise<void> {
-    console.log("Starting Engine...");
     while (true) {
       try {
         await this.runGameLoop();
@@ -144,66 +104,44 @@ class Engine {
           console.warn("VN event interrupted, returning to menu or resetting.");
         } else {
           console.error("Engine error:", err);
+          // DEBUG: Wait for dev to read error (will be removed in production)
           await new Promise((resolve) => setTimeout(resolve, 10000));
         }
       }
-      while (this.engineState.state !== "RUNNING") {
+      while (this.engineState.state !== EngineStateEnum.RUNNING) {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
   }
 
   async runGameLoop(): Promise<void> {
-    console.log("Starting Game engine...", this.engineState.state);
-    while (this.engineState.state === "RUNNING") {
-      const { immediateEvent, drawableEvents } = await this.getEvents();
-      console.debug(
-        `getEvents returned: immediateEvent=${immediateEvent ? immediateEvent.id : "none"}, drawableEvents=${drawableEvents.length}`,
-      );
+    while (this.engineState.state === EngineStateEnum.RUNNING) {
+      const { immediateEvent, drawableEvents } = await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
-        this.engineState.currentEvent = immediateEvent.id;
-        this.engineState.currentStep = 0;
         await this.handleEvent(immediateEvent);
       } else {
-        // placeholder for drawable events
+        // Handle drawable events if needed
       }
-      console.log("Petit sleep pour debug l'engine...");
+      
+      // DEBUG: Sleep for debugging
+      console.warn("SLEEP FOR DEBUG");
       await new Promise((resolve) => setTimeout(resolve, 20000));
     }
   }
+  // #endregion
+  
 
-  findEventById(eventId: string): VNEvent | null {
-    for (const location in this.eventCache) {
-      const cache = this.eventCache[location];
-      for (const list of ["unlocked", "locked", "notReady"] as const) {
-        const found = cache[list].find((ev) => ev.id === eventId);
-        if (found) {
-          return found;
-        }
-      }
+  // #region Event EXECUTOR
+  async handleEvent(immediateEvent: VNEvent): Promise<void> {    
+    try {
+      // ActionExecutor handles everything: simulation + playback + choice branches
+      await this.actionExecutor.executeEvent(immediateEvent);
+    } catch (error) {
+        console.error('Event execution error:', error);
+        throw error;
     }
-    console.warn(`Event with id '${eventId}' not found`);
-    return null;
   }
-
-  async handleEvent(immediateEvent: VNEvent): Promise<void> {
-    await EngineEvents.handleEvent(this, immediateEvent);
-  }
-
-  createEventsCopy(): void {
-    EngineEvents.createEventsCopy(this);
-  }
-
-  async getEvents(): Promise<{
-    immediateEvent: VNEvent | null;
-    drawableEvents: VNEvent[];
-  }> {
-    return await EngineEvents.getEvents(this);
-  }
-
-  updateEvents(location?: string): void {
-    EngineEvents.updateEvents(this, location);
-  }
+  // #endregion
 }
 
 export default Engine;

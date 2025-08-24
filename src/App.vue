@@ -3,7 +3,7 @@
   <Main v-else />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { defineAsyncComponent } from 'vue';
 import { Main } from '@/generate/components';
 

@@ -33,6 +33,7 @@ function run(script: string): void {
 run("generate-components-index.cts");
 run("generate-engine-index.cts");
 run("generate-events-index.cts");
+run("generate-types-index.cts");
 
 // Mode watch (dev)
 if (process.argv.includes("--watch")) {
@@ -58,6 +59,7 @@ if (process.argv.includes("--watch")) {
     run("generate-components-index.cts");
     run("generate-engine-index.cts");
     run("generate-events-index.cts");
+    run("generate-types-index.cts");
   });
 
   watcher.on("error", (error: Error) => {

@@ -2,18 +2,18 @@
   <Transition name="fade">
     <div
       v-show="
-        engineState.state === ENGINE_STATES.SAVE ||
-        engineState.state === ENGINE_STATES.LOAD
+        engineState.state === EngineStateEnum.SAVE ||
+        engineState.state === EngineStateEnum.LOAD
       "
       :style="menuBgStyle"
-      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-50 transition-opacity duration-300"
+      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-90 transition-opacity duration-300"
       :class="{
         'opacity-100':
-          engineState.state === ENGINE_STATES.SAVE ||
-          engineState.state === ENGINE_STATES.LOAD,
+          engineState.state === EngineStateEnum.SAVE ||
+          engineState.state === EngineStateEnum.LOAD,
         'opacity-0':
-          engineState.state !== ENGINE_STATES.SAVE &&
-          engineState.state !== ENGINE_STATES.LOAD,
+          engineState.state !== EngineStateEnum.SAVE &&
+          engineState.state !== EngineStateEnum.LOAD,
       }"
     >
       <div
@@ -88,24 +88,25 @@
   </Transition>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import {
-  engineState as useEngineState,
-  engineStateEnum as ENGINE_STATES,
-} from "@/generate/stores";
+import { engineState as useEngineState } from "@/generate/stores";
+import { EngineStateEnum } from '@/generate/enums';
+import { Engine } from '@/generate/runtime';
+import type { SaveData } from '@/generate/types';
+
 const engineState = useEngineState();
 import { PROJECT_ID } from "@/generate/components";
 
 const slotsPerPage = 8;
 const maxSlots = 24;
 const page = ref(0);
-const saves = ref({});
-const saveNames = ref({});
+const saves = ref<SaveData[]>([]);
+const saveNames = ref<string[]>([]);
 
 const mode = computed(() => {
-  if (engineState.state === ENGINE_STATES.SAVE) return "save";
-  if (engineState.state === ENGINE_STATES.LOAD) return "load";
+  if (engineState.state === EngineStateEnum.SAVE) return "save";
+  if (engineState.state === EngineStateEnum.LOAD) return "load";
   return "save"; // fallback
 });
 
@@ -116,18 +117,18 @@ const visibleSlots = computed(() => {
   );
 });
 
-function formatDate(timestamp) {
+function formatDate(timestamp: string) {
   if (!timestamp) return "";
   return new Date(timestamp).toLocaleString();
 }
 
 function loadSaves() {
-  saves.value = {};
+  saves.value = [];
   for (let i = 1; i <= maxSlots; i++) {
     const raw = localStorage.getItem(`Save_${PROJECT_ID}_${i}`);
     if (raw) {
       try {
-        const data = JSON.parse(raw);
+        const data: SaveData = JSON.parse(raw);
         saves.value[i] = data;
         saveNames.value[i] = data.name || "";
       } catch {}
@@ -137,16 +138,21 @@ function loadSaves() {
   }
 }
 
-function save(slot) {
-  console.log(`Saving to slot ${slot}`);
-  console.log(`engine: ${window.__VN_ENGINE__}`);
+function save(slot: number) {
+  console.log(`Saving to slot ${slot}`);  
+  const engine = Engine.getInstance();
   const name = saveNames.value[slot] || `Slot ${slot}`;
-  window.__VN_ENGINE__.saveGame(slot, name);
+  if (engine != null) {
+    engine.saveGame(slot, name);
+  }
   loadSaves();
 }
 
-function load(slot) {
-  window.__VN_ENGINE__.loadGame(slot);
+function load(slot: number) {
+  const engine = Engine.getInstance();
+  if (engine != null) {
+    engine.loadGame(slot);
+  }
 }
 
 function prevPage() {

@@ -41,8 +41,8 @@ function walk(dir, base = "", files = {}) {
 }
 
 const filesByLoc = walk(eventsDir);
-let imports = "";
-let eventsBlock = "export const events = {\n";
+let imports = "import type { VNEvent } from '@/generate/types';\n";
+let eventsBlock = "export const events: Record<string, VNEvent[]> = {\n";
 let importCount = 0;
 Object.entries(filesByLoc).forEach(([location, files]) => {
   eventsBlock += `  '${location}': [`;
@@ -50,7 +50,8 @@ Object.entries(filesByLoc).forEach(([location, files]) => {
     const varName = `event${importCount++}`;
     const relPath = path
       .relative(path.join(__dirname, "../src/generate"), f)
-      .replace(/\\/g, "/");
+      .replace(/\\/g, "/")
+      .replace(/\.ts$/, "");
     imports += `import ${varName} from '${
       relPath.startsWith(".") ? relPath : "../" + relPath
     }';\n`;
@@ -63,4 +64,4 @@ eventsBlock += "};\n";
 const outDir = path.join(__dirname, "../src/generate");
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir);
 fs.writeFileSync(path.join(outDir, "events.ts"), imports + "\n" + eventsBlock);
-console.log("events.ts generated for project", currentProject);
+console.log("🎭 events.ts generated for project", currentProject);

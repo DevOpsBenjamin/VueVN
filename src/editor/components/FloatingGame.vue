@@ -43,7 +43,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useEditorState } from '@/editor/stores/editorState';
 import { Game } from '@/generate/components';
@@ -68,14 +68,14 @@ let dragging = false;
 let resizing = false;
 let resizeStart = { x: 0, y: 0, size: 0 };
 
-function startDrag(e) {
+function startDrag(e: MouseEvent) {
   dragging = true;
   dragOffsetX = e.clientX - x.value;
   dragOffsetY = e.clientY - y.value;
   window.addEventListener('mousemove', onDrag);
   window.addEventListener('mouseup', stopDrag);
 }
-function onDrag(e) {
+function onDrag(e: MouseEvent) {
   if (dragging) {
     x.value = e.clientX - dragOffsetX;
     y.value = e.clientY - dragOffsetY;
@@ -93,7 +93,7 @@ function stopDrag() {
   window.removeEventListener('mousemove', onDrag);
   window.removeEventListener('mouseup', stopDrag);
 }
-function startResize(e) {
+function startResize(e: MouseEvent) {
   resizing = true;
   resizeStart.x = e.clientX;
   resizeStart.y = e.clientY;

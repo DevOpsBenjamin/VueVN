@@ -1,16 +1,17 @@
 <template>
-  <div id="game-root" class="engine-content">
+  <div class="engine-content">
     <!-- Layered VN components -->
     <Background />
-    <Drawing />
     <LocationOverlay />
+    <Drawing />
     <Foreground />
     <Dialogue />
     <Choice />
+    <Custom />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import {
   Background,
   LocationOverlay,
@@ -18,6 +19,7 @@ import {
   Foreground,
   Dialogue,
   Choice,
+  Custom
 } from '@/generate/components';
 </script>
 

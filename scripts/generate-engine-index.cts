@@ -11,7 +11,7 @@ if (!currentProject) {
   process.exit(1);
 }
 
-// Helper: recursively walk a directory, collecting .ts files, skipping any 'events' folder
+// Helper: recursively walk a directory, collecting .ts files, skipping 'events' and 'types' folders
 function walkTsFiles(
     dir: string,
     base: string = "",
@@ -22,7 +22,7 @@ function walkTsFiles(
     const abs = path.join(dir, file);
     const rel = path.join(base, file);
     if (fs.statSync(abs).isDirectory()) {
-      if (file === "events") return; // skip events folder
+      if (file === "events" || file === "types") return; // skip events and types folders
       walkTsFiles(abs, rel, files);
     } else if (file.endsWith(".ts") && file !== "types.ts") {
       files[rel.replace(/\\/g, "/")] = abs;
@@ -73,13 +73,13 @@ Object.entries(groups).forEach(([group, relPaths]) => {
     let abs: string, importPath: string;
     if (projectFiles[rel]) {
       abs = projectFiles[rel];
-      // Path relative to outDir
-      const relPath = path.relative(outDir, abs).replace(/\\/g, "/");
+      // Path relative to outDir, remove .ts extension
+      const relPath = path.relative(outDir, abs).replace(/\\/g, "/").replace(/\.ts$/, "");
       importPath = relPath.startsWith(".") ? relPath : "./" + relPath;
     } else {
       abs = engineFiles[rel];
-      // Path relative to outDir
-      const relPath = path.relative(outDir, abs).replace(/\\/g, "/");
+      // Path relative to outDir, remove .ts extension
+      const relPath = path.relative(outDir, abs).replace(/\\/g, "/").replace(/\.ts$/, "");
       importPath = relPath.startsWith(".") ? relPath : "./" + relPath;
     }
     imports += `import ${finalVarName} from '${importPath}';\n`;
@@ -91,5 +91,5 @@ Object.entries(groups).forEach(([group, relPaths]) => {
     path.join(outDir, `${group}.ts`),
     imports + "\n" + exportsBlock,
   );
-  console.log(`${group}.ts generated for project: ${currentProject}`);
+  console.log(`⚙️ ${group}.ts generated for project: ${currentProject}`);
 });

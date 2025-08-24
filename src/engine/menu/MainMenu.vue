@@ -1,12 +1,12 @@
 <template>
   <Transition name="fade">
     <div
-      v-show="engineState.state === ENGINE_STATES.MENU"
+      v-show="engineState.state === EngineStateEnum.MENU"
       :style="menuBgStyle"
-      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-50 transition-opacity duration-300"
+      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm z-80 transition-opacity duration-300"
       :class="{
-        'opacity-100': engineState.state === ENGINE_STATES.MENU,
-        'opacity-0': engineState.state !== ENGINE_STATES.MENU,
+        'opacity-100': engineState.state === EngineStateEnum.MENU,
+        'opacity-0': engineState.state !== EngineStateEnum.MENU,
       }"
     >
       <div
@@ -20,7 +20,7 @@
 
         <button
           class="px-6 py-3 bg-green-700 hover:bg-green-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="newGame"
+          @click.stop.prevent="newGame"
         >
           New Game
         </button>
@@ -28,7 +28,7 @@
         <button
           v-if="engineState.initialized"
           class="px-6 py-3 bg-blue-700 hover:bg-blue-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="continueGame"
+          @click.stop.prevent="continueGame"
         >
           Continue
         </button>
@@ -36,21 +36,21 @@
         <button
           v-if="engineState.initialized"
           class="px-6 py-3 bg-purple-700 hover:bg-purple-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="saveGame"
+          @click.stop.prevent="saveGame"
         >
           Save
         </button>
 
         <button
           class="px-6 py-3 bg-yellow-700 hover:bg-yellow-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="loadGame"
+          @click.stop.prevent="loadGame"
         >
           Load
         </button>
 
         <button
           class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="openSettings"
+          @click.stop.prevent="openSettings"
         >
           Settings
         </button>
@@ -59,25 +59,25 @@
   </Transition>
 </template>
 
-<script setup>
-import {
-  engineState as useEngineState,
-  engineStateEnum as ENGINE_STATES,
-} from '@/generate/stores';
+<script setup lang="ts">
+import { engineState as useEngineState } from '@/generate/stores';
+import { EngineStateEnum } from '@/generate/enums';
 import { Engine } from '@/generate/runtime';
 const engineState = useEngineState();
 
 function newGame() {
   const engine = Engine.getInstance();
-  engine.startNewGame();
+  if (engine!= null) {
+    engine.startNewGame();
+  }
 }
 
 function continueGame() {
-  engineState.state = ENGINE_STATES.RUNNING;
+  engineState.state = EngineStateEnum.RUNNING;
 }
 
 function loadGame() {
-  engineState.state = ENGINE_STATES.LOAD;
+  engineState.state = EngineStateEnum.LOAD;
 }
 
 function openSettings() {
@@ -85,7 +85,7 @@ function openSettings() {
 }
 
 function saveGame() {
-  engineState.state = ENGINE_STATES.SAVE;
+  engineState.state = EngineStateEnum.SAVE;
 }
 
 const menuBgStyle = {

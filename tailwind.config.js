@@ -5,7 +5,14 @@ module.exports = {
     './public/game/events/**/*.js'
   ],
   theme: {
-    extend: {},
+    extend: {
+      zIndex: {
+        '60': '60',
+        '70': '70',
+        '80': '80',
+        '90': '90',
+      }
+    },
   },
   plugins: [],
 }

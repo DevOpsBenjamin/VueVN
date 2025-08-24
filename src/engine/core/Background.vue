@@ -9,15 +9,9 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { engineState as useEngineState } from '@/generate/stores';
 const engineState = useEngineState();
 const background = computed(() => engineState.background);
 </script>
-
-<style scoped>
-.z-0 {
-  z-index: 0;
-}
-</style>

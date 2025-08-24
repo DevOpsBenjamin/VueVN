@@ -5,20 +5,14 @@
   >
     <!-- Foreground image -->
     <img
-      :src="engineState.foreground"
+      :src="engineState.foreground!"
       class="object-contain w-full h-full"
       alt="Foreground"
     />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { engineState as useEngineState } from '@/generate/stores';
 const engineState = useEngineState();
 </script>
-
-<style scoped>
-.z-30 {
-  z-index: 30;
-}
-</style>
