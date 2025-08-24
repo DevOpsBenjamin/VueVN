@@ -6,8 +6,11 @@ import type { Engine } from '@/generate/runtime';
 export const startNewGame = async (engine: Engine): Promise<void> => {
   engine.engineState.state = EngineStateEnum.LOADING;
   await new Promise((resolve) => setTimeout(resolve, 100));
+  
+  // Access store action methods directly (properly typed)
   engine.gameState.resetGame();
-  //engine.engineState.resetState();
+  engine.engineState.resetState();
+  
   engine.historyManager.resetHistory();
   engine.eventManager.resetEvents(engine.gameState);
   engine.navigationManager.cancelWaiters();
@@ -22,13 +25,13 @@ export const loadGame = async (engine: Engine, slot: number): Promise<void> => {
   }
   
   const data = JSON.parse(raw);
-  // Restore game state
+  // Restore game state using Pinia $state (properly typed)
   Object.assign(engine.gameState.$state, data.gameState);  
   engine.eventManager.resetEvents(engine.gameState);
   //LoadHistory
   engine.historyManager.loadHistoryData(data.historyState);
-  // Restore engine state
-  Object.assign(engine.engineState.state, data.engineState);
+  // Restore engine state using Pinia $state (properly typed)
+  Object.assign(engine.engineState.$state, data.engineState);
 
   engine.navigationManager.cancelWaiters();
   if (engine.engineState.currentEvent != null) {
@@ -40,8 +43,8 @@ export const loadGame = async (engine: Engine, slot: number): Promise<void> => {
 };
 
 export const saveGame = (engine: Engine, slot: number, name?: string): void => {
-  // Create a clean copy of engineState, filtering out non-serializable properties
-  const engineStateCopy:EngineState = JSON.parse(JSON.stringify(engine.engineState.state));
+  // Create a clean copy of engineState using Pinia $state (properly typed)
+  const engineStateCopy:EngineState = JSON.parse(JSON.stringify(engine.engineState.$state));
   engineStateCopy.state = EngineStateEnum.RUNNING;
 
   // Save history state separately

@@ -1,13 +1,13 @@
-// Sample project GameState override
+// Sample project GameState - must match actual Pinia store structure
 export interface GameState {
   player: { 
     name: string;
-    level: number;
-    experience: number;
   };
   location: string;
-  inventory: string[];
-  questFlags: Record<string, boolean>;
   flags: Record<string, any>;
+  // Sample project specific properties (matching gameState.ts store)
+  npc_1: any;
+  myCustomField: string;
+  myCustomArray: string[];
   [key: string]: any;
 }

@@ -14,13 +14,15 @@ import type {
   GameState, 
   EngineState, 
   VNEvent, 
-  VNAction
+  VNAction,
+  GameStateStore,
+  EngineStateStore
 } from "@/generate/types";
 
 class Engine {
   // #region DEFINITION
-  gameState: GameState;
-  engineState: EngineState;
+  gameState: GameStateStore;
+  engineState: EngineStateStore;
   
   // Managers
   historyManager: HistoryManager;
@@ -32,8 +34,8 @@ class Engine {
   private gameRoot: HTMLElement;
 
   constructor(
-    gameState: GameState, 
-    engineState: EngineState,
+    gameState: GameStateStore, 
+    engineState: EngineStateStore,
     gameRoot: HTMLElement
     ) {
     // State

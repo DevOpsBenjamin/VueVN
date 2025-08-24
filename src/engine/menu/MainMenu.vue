@@ -20,7 +20,7 @@
 
         <button
           class="px-6 py-3 bg-green-700 hover:bg-green-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="newGame"
+          @click.stop.prevent="newGame"
         >
           New Game
         </button>
@@ -28,7 +28,7 @@
         <button
           v-if="engineState.initialized"
           class="px-6 py-3 bg-blue-700 hover:bg-blue-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="continueGame"
+          @click.stop.prevent="continueGame"
         >
           Continue
         </button>
@@ -36,21 +36,21 @@
         <button
           v-if="engineState.initialized"
           class="px-6 py-3 bg-purple-700 hover:bg-purple-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="saveGame"
+          @click.stop.prevent="saveGame"
         >
           Save
         </button>
 
         <button
           class="px-6 py-3 bg-yellow-700 hover:bg-yellow-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="loadGame"
+          @click.stop.prevent="loadGame"
         >
           Load
         </button>
 
         <button
           class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded font-mono font-medium transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg"
-          @click="openSettings"
+          @click.stop.prevent="openSettings"
         >
           Settings
         </button>

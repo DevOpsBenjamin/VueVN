@@ -22,6 +22,7 @@ const gameRoot = ref<HTMLElement | null>(null);
 
 onMounted(async () => {
   if (!EngineCore.getInstance()) {
+    // Pinia stores are now properly typed as GameStateStore & EngineStateStore
     const engine = new EngineCore(gameState, engineState, gameRoot.value!);
     await engine.run();
   }
