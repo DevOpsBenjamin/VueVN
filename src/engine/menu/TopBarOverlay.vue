@@ -10,22 +10,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Engine } from '@/generate/runtime';
 import { gameState as useGameState } from '@/generate/stores';
 
 const gameState = useGameState();
 
 const locationName = computed(() => {
-  const engine = Engine.getInstance();
-  if (!engine) {
-    console.error('Engine get error');
-    return '';
-  }
-  try {
-    return engine.locationManager.findLocationById(gameState.location_id).name;
-  } catch (error) {
-    console.error('[TopBarOverlay] Error retrieving location name:', error);
-    return '';
-  }
+  return gameState.location_id;
 });
 </script>
