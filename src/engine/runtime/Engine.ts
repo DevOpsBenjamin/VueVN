@@ -31,7 +31,7 @@ class Engine {
   locationManager: LocationManager;
   actionManager: ActionManager;
   eventManager: EventManager;
-  inputManager: InputManager;
+  inputManager: InputManager | null = null;;
   actionExecutor: ActionExecutor;
   navigationManager: NavigationManager;
   private static instance: Engine | null = null;
@@ -55,9 +55,8 @@ class Engine {
     
     // Initialize NavigationManager first (ActionExecutor needs it)
     this.navigationManager = new NavigationManager(this.historyManager);    
-    this.inputManager = new InputManager(engineState, gameState, this.navigationManager, gameRoot);
     this.actionExecutor = new ActionExecutor(engineState, gameState, this.historyManager, this.navigationManager);
-    this.inputManager.init();
+    
     
     // Initialize window reference
     if (typeof window !== "undefined") {
@@ -71,6 +70,16 @@ class Engine {
     return this.instance;
   }
   
+  setRootHTML (root: HTMLElement): void  {
+    this.gameRoot = root; 
+    this.inputManager = new InputManager(
+      this.engineState, 
+      this.gameState, 
+      this.navigationManager, 
+      this.gameRoot);
+    this.inputManager.init();
+  }
+
   getGameSize(): number {
     const rect = this.gameRoot.getBoundingClientRect();
     return Math.floor(rect.height / 8);
@@ -114,10 +123,8 @@ class Engine {
 
   async runGameLoop(): Promise<void> {
     while (this.engineState.state === EngineStateEnum.RUNNING) {
-      // Clean state at start of each loop iteration
-      this.cleanState();      
-      // Handle location-based logic
-      await this.handleLocation();   
+      // Calculate and update all engine info
+      await this.calculateInfo();
 
       const { immediateEvent, drawableEvents } = await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
@@ -136,6 +143,21 @@ class Engine {
 
   // #region STATE MANAGEMENT
   /**
+   * Calculate and update all engine information for the current loop iteration.
+   * Orchestrates state reset, location handling, and action management.
+   */
+  private async calculateInfo(): Promise<void> {
+    // Reset state first
+    this.cleanState();
+    
+    // Handle location logic (background, time-based backgrounds)
+    await this.handleLocation();
+    
+    // Update action manager with current available actions
+    this.updateActions();
+  }
+
+  /**
    * Clean state at the beginning of each loop iteration.
    * Resets important UI fields that should be cleared between events.
    */
@@ -152,15 +174,36 @@ class Engine {
 
   /**
    * Handle location-specific logic.
-   * Placeholder for location-based processing.
+   * Sets background from current location and applies time-based backgrounds if applicable.
    */
   private async handleLocation(): Promise<void> {
-    // TODO: Implement location-specific logic
-    // This will handle things like:
-    // - Location transitions
-    // - Location-specific state updates  
-    // - Background/environment setup
-    // - Location-based event filtering
+    try {
+      const currentLocation = this.locationManager.findLocationById(this.gameState.location_id);
+      
+      // Set base background
+      this.engineState.background = currentLocation.baseBackground;
+      
+      // Check for time-based background overrides
+      if (currentLocation.timeBackgrounds && currentLocation.timeBackgrounds.length > 0) {
+        for (const timeBackground of currentLocation.timeBackgrounds) {
+          if (timeBackground.check(this.gameState)) {
+            this.engineState.background = timeBackground.value;
+            break; // Use first matching time background
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[Engine] Error handling location:', error);
+    }
+  }
+
+  /**
+   * Update action manager by building list of currently accessible actions.
+   * This ensures action overlay shows up-to-date available actions.
+   */
+  private updateActions(): void {
+    // Update ActionManager's internal accessible actions list
+    this.actionManager.updateAccessibleActions(this.gameState);
   }
   // #endregion
 

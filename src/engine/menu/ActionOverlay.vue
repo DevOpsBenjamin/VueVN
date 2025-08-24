@@ -9,15 +9,12 @@
         v-for="action in accessibleActions"
         :key="action.id"
         @click.stop.prevent="executeAction(action.id)"
-        class="action-circle group relative overflow-hidden transition-all duration-300 ease-out transform hover:scale-110 hover:-translate-y-2"
+        class="action-circle group relative overflow-hidden transition-all duration-300 ease-out transform hover:scale-110 hover:-translate-y-2 focus:outline-none border-none"
         :style="{ width: circleSize + 'px', height: circleSize + 'px' }"
         :title="action.name"
       >
-        <!-- Circle background with glass morphism -->
-        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm border border-white/20 rounded-full group-hover:bg-black/40 group-hover:border-white/40 transition-all duration-300"></div>
-        
-        <!-- Glow effect on hover -->
-        <div class="absolute inset-0 rounded-full group-hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] transition-all duration-300"></div>
+        <!-- Circle background with glass morphism - green on hover -->
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm border border-white/20 rounded-full group-hover:bg-green-600/60 group-focus:bg-green-600/60 group-hover:border-white/40 group-focus:border-white/40 transition-all duration-300"></div>
         
         <!-- Inner glow ring -->
         <div class="absolute inset-2 rounded-full border border-white/10 group-hover:border-white/30 transition-all duration-300"></div>
@@ -63,7 +60,7 @@ const updateAccessibleActions = () => {
   }
   
   try {
-    accessibleActions.value = engine.actionManager.getAccessibleActions(gameState);
+    accessibleActions.value = engine.actionManager.getAccessibleActions();
   } catch (error) {
     console.error('[ActionOverlay] Error updating accessible actions:', error);
     accessibleActions.value = [];
@@ -88,11 +85,12 @@ const executeAction = (actionId: string) => {
 };
 
 onMounted(() => {
-  // Watch for time changes to update available actions
-  watch(
-    () => gameState.gameTime,
-    updateAccessibleActions,
-    { immediate: true, deep: true }
-  );
+  updateAccessibleActions();
+  
+  // Register for updates when engine recalculates actions
+  const engine = Engine.getInstance();
+  if (engine) {
+    engine.actionManager.setUpdateCallback(updateAccessibleActions);
+  }
 });
 </script>

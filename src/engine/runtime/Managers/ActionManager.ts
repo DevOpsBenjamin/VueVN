@@ -3,6 +3,8 @@ import * as actions from '@/generate/actions';
 
 export default class ActionManager {
   private actionDico: Record<string, Action> = {};
+  private accessibleActions: Action[] = [];
+  private updateCallback: (() => void) | null = null;
   
   constructor() {
     this.buildActionsRecords();
@@ -21,8 +23,19 @@ export default class ActionManager {
     }
   }
 
-  getAccessibleActions(gameState: GameState): Action[] {
-    return Object.values(this.actionDico).filter(action => action.unlocked(gameState));
+  updateAccessibleActions(gameState: GameState): void {
+    this.accessibleActions = Object.values(this.actionDico).filter(action => action.unlocked(gameState));
+    if (this.updateCallback) {
+      this.updateCallback();
+    }
+  }
+
+  setUpdateCallback(callback: () => void): void {
+    this.updateCallback = callback;
+  }
+
+  getAccessibleActions(): Action[] {
+    return this.accessibleActions;
   }
   
   executeAction(actionId: string, gameState: GameState): void {
