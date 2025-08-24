@@ -8,7 +8,7 @@
       <button
         v-for="action in accessibleActions"
         :key="action.id"
-        @click="executeAction(action.id)"
+        @click.stop.prevent="executeAction(action.id)"
         class="action-circle group relative overflow-hidden transition-all duration-300 ease-out transform hover:scale-110 hover:-translate-y-2"
         :style="{ width: circleSize + 'px', height: circleSize + 'px' }"
         :title="action.name"

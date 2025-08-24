@@ -8,7 +8,7 @@
       <button
         v-for="location in accessibleLocations"
         :key="location.id"
-        @click="navigateToLocation(location.id)"
+        @click.stop.prevent="navigateToLocation(location.id)"
         class="location-circle group relative overflow-hidden transition-all duration-300 ease-out transform hover:scale-110 hover:-translate-y-2"
         :style="{ width: circleSize + 'px', height: circleSize + 'px' }"
         :title="location.name"
