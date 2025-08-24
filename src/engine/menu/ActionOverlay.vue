@@ -1,31 +1,31 @@
 <template>
   <div
-    v-if="accessibleLocations.length > 0"
-    class="absolute top-0 left-0 w-full h-full z-10 pointer-events-none flex items-end justify-end p-4"
+    v-if="accessibleActions.length > 0"
+    class="absolute top-0 left-0 w-full h-full z-10 pointer-events-none flex items-end justify-start p-4"
   >
-    <!-- Location navigation circles -->
+    <!-- Action navigation circles -->
     <div class="flex flex-wrap gap-6 justify-center items-center pointer-events-auto">
       <button
-        v-for="location in accessibleLocations"
-        :key="location.id"
-        @click="navigateToLocation(location.id)"
-        class="location-circle group relative overflow-hidden transition-all duration-300 ease-out transform hover:scale-110 hover:-translate-y-2"
+        v-for="action in accessibleActions"
+        :key="action.id"
+        @click="executeAction(action.id)"
+        class="action-circle group relative overflow-hidden transition-all duration-300 ease-out transform hover:scale-110 hover:-translate-y-2"
         :style="{ width: circleSize + 'px', height: circleSize + 'px' }"
-        :title="location.name"
+        :title="action.name"
       >
         <!-- Circle background with glass morphism -->
         <div class="absolute inset-0 bg-black/30 backdrop-blur-sm border border-white/20 rounded-full group-hover:bg-black/40 group-hover:border-white/40 transition-all duration-300"></div>
         
         <!-- Glow effect on hover -->
-        <div class="absolute inset-0 rounded-full group-hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] transition-all duration-300"></div>
+        <div class="absolute inset-0 rounded-full group-hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] transition-all duration-300"></div>
         
         <!-- Inner glow ring -->
         <div class="absolute inset-2 rounded-full border border-white/10 group-hover:border-white/30 transition-all duration-300"></div>
         
-        <!-- Location name text -->
+        <!-- Action name text -->
         <div class="relative w-full h-full flex items-center justify-center p-2">
           <span class="text-white font-semibold text-center text-sm leading-tight group-hover:text-white transition-colors duration-300 drop-shadow-lg">
-            {{ location.name }}
+            {{ action.name }}
           </span>
         </div>
         
@@ -40,12 +40,12 @@
 import { ref, watch, onMounted, computed } from 'vue';
 import { Engine } from "@/generate/runtime";
 import { gameState as useGameState } from '@/generate/stores';
-import type { Location } from '@/generate/types';
+import type { Action } from '@/generate/types';
 
 const gameState = useGameState();
-const accessibleLocations = ref<Location[]>([]);
+const accessibleActions = ref<Action[]>([]);
 
-// Calculate circle size as 1/8 of gameRoot size (using smaller dimension)
+// Calculate circle size as 1/8 of gameRoot size (same as locations)
 const circleSize = computed(() => {
   const engine = Engine.getInstance();  
   if (engine == null) {
@@ -55,7 +55,7 @@ const circleSize = computed(() => {
   return engine.getGameSize();
 });
 
-const updateAccessibleLocations = () => {
+const updateAccessibleActions = () => {
   const engine = Engine.getInstance();
   if (engine == null) {
     console.error("Engine get error");
@@ -63,31 +63,33 @@ const updateAccessibleLocations = () => {
   }
   
   try {
-    const currentLocation = engine.locationManager.findLocationById(gameState.location_id);
-    accessibleLocations.value = currentLocation.accessibleLocations;
+    accessibleActions.value = engine.actionManager.getAccessibleActions(gameState);
   } catch (error) {
-    console.error('[LocationOverlay] Error updating accessible locations:', error);
-    accessibleLocations.value = [];
+    console.error('[ActionOverlay] Error updating accessible actions:', error);
+    accessibleActions.value = [];
   }
 };
 
-const navigateToLocation = (locationId: string) => {
+const executeAction = (actionId: string) => {
   const engine = Engine.getInstance();
   if (engine == null) {
     console.error("Engine get error");
     return;
   }  
-  // TODO: Add validation logic for access errors
-  // For now, just update the location
-  gameState.location_id = locationId;
+  
+  try {
+    engine.actionManager.executeAction(actionId, gameState);
+  } catch (error) {
+    console.error('[ActionOverlay] Error executing action:', error);
+  }
 };
 
 onMounted(() => {
-  // Watch for location changes
+  // Watch for time changes to update available actions
   watch(
-    () => gameState.location_id,
-    updateAccessibleLocations,
-    { immediate: true }
+    () => gameState.gameTime,
+    updateAccessibleActions,
+    { immediate: true, deep: true }
   );
 });
 </script>

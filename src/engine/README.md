@@ -8,6 +8,7 @@ This folder contains the core visual novel display components, stacked using z-i
 | ------------------- | ------- | --------------------------------------- |
 | Background.vue      | 0       | Main background image                   |
 | LocationOverlay.vue | 10      | Location navigation overlay             |
+| ActionOverlay.vue   | 10      | Action overlay (same deep LeftAlign)    |
 | Drawing.vue         | 20      | Drawable event layer (characters, etc.) |
 | Foreground.vue      | 30      | Foreground CGs, special art             |
 | Dialogue.vue        | 40      | Dialogue text box                       |

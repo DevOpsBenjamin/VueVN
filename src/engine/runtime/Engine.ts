@@ -8,7 +8,8 @@ import {
   InputManager,
   ActionExecutor,
   NavigationManager,
-  LocationManager
+  LocationManager,
+  ActionManager
 } from "@/generate/runtime";
 import { EngineStateEnum } from "@/generate/enums";
 import type { 
@@ -28,6 +29,7 @@ class Engine {
   // Managers
   historyManager: HistoryManager;
   locationManager: LocationManager;
+  actionManager: ActionManager;
   eventManager: EventManager;
   inputManager: InputManager;
   actionExecutor: ActionExecutor;
@@ -49,6 +51,7 @@ class Engine {
     this.historyManager = new HistoryManager();
     this.eventManager = new EventManager();
     this.locationManager = new LocationManager();
+    this.actionManager = new ActionManager();
     
     // Initialize NavigationManager first (ActionExecutor needs it)
     this.navigationManager = new NavigationManager(engineState, gameState, this.historyManager);    
@@ -66,6 +69,11 @@ class Engine {
 
   static getInstance(): Engine | null {
     return this.instance;
+  }
+  
+  getGameSize(): number {
+    const rect = this.gameRoot.getBoundingClientRect();
+    return Math.floor(rect.height / 8);
   }
   // #endregion
   
