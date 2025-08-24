@@ -42,9 +42,12 @@ export default class NavigationManager {
       this.historyManager.goForward();
       this.resolveContinue();
     }
-    else if (this.choiceWaiter)
-    {
+    else if (this.choiceWaiter && this.historyManager.canGoForward()) {
+      //Case of choice already shown and history having a previous done choice
       this.historyManager.goForward();
+      this.rejectWaiters();
+    }
+    else {      
       this.rejectWaiters();
     }
   }

@@ -103,6 +103,17 @@ class Engine {
 
   async runGameLoop(): Promise<void> {
     while (this.engineState.state === EngineStateEnum.RUNNING) {
+      // Clean state at start of each loop iteration
+      this.cleanState();
+      
+      // Handle location-based logic
+      await this.handleLocation();
+      
+      
+      // DEBUG: Sleep for debugging
+      console.warn("SLEEP FOR DEBUG");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       const { immediateEvent, drawableEvents } = await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
         await this.handleEvent(immediateEvent);
@@ -112,13 +123,38 @@ class Engine {
         // Handle drawable events if needed
       }
       
-      // DEBUG: Sleep for debugging
-      console.warn("SLEEP FOR DEBUG");
-      await new Promise((resolve) => setTimeout(resolve, 10000));
     }
   }
+
+  // #region STATE MANAGEMENT
+  /**
+   * Clean state at the beginning of each loop iteration.
+   * Resets important UI fields that should be cleared between events.
+   */
+  private cleanState(): void {
+    // Clear visual elements
+    this.engineState.background = null;
+    this.engineState.foreground = null;
+    this.engineState.dialogue = null;
+    this.engineState.choices = null;
+    
+    // Clear any other transient state that shouldn't persist between loops
+    // TODO: Add other fields that need cleaning each loop
+  }
+
+  /**
+   * Handle location-specific logic.
+   * Placeholder for location-based processing.
+   */
+  private async handleLocation(): Promise<void> {
+    // TODO: Implement location-specific logic
+    // This will handle things like:
+    // - Location transitions
+    // - Location-specific state updates  
+    // - Background/environment setup
+    // - Location-based event filtering
+  }
   // #endregion
-  
 
   // #region Event EXECUTOR
   async handleEvent(immediateEvent: VNEvent): Promise<void> {    

@@ -34,7 +34,12 @@ export default class EventManager
 
   async getEvents(gameState: GameState): Promise<EventLookup> {
     const location = gameState.location;
-    const eventList = this.eventCache[location].unlocked || [];
+    // Only check unlocked events - locked events are permanently excluded
+    const locationEvents = this.eventCache[location];
+    let eventList: VNEvent[] = [];
+    if (locationEvents) {
+      eventList = locationEvents.unlocked;
+    }
     const drawableEvents: VNEvent[] = [];
 
     for (const event of eventList) {
@@ -66,23 +71,37 @@ export default class EventManager
 
   updateEventsCache(gameState: GameState, location?: string): void {
     const locations = location ? [location] : Object.keys(this.eventCache);
+    
     for (const loc of locations) {
       const cache = this.eventCache[loc];
-      if (!cache) {
-        continue;
-      }
+      if (!cache) continue;
+      
+      // Move NotReady → Unlocked
       const stillNotReady: VNEvent[] = [];
       for (const event of cache.notReady) {
-        if (event.locked(gameState)) {
-          cache.locked.push(event);
-        } else if (event.unlocked(gameState)) {
+        if (event.unlocked(gameState)) {
           cache.unlocked.push(event);
         } else {
           stillNotReady.push(event);
         }
       }
       cache.notReady = stillNotReady;
+
+      // Move Unlocked → Locked
+      const stillUnlocked: VNEvent[] = [];
+      for (const event of cache.unlocked) {
+        if (event.locked(gameState)) {
+          cache.locked.push(event);
+        } else {
+          stillUnlocked.push(event);
+        }
+      }
+      cache.unlocked = stillUnlocked;
+
+      // Locked events stay locked - no processing needed
     }
+    
+    console.log('Cache updated:', this.eventCache);
   }
 
   findEventById(eventId: string): VNEvent | undefined {
