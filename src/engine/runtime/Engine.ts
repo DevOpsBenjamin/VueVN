@@ -54,7 +54,7 @@ class Engine {
     this.actionManager = new ActionManager();
     
     // Initialize NavigationManager first (ActionExecutor needs it)
-    this.navigationManager = new NavigationManager(engineState, gameState, this.historyManager);    
+    this.navigationManager = new NavigationManager(this.historyManager);    
     this.inputManager = new InputManager(engineState, gameState, this.navigationManager, gameRoot);
     this.actionExecutor = new ActionExecutor(engineState, gameState, this.historyManager, this.navigationManager);
     this.inputManager.init();
@@ -126,10 +126,10 @@ class Engine {
         this.eventManager.updateEventsCache(this.gameState)
       } else if (drawableEvents.length > 0) {
         // Handle drawable events if needed
-        await this.navigationManager.waitAction();
+        await this.navigationManager.actionManager.wait();
       } else {
         // No event to draw no loopUntil either a Action Or a DrawableClick.
-        await this.navigationManager.waitAction();
+        await this.navigationManager.actionManager.wait();
       }
       
       // DEBUG: Sleep for debugging

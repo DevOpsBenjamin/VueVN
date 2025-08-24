@@ -82,6 +82,9 @@ const executeAction = (actionId: string) => {
   } catch (error) {
     console.error('[ActionOverlay] Error executing action:', error);
   }
+  
+  // Resolve the action waiter to continue the game loop
+  engine.navigationManager.actionManager.resolve();
 };
 
 onMounted(() => {

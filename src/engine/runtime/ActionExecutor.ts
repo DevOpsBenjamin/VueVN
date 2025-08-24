@@ -97,7 +97,7 @@ export default class ActionExecutor {
 
   private async handleTextAction(event: VNEvent, action: VNAction): Promise<void> {
     try {
-      await this.navigationManager.waitForContinue();
+      await this.navigationManager.continueManager.wait();
     }
     catch (error) { 
       if (!(error instanceof NavigationCancelledError)) {
@@ -111,7 +111,7 @@ export default class ActionExecutor {
   // Handle choice actions and return chosen choice ID
   private async handleChoiceAction(event: VNEvent, action: VNAction): Promise<void> {
     try {           
-      const choiceId = await this.navigationManager.waitForChoice();
+      const choiceId = await this.navigationManager.choiceManager.wait();
     
       // SIMULATE CHOICE
       if (choiceId && event.branches?.[choiceId]) {

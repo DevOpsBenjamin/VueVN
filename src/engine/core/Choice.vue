@@ -64,7 +64,7 @@ function select(id: string): void {
     return;
   }
   console.log("SELECT CHOICE: ", id);
-  Engine.getInstance()?.navigationManager.resolveChoice(id);
+  Engine.getInstance()?.navigationManager.choiceManager.resolve(id);
 }
 
 function handleKeyPress(event: KeyboardEvent): void {

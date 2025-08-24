@@ -77,9 +77,13 @@ const navigateToLocation = (locationId: string) => {
     console.error("Engine get error");
     return;
   }  
+  
   // TODO: Add validation logic for access errors
   // For now, just update the location
   gameState.location_id = locationId;
+  
+  // Resolve the action waiter to continue the game loop
+  engine.navigationManager.actionManager.resolve();
 };
 
 onMounted(() => {
