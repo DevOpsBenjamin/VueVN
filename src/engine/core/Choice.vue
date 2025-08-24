@@ -10,7 +10,7 @@
           <button
             v-for="(choice, index) in engineState.choices"
             :key="choice.branch"
-            @click="select(choice.branch)"
+            @click.stop.prevent="select(choice.branch)"
             class="choice-button group relative overflow-hidden rounded-xl px-6 py-4 text-left transition-all duration-300 ease-out transform hover:scale-[1.02] hover:-translate-y-1"
             :class="`choice-${index + 1}`"
           >
@@ -58,11 +58,14 @@ import { engineState as useEngineState } from "@/generate/stores";
 const engineState = useEngineState();
 
 function select(id: string): void {
+  console.log("SELECT CHOICE: ", id);
   Engine.getInstance()?.navigationManager.makeChoice(id);
 }
 
 function handleKeyPress(event: KeyboardEvent): void {
-  if (!engineState.choices || engineState.choices.length === 0) return;
+  if (!engineState.choices || engineState.choices.length === 0) {
+    return;
+  }
   
   const key = event.key;
   const choiceIndex = parseInt(key) - 1;

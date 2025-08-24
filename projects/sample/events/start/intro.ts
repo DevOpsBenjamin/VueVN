@@ -10,11 +10,6 @@ const intro: VNEvent = {
   async execute(engine, state) {
     await engine.setForeground('assets/images/background/intro/hall.png');
     await engine.showText('Welcome to VueVN game sample! You can either start directly or learn about the framework');
-
-    await engine.showText('First text', 'Narrator');
-    await engine.showText('Second text', 'Narrator');
-    await engine.showText('Third text', 'Narrator');
-
     await engine.showChoices([
       { text: 'Start the adventure', branch: 'start_adventure' },
       { text: 'Learn more about VueVN', branch: 'learn_more' },

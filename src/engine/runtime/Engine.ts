@@ -28,11 +28,18 @@ class Engine {
   inputManager: InputManager;
   actionExecutor: ActionExecutor;
   navigationManager: NavigationManager;
+  private static instance: Engine | null = null;
+  private gameRoot: HTMLElement;
 
-  constructor(gameState: GameState, engineState: EngineState) {
+  constructor(
+    gameState: GameState, 
+    engineState: EngineState,
+    gameRoot: HTMLElement
+    ) {
     // State
     this.gameState = gameState;
     this.engineState = engineState;
+    this.gameRoot = gameRoot;
     
     // Initialize managers (order matters for dependencies)
     this.historyManager = new HistoryManager();
@@ -40,29 +47,20 @@ class Engine {
     
     // Initialize NavigationManager first (ActionExecutor needs it)
     this.navigationManager = new NavigationManager(engineState, gameState, this.historyManager);    
-    this.inputManager = new InputManager(engineState, gameState, this.navigationManager);
+    this.inputManager = new InputManager(engineState, gameState, this.navigationManager, gameRoot);
     this.actionExecutor = new ActionExecutor(engineState, gameState, this.historyManager, this.navigationManager);
+    this.inputManager.init();
     
     // Initialize window reference
     if (typeof window !== "undefined") {
       const w = window as any;
-      if (!w.__VN_ENGINE__) {
-        console.debug("Initializing VN Engine instance");
-        w.VueVN = this.gameState;
-        w.__VN_ENGINE__ = this;
-        this.inputManager.init();
-      }
+      w.VueVN = this.gameState;
     }
+    Engine.instance = this;
   }
 
-  static getInstance(): Engine | undefined {
-    if (typeof window !== "undefined") {
-      const w = window as any;
-      if (w.__VN_ENGINE__) {
-        return w.__VN_ENGINE__ as Engine;
-      }
-    }
-    return undefined;
+  static getInstance(): Engine | null {
+    return this.instance;
   }
   // #endregion
   
@@ -71,11 +69,11 @@ class Engine {
     EngineSave.startNewGame(this);
   }
 
-  loadGame(slot: string): Promise<void> {
+  loadGame(slot: number): Promise<void> {
     return EngineSave.loadGame(this, slot);
   }
 
-  saveGame(slot: string, name?: string): void {
+  saveGame(slot: number, name?: string): void {
     EngineSave.saveGame(this, slot, name);
   }
   // #endregion

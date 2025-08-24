@@ -9,6 +9,7 @@ export default class InputManager {
   private keyboardLayout: KeyboardLayout = 'unknown';
   private engineState: EngineState;
   private gameState: GameState;
+  private gameRoot: HTMLElement;
   private navigationManager: NavigationManager;
 
   // keep references so we can remove listeners later
@@ -19,25 +20,27 @@ export default class InputManager {
   constructor(
     engineState: EngineState,
     gameState: GameState,
-    navigationManager: NavigationManager
+    navigationManager: NavigationManager,
+    gameRoot: HTMLElement
   ) {
     this.engineState = engineState;
     this.gameState = gameState;
     this.navigationManager = navigationManager;
+    this.gameRoot = gameRoot;
   }
 
   /** Attach listeners */
   init(): void {
     window.addEventListener('keydown', this.keyDownHandler);
     window.addEventListener('keyup', this.keyUpHandler);
-    window.addEventListener('click', this.clickHandler);
+    this.gameRoot.addEventListener('click', this.clickHandler);
   }
 
   /** Detach listeners (call on teardown) */
   destroy(): void {
     window.removeEventListener('keydown', this.keyDownHandler);
     window.removeEventListener('keyup', this.keyUpHandler);
-    window.removeEventListener('click', this.clickHandler);
+    this.gameRoot.removeEventListener('click', this.clickHandler);
   }
 
   /** Public getter (kept for compatibility) */
@@ -89,10 +92,14 @@ export default class InputManager {
       return;
     }
 
-    const isRightHalf = e.clientX > window.innerWidth / 2;
-    if (isRightHalf) {
+    const rect = this.gameRoot.getBoundingClientRect();
+    const midpoint = rect.left + rect.width / 2;
+
+    if (e.clientX > midpoint) {
+      console.warn("CLICK FORWARD");
       this.forward();
     } else {
+      console.warn("CLICK BACKWARD");
       this.backward();
     }
   }

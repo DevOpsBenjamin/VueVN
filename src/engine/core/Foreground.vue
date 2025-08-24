@@ -5,7 +5,7 @@
   >
     <!-- Foreground image -->
     <img
-      :src="engineState.foreground"
+      :src="engineState.foreground!"
       class="object-contain w-full h-full"
       alt="Foreground"
     />

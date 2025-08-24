@@ -1,5 +1,5 @@
 <template>
-  <div id="game-root" class="engine-content">
+  <div class="engine-content">
     <!-- Layered VN components -->
     <Background />
     <LocationOverlay />

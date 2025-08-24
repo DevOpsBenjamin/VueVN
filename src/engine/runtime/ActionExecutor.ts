@@ -97,6 +97,7 @@ export default class ActionExecutor {
 
   private async handleTextAction(event: VNEvent, action: VNAction): Promise<void> {
     await this.navigationManager.waitForContinue();
+    this.historyManager.goForward();
   }
 
   // Handle choice actions and return chosen choice ID

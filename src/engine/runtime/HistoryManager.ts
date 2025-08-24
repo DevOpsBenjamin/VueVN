@@ -1,87 +1,88 @@
-import type { VNAction, GameState, EngineState } from '@/generate/types';
+import type { HistoryData, VNAction, GameState, EngineState } from '@/generate/types';
 import { mapActions } from 'pinia';
 
 export default class HistoryManager {
-  private history: VNAction[] = [];
-  private present: VNAction | null = null;
-  private future: VNAction[] = [];
-  private readonly maxHistorySize = 50;
+  private data:HistoryData;
+  private readonly maxHistorySize = 20;
 
   constructor() {
+    this.data = {      
+      history: [],
+      present: null,
+      future: []
+    }
     console.debug('HistoryManager initialized');
   }
     
   setFuture(actions: VNAction[]): void {
-    this.future = actions;
+    this.data.future = actions;
   }
   
   resetHistory(): void {
     console.debug('Resetting history');
-    this.history = [];
-    this.present = null;
-    this.future = [];
+    this.data = {      
+      history: [],
+      present: null,
+      future: []
+    }
   }
 
   canGoBack(): boolean {
-    return this.history.length > 0;
+    return this.data.history.length > 0;
   }
 
   canGoForward(): boolean {
-    return this.future.length > 0;
+    return this.data.future.length > 0;
   }
 
   // New methods for ActionExecutor
   getPresent(): VNAction | null {
-    return this.present || null;
+    return this.data.present || null;
   }
 
-  goBack(): VNAction | null {
-    const entry = this.history.pop();
+  goBack(): void {
+    const entry = this.data.history.pop();
+    if (this.data.present != null)
+    {
+      this.data.future.unshift(this.data.present);
+      this.data.present = null;
+    }
     if (entry) {
-      if (this.present != null)
-      {
-        this.future.unshift(this.present);
-      }
-      this.present = entry;
+      this.data.present = entry;
     }
-    return entry || null;
   }
 
-  goForward(): VNAction | null {
-    const entry = this.future.shift(); // Take FIRST item, not last
-    if (entry) {      
-      if (this.present != null)
-      {
-        this.history.push(this.present);
-      }
-      this.present = entry;
+  goForward(): void {
+    const entry = this.data.future.shift(); // Take FIRST item, not last     
+    if (this.data.present != null)
+    {
+      this.data.history.push(this.data.present);
+      this.data.present = null;
     }
-    return entry || null;
+    if (entry) { 
+      this.data.present = entry;
+    }
   }
 
   getHistoryLength(): number {
-    return this.history.length;
+    return this.data.history.length;
   }
 
   getFutureLength(): number {
-    return this.future.length;
+    return this.data.future.length;
   }
 
   getLastHistoryEntry(): VNAction | null {
-    if (this.history.length === 0) return null;
-    return this.history[this.history.length - 1];
+    if (this.data.history.length === 0) return null;
+    return this.data.history[this.data.history.length - 1];
   }
 
   // Methods for save/load functionality
-  getHistoryData(): { history: VNAction[], future: VNAction[] } {
-    return {
-      history: JSON.parse(JSON.stringify(this.history)),
-      future: JSON.parse(JSON.stringify(this.future))
-    };
+  getHistoryData(): HistoryData {
+    return this.data;
   }
 
-  loadHistoryData(data: { history: VNAction[], future: VNAction[] }): void {
-    this.history = data.history || [];
-    this.future = data.future || [];
+  loadHistoryData(data: HistoryData): void {
+    this.data = data;
   }
 }

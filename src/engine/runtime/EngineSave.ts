@@ -1,5 +1,5 @@
 import { PROJECT_ID } from '@/generate/components';
-import type { EngineState } from '@/generate/types'
+import type { EngineState, SaveData } from '@/generate/types'
 import { EngineStateEnum } from '@/generate/enums'
 import type { Engine } from '@/generate/runtime';
 
@@ -15,7 +15,7 @@ export const startNewGame = async (engine: Engine): Promise<void> => {
   engine.engineState.state = EngineStateEnum.RUNNING;
 };
 
-export const loadGame = async (engine: Engine, slot: string): Promise<void> => {
+export const loadGame = async (engine: Engine, slot: number): Promise<void> => {
   const raw = localStorage.getItem(`Save_${PROJECT_ID}_${slot}`);
   if (!raw) {
     throw new Error('No save found');
@@ -39,7 +39,7 @@ export const loadGame = async (engine: Engine, slot: string): Promise<void> => {
   }
 };
 
-export const saveGame = (engine: Engine, slot: string, name?: string): void => {
+export const saveGame = (engine: Engine, slot: number, name?: string): void => {
   // Create a clean copy of engineState, filtering out non-serializable properties
   const engineStateCopy:EngineState = JSON.parse(JSON.stringify(engine.engineState.state));
   engineStateCopy.state = EngineStateEnum.RUNNING;

@@ -67,7 +67,9 @@ const engineState = useEngineState();
 
 function newGame() {
   const engine = Engine.getInstance();
-  engine.startNewGame();
+  if (engine!= null) {
+    engine.startNewGame();
+  }
 }
 
 function continueGame() {

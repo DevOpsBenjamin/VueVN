@@ -6,14 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 VueVN is a visual novel engine built with Vue 3, TypeScript, and Vite that provides a natural TypeScript development experience with perfect save/load and history functionality like Ren'Py.
 
-**Current Status:** ✅ **Dual-Phase Engine Complete**  
-The engine architecture redesign has been successfully implemented:
+**Current Status:** ✅ **Dual-Phase Engine Implemented**  
+The engine architecture redesign has been implemented with functional core engine:
 - ✅ Dual-phase execution (simulation + playback)
 - ✅ Text-by-text go back/forward history (50 entries max)
 - ✅ Natural TypeScript event development with EngineAPIForEvents
 - ✅ Perfect save/load with mid-event support and fast-forward replay
 - ✅ Custom logic integration with minigame support
 - ✅ All imports using @/generate/runtime for extensibility
+- ⚠️ Some TypeScript errors in UI components (build still succeeds)
 
 ## 📋 Development Workflow
 
@@ -173,15 +174,25 @@ import type Dialogue from './types/Dialogue';
 
 ## Testing and Quality Assurance
 
-**Note**: The project currently has no formal test suite. Testing is done manually using the `sample` project which includes three test events:
+**Build Status:** ✅ Production builds succeed (120.89 kB optimized output)  
+**Type Status:** ⚠️ TypeScript errors in UI components (`npm run check` fails)  
+**Engine Status:** ✅ Core engine functionality working correctly
+
+The project has no formal test suite. Testing is done manually using the `sample` project which includes test events:
 - `after-intro.ts`: Basic text and background testing
 - `choice-event.ts`: Choice navigation testing  
 - `timing-event.ts`: Minigame and custom logic testing
+- `intro.ts`: Basic narrative flow
 
-Future development should consider adding:
-- Unit tests for individual managers
-- Integration tests for the dual-phase engine
-- E2E tests for the complete visual novel flow
+**Current Issues (Non-blocking):**
+- TypeScript errors in SaveLoadMenu.vue, Game.vue, Main.vue, and Foreground.vue
+- Some type mismatches in Pinia store usage
+- Engine core works correctly despite UI type errors
+
+**Immediate Fix Priorities:**
+1. Fix GameState type mismatch in Game.vue
+2. Fix SaveLoadMenu.vue array indexing and window type issues
+3. Add proper type declarations for Vue components
 
 ## Architecture Files (Current Implementation)
 

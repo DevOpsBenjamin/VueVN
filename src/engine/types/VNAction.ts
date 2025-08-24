@@ -3,7 +3,7 @@ import { VNActionEnum } from '@/generate/enums';
 
 export interface VNAction {
   type: VNActionEnum;
-  event_id: string,
-  gameState: GameState,
-  engineState: EngineState
+  event_id: string;
+  gameState: GameState;
+  engineState: EngineState;
 }

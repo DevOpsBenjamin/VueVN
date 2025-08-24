@@ -6,38 +6,19 @@
     >
       + Add Event
     </button>
-    <BaseTree
+    <FileTree
       v-if="tree.length"
-      :model-value="tree"
-      :text-key="'name'"
-      :children-key="'children'"
-      :indent="12"
-    >
-      <template #default="{ stat }">
-        <div
-          class="flex items-center cursor-pointer px-2 py-1 hover:bg-gray-800"
-          :class="{
-            'bg-gray-800': editorState.currentFile === stat.data.path,
-          }"
-          @click="handleNode(stat.data)"
-        >
-          <OpenIcon
-            v-if="stat.data.type === 'directory'"
-            :stat="stat"
-            class="mr-1"
-          />
-          <span class="truncate">{{ stat.data.name }}</span>
-        </div>
-      </template>
-    </BaseTree>
+      :items="tree"
+      :selected-file="editorState.currentFile || undefined"
+      @select="handleNode"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { BaseTree, OpenIcon } from "@he-tree/vue";
-import "@he-tree/vue/style/default.css";
 import { useEditorState } from "@/editor/stores/editorState";
+import FileTree from "./FileTree.vue";
 
 interface FileItem {
   name: string;
