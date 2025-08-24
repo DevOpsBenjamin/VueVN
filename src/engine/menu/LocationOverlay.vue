@@ -21,6 +21,7 @@
 import { ref, watch, onMounted } from 'vue';
 import { Engine } from "@/generate/runtime";
 import { gameState as useGameState } from '@/generate/stores';
+import type { Location } from '@/generate/types';
 
 const gameState = useGameState();
 const accessibleLocations = ref<Location[]>([]);
