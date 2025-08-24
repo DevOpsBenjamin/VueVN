@@ -10,7 +10,7 @@ const bedroom: Location = {
       value: "assets/images/background/bedroom/morning.png",
     }
   ],
-  accessibleLocations: ["kitchen", "hallway"],
+  accessibleLocations: [],
   unlocked: (state) => true,
   accessErrors: []
 };

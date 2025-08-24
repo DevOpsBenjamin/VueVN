@@ -1,8 +1,8 @@
 import type { Location } from '@/generate/types';
 
-const hallway: Location = {
-  id: "hallway",
-  name: "Hallway",
+const start: Location = {
+  id: "start",
+  name: "Intro location",
   baseBackground: "assets/images/background/intro/hall.png",
   timeBackgrounds: [],
   accessibleLocations: [],
@@ -10,4 +10,4 @@ const hallway: Location = {
   accessErrors: []
 };
 
-export default hallway;
+export default start;

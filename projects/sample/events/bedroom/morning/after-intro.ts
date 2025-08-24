@@ -1,9 +1,10 @@
 import type { VNEvent } from '@/generate/types';
+import { bedroom } from '@/generate/locations';
 
 const afterIntro: VNEvent = {
   id: 'after-intro',
   name: 'After Introduction',
-  conditions: (state) => state.location === 'bedroom',
+  conditions: (state) => state.location_id === bedroom.id,
   unlocked: (state) => state.flags.introSeen,
   locked: (state) => state.flags.introAct,
   

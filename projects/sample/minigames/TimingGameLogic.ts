@@ -1,14 +1,14 @@
 import type { GameState } from '@/generate/types';
 import { CustomRegistry } from '@/generate/runtime';
 
-export interface TimingGameResult {
+interface TimingGameResult {
   bonus: number;
   zone: string;
   reward: number;
   angle: number;
 }
 
-export class TimingGame {
+class TimingGame {
   private angle: number = 0;
   private speed: number = 2;
   private isRunning: boolean = true;
@@ -77,9 +77,11 @@ CustomRegistry.register('timingMinigame', async (args, gameState: GameState) => 
   gameState.player.money += result.reward;
   */
   
-  gameState.lastMinigameResult = result;
+  //gameState.lastMinigameResult = result;
   
   console.log(`Timing game completed: ${result.zone} zone, ${result.reward} money earned`);
   
   return result;
 });
+
+export default TimingGame;

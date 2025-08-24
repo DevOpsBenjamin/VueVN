@@ -33,7 +33,7 @@ export default class EventManager
   }
 
   async getEvents(gameState: GameState): Promise<EventLookup> {
-    const location = gameState.location;
+    const location = gameState.location_id;
     // Only check unlocked events - locked events are permanently excluded
     const locationEvents = this.eventCache[location];
     let eventList: VNEvent[] = [];

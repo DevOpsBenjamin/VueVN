@@ -1,9 +1,10 @@
 import type { VNEvent } from '@/generate/types';
+import { hallway, bedroom } from '@/generate/locations';
 
 const choiceEvent: VNEvent = {
   id: 'choice-event',
   name: 'Important Decision',
-  conditions: (state) => state.location === 'bedroom',
+  conditions: (state) => state.location_id === bedroom.id,
   unlocked: (state) => state.flags.introSeen && (state.flags.exploredRoom || state.flags.checkedPhone),
   locked: (state) => state.flags.majorChoiceMade,
   
@@ -26,7 +27,7 @@ const choiceEvent: VNEvent = {
       async execute(engine, state) {
         state.flags.majorChoiceMade = true;
         state.player.personality = 'brave';
-        state.location = 'hallway';
+        state.location_id = hallway.id;
         await engine.showText("You boldly open the door without hesitation.");
         await engine.showText("Standing there is a mysterious figure in a dark coat...");
         await engine.showText("Your adventure truly begins now!");
@@ -37,7 +38,7 @@ const choiceEvent: VNEvent = {
       async execute(engine, state) {
         state.flags.majorChoiceMade = true;
         state.player.personality = 'cautious';
-        state.location = 'hallway';
+        state.location_id = hallway.id;
         await engine.showText("'Who is it?' you call out cautiously.");
         await engine.showText("'A friend,' comes the cryptic reply.");
         await engine.showText("You slowly open the door...");

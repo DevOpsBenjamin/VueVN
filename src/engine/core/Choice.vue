@@ -58,6 +58,11 @@ import { engineState as useEngineState } from "@/generate/stores";
 const engineState = useEngineState();
 
 function select(id: string): void {
+  const engine = Engine.getInstance();
+  if (engine == null) {
+    console.error("Engine get error");
+    return;
+  }
   console.log("SELECT CHOICE: ", id);
   Engine.getInstance()?.navigationManager.resolveChoice(id);
 }

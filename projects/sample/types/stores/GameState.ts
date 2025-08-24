@@ -1,8 +1,8 @@
-import type { Neighbor_NPC, Mother_NPC, Player, GameTime } from '@/generate/types';
+import type { Neighbor_NPC, Mother_NPC, Player, GameTime, Location } from '@/generate/types';
 // Sample project specific GameState
 export interface GameState {
   player: Player;
-  location: string;
+  location_id: string;
   gameTime: GameTime;
   flags: Record<string, boolean>;
   //Some typed NPC

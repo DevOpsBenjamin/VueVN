@@ -1,5 +1,4 @@
-import type { HistoryData, VNAction, GameState, EngineState } from '@/generate/types';
-import { mapActions } from 'pinia';
+import type { HistoryData, VNAction } from '@/generate/types';
 
 export default class HistoryManager {
   private data:HistoryData;

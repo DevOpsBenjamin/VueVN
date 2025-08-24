@@ -7,7 +7,8 @@ import {
   EventManager,
   InputManager,
   ActionExecutor,
-  NavigationManager
+  NavigationManager,
+  LocationManager
 } from "@/generate/runtime";
 import { EngineStateEnum } from "@/generate/enums";
 import type { 
@@ -26,6 +27,7 @@ class Engine {
   
   // Managers
   historyManager: HistoryManager;
+  locationManager: LocationManager;
   eventManager: EventManager;
   inputManager: InputManager;
   actionExecutor: ActionExecutor;
@@ -46,6 +48,7 @@ class Engine {
     // Initialize managers (order matters for dependencies)
     this.historyManager = new HistoryManager();
     this.eventManager = new EventManager();
+    this.locationManager = new LocationManager();
     
     // Initialize NavigationManager first (ActionExecutor needs it)
     this.navigationManager = new NavigationManager(engineState, gameState, this.historyManager);    
