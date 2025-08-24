@@ -106,7 +106,7 @@ class Engine {
       const { immediateEvent, drawableEvents } = await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
         await this.handleEvent(immediateEvent);
-        //After event we always reset cache cause some variable can have changed
+        //After event we always reset cache cause some variable (flags) can have changed
         this.eventManager.updateEventsCache(this.gameState)
       } else if (drawableEvents.length > 0) {
         // Handle drawable events if needed
@@ -114,7 +114,7 @@ class Engine {
       
       // DEBUG: Sleep for debugging
       console.warn("SLEEP FOR DEBUG");
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 10000));
     }
   }
   // #endregion
