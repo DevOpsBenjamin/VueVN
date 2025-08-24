@@ -2,9 +2,9 @@ import type { Neighbor_NPC, Mother_NPC, Player, GameTime, Location } from '@/gen
 // Sample project specific GameState
 export interface GameState {
   player: Player;
+  flags: Record<string, boolean>;
   location_id: string;
   gameTime: GameTime;
-  flags: Record<string, boolean>;
   //Some typed NPC
   neighbor: Neighbor_NPC;
   mother: Mother_NPC;
