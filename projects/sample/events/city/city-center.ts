@@ -5,11 +5,12 @@ const cityCenter: VNEvent = {
   id: 'city-center',
   name: 'Arrive at City Center', 
   foreground: 'assets/images/background/city/day.png',
-  conditions: (state) => state.location_id === city.id && !state.player.daily.cityWelcome,
+  conditions: (state) => state.location_id === city.id && state.player.daily.city_welcome !== false,
   unlocked: () => true,
   locked: () => false,
   
   async execute(engine, state) {
+    state.player.daily.city_welcome = false;
     await engine.showText("You arrive at the busy city center.");
     
     if (state.gameTime.hour >= 6 && state.gameTime.hour < 20) {
@@ -21,7 +22,6 @@ const cityCenter: VNEvent = {
     await engine.showText("You see an ATM nearby, various shops and cafes, and people going about their business.");
     await engine.showText("You can explore the city at your own pace and choose what to do.");
     
-    state.player.daily.cityWelcome = true;
   }
 };
 
