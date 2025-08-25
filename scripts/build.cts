@@ -3,7 +3,6 @@
 import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
-import fsExtra from 'fs-extra';
 
 const projectName: string | undefined = process.argv[2];
 
@@ -29,8 +28,8 @@ try {
   // Generate files
   execSync('tsx scripts/generate.cts', { stdio: 'inherit', env });
 
-  // Build with Vite
-  execSync('vite build', { stdio: 'inherit', env });
+  // Build with Vite using engine config
+  execSync('vite build --config vite.config.engine.js', { stdio: 'inherit', env });
 
   // Copy assets
   execSync('tsx scripts/copy-assets.cts', { stdio: 'inherit', env });

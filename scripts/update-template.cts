@@ -5,14 +5,14 @@ import path from 'path';
 import AdmZip from 'adm-zip';
 
 const rootDir = path.join(__dirname, '..');
-const sampleDir = path.join(rootDir, 'projects', 'sample');
+const templateDir = path.join(rootDir, 'projects', '0-template');
 const templatePath = path.join(rootDir, 'template.zip');
 
-console.log('📦 Updating project template from sample...');
+console.log('📦 Updating project template from 0-template...');
 
-// Check if sample project exists
-if (!fs.existsSync(sampleDir)) {
-  console.error('❌ Error: Sample project not found at projects/sample');
+// Check if template project exists
+if (!fs.existsSync(templateDir)) {
+  console.error('❌ Error: Sample project not found at projects/0-template');
   process.exit(1);
 }
 
@@ -24,12 +24,12 @@ function createTemplate() {
       console.log('🗑️  Removed existing template.zip');
     }
 
-    // Create zip of sample project using adm-zip
-    console.log('🔄 Zipping sample project...');
+    // Create zip of template project using adm-zip
+    console.log('🔄 Zipping template project...');
     
     const zip = new AdmZip();
     
-    // Add sample directory to zip, excluding unwanted files
+    // Add template directory to zip, excluding unwanted files
     const addDirectory = (dirPath: string, zipPath: string) => {
       const items = fs.readdirSync(dirPath);
       
@@ -52,7 +52,7 @@ function createTemplate() {
       }
     };
     
-    addDirectory(sampleDir, 'sample');
+    addDirectory(templateDir, '0-template');
     
     // Write zip file
     zip.writeZip(templatePath);
@@ -60,7 +60,7 @@ function createTemplate() {
     const stats = fs.statSync(templatePath);
     console.log(`✅ Template updated successfully!`);
     console.log(`📁 File: template.zip (${Math.round(stats.size / 1024)}KB)`);
-    console.log(`🎯 Template based on: projects/sample/`);
+    console.log(`🎯 Template based on: projects/template/`);
     console.log(`\n💡 You can now create new projects with:`);
     console.log(`   npm run add-project <project-name>`);
 

@@ -13,13 +13,18 @@
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@engine/*": ["engine_src/*"],
+      "@editor/*": ["editor_src/*"],
+      "@projects/*": ["projects/*"],
+      "@generate/*": ["generate/*"]
     }
   },
   "include": [
-    "src/**/*.ts",
+    "engine_src/**/*.ts",
+    "engine_src/**/*.vue",
+    "editor_src/**/*.ts",
+    "editor_src/**/*.vue",
     "projects/**/*.ts",
-    "src/**/*.vue",
     "projects/**/*.vue",
   ],
   "exclude": ["node_modules", "dist"]
