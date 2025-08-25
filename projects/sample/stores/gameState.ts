@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
-import { neighbor, mother } from "@/generate/npcs";
+import { neighbor, mother, player } from "@/generate/npcs";
 import type { GameState, GameStateActions } from "@/generate/types";
 import { start } from "@/generate/locations";
 
 export const useGameState = defineStore("gameState", {
   state: (): GameState => ({
-    player: { name: "" },
+    player: player,
     location_id: start.id,
     gameTime: {
       hour: 8,
@@ -21,7 +21,7 @@ export const useGameState = defineStore("gameState", {
     resetGame(): void {
       console.debug('Resetting game state');
       Object.assign(this, {
-        player: { name: "" },
+        player: player,
         location_id: start.id, 
         gameTime: {
           hour: 8,
