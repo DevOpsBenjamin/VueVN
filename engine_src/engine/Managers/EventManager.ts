@@ -1,4 +1,3 @@
-import { events as eventIndex } from "@generate/events";
 import { gameState } from "@generate/stores";
 import type { GameState, VNEvent } from '@generate/types';
 
@@ -20,6 +19,7 @@ function isDrawingEvent(e: VNEvent): boolean {
 export default class EventManager
 {
   eventCache: Record<string, EventCache>;
+  globalEvent: EventCache;
   eventById: Map<string, VNEvent>;
 
   constructor() {
