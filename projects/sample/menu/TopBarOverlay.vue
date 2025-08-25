@@ -15,16 +15,32 @@
         >
           Phone
         </button>
+        <button
+          @click="showUserInfo = !showUserInfo"
+          class="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded"
+        >
+          👤
+        </button>
+      </div>
+      
+      <!-- User Info Panel -->
+      <div 
+        v-if="showUserInfo"
+        class="absolute top-16 right-4 bg-black/80 backdrop-blur-sm text-white p-4 rounded-lg w-96 max-h-96 overflow-y-auto"
+      >
+        <UserInfoPanel @close="showUserInfo = false" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { gameState as useGameState } from '@/generate/stores';
+import UserInfoPanel from './UserInfoPanel.vue';
 
 const gameState = useGameState();
+const showUserInfo = ref(false);
 
 const formattedDate = computed(() => {
   const { year, month, day, hour } = gameState.gameTime;

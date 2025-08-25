@@ -43,6 +43,12 @@ class TimeHelper {
         d.setHours(d.getHours() + 1);
         TimeHelper.setDate(gameTime, d);
     }
+
+    static jump(gameTime: GameTime, hours: number) {
+        const d = TimeHelper.toDate(gameTime);
+        d.setHours(d.getHours() + hours);
+        TimeHelper.setDate(gameTime, d);
+    }
 };
 
 export default TimeHelper;

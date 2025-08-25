@@ -223,7 +223,13 @@ class Engine {
     try {
       // ActionExecutor handles everything: simulation + playback + choice branches
       await this.actionExecutor.executeEvent(immediateEvent);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'JumpInterrupt') {
+        // Jump was triggered - the ActionExecutor has already set engineState.currentEvent
+        // Let the engine loop handle the new event
+        console.log('Jump interrupt caught - will execute new event:', this.engineState.currentEvent);
+        return;
+      }
       console.error('Event execution error:', error);
       throw error;
     }

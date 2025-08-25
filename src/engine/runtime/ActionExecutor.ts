@@ -25,8 +25,8 @@ export default class ActionExecutor {
     console.log("executeEvent :");
     console.log(event);
     
-    // Set foreground image at start of event
-    this.engineState.foreground = event.foreground;
+    // Initialize foreground array with event's base image
+    this.engineState.foreground = [event.foreground];
     
     await this.simulateEvent(event.execute);
     await this.runEvent(event);
@@ -80,14 +80,11 @@ export default class ActionExecutor {
         await this.handleChoiceAction(event, action);
         break;
 
-      /*
       case VNActionEnum.JUMP:
-        // Jump should exit the current event execution
-        this.engineState.currentEvent = action.engineState.jumpEvent;
-        this.engineState.currentStep = 0;
-        throw new Error('JumpInterrupt'); // This will be caught by engine
+        await this.handleJumpAction(event, action);
         break;
 
+      /*
       case VNActionEnum.RUN_CUSTOM:
         // TODO: Custom logic - temporarily disabled for minimal implementation
         console.log('Custom logic skipped for now');
@@ -132,5 +129,20 @@ export default class ActionExecutor {
         console.error("handleTextAction Error:", error);
       }
     }    
+  }
+
+  private async handleJumpAction(event: VNEvent, action: VNAction): Promise<void> {
+    // Jump should exit the current event execution and trigger new event
+    const jumpEventId = action.engineState?.jumpEvent;
+    if (jumpEventId) {
+      // Set the target event in engine state for the main engine to pick up
+      this.engineState.currentEvent = jumpEventId;
+      this.engineState.currentStep = 0;
+      
+      // Throw error to break out of current event execution
+      throw new Error('JumpInterrupt');
+    } else {
+      console.error('Jump action missing target event ID');
+    }
   }
 }

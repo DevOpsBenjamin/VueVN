@@ -18,8 +18,9 @@ export interface VNEvent {
   name: string;
   
   /** 
-   * Foreground image to display when event starts.
-   * Automatically set by ActionExecutor before event execution.
+   * Base foreground image for this event.
+   * Engine automatically initializes foreground array as [event.foreground] at start.
+   * Use engine.addForeground() and engine.replaceForeground() during execution.
    */
   foreground: string;
   

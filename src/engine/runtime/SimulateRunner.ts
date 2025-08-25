@@ -83,7 +83,22 @@ export default class SimulateRunner implements EngineAPI
         this.engineState.background = imagePath;
     }
 
-    setForeground(imagePath: string): void {
-        this.engineState.foreground = imagePath;
+    setForeground(imagePaths: string[]): void {
+        this.engineState.foreground = [...imagePaths];
+    }
+
+    addForeground(imagePath: string): void {
+        if (!this.engineState.foreground) {
+            this.engineState.foreground = [];
+        }
+        this.engineState.foreground.push(imagePath);
+    }
+
+    replaceForeground(imagePath: string): void {
+        if (!this.engineState.foreground || this.engineState.foreground.length === 0) {
+            this.engineState.foreground = [imagePath];
+        } else {
+            this.engineState.foreground[this.engineState.foreground.length - 1] = imagePath;
+        }
     }
 }

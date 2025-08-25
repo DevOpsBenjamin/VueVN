@@ -7,8 +7,10 @@ export interface EngineAPI {
   showChoices: (choices: Array<Choice>) => Promise<void>;
   // TODO HANDLE INTERNALLY // NOT READY
   // runCustom: (args: CustomArgs) => Promise<void>;
-  // TODO STOP CURRENT EVENT AND JUMP TO NEW ONE //NOREADY
-  // jump: (eventId: string) => Promise<void>;
-  //NonWaiting
-  setForeground: (imagePath: string) => void;
+  // STOP CURRENT EVENT AND JUMP TO NEW ONE
+  jump: (eventId: string) => Promise<void>;
+  // Foreground layer management (non-waiting)
+  setForeground: (imagePaths: string[]) => void;
+  addForeground: (imagePath: string) => void;
+  replaceForeground: (imagePath: string) => void;
 }
