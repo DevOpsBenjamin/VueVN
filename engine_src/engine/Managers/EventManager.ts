@@ -19,7 +19,6 @@ function isDrawingEvent(e: VNEvent): boolean {
 export default class EventManager
 {
   eventCache: Record<string, EventCache>;
-  globalEvent: EventCache;
   eventById: Map<string, VNEvent>;
 
   constructor() {

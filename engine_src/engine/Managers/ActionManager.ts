@@ -27,8 +27,7 @@ export default class ActionManager {
     const localActions = this.allActions[gameState.location_id];
     
     //Add global Action
-    this.currentActions = localActions;    
-
+    this.currentActions = localActions;
     this.unlockedActions = Object.values(localActions).filter(action => action.unlocked(gameState));
     
     if (this.updateCallback) {

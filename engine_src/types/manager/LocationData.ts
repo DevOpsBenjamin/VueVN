@@ -1,5 +1,4 @@
-import type { Action } from './Action';
-import type { VNEvent } from './VNEvent';
+import type { Action, VNEvent } from '@generate/types';
 
 export interface LocationInfo {
   name: string;

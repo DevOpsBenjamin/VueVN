@@ -35,6 +35,7 @@ function generate_files() {
   run("generate-engine.cts");
   run("generate-components.cts");
   run("generate-locations.cts");
+  run("generate-project.cts");
 }
 
 generate_files()
