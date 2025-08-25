@@ -11,7 +11,7 @@ const try_sleep: VNEvent = {
   
   async execute(engine, state) {
     // Reset the sleep flag immediately
-    state.flags.wantToSleep = false;
+    state.flags.try_sleep = false;
     // Full sleep - reset daily activities and restore energy
     state.player.daily = {};
     state.player.energy = 100;

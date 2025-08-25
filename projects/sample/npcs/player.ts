@@ -1,7 +1,7 @@
 import type { Player } from "@/generate/types";
 
 const player: Player = {
-  name: "",
+  name: "MC",
   bankMoney: 500,
   pocketMoney: 25,
   energy: 75,
