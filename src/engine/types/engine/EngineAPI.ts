@@ -5,11 +5,10 @@ export interface EngineAPI {
   showText: (text: string, from?: string) => Promise<void>;
   // WAIT USER CHOICE
   showChoices: (choices: Array<Choice>) => Promise<void>;
-  // HANDLE INTERNALLY
-  runCustom: (args: CustomArgs) => Promise<void>;
-  // STOP CURRENT EVENT AND JUMP TO NEW ONE
-  jump: (eventId: string) => Promise<void>;
+  // TODO HANDLE INTERNALLY // NOT READY
+  // runCustom: (args: CustomArgs) => Promise<void>;
+  // TODO STOP CURRENT EVENT AND JUMP TO NEW ONE //NOREADY
+  // jump: (eventId: string) => Promise<void>;
   //NonWaiting
-  setBackground: (imagePath: string) => void;
   setForeground: (imagePath: string) => void;
 }
