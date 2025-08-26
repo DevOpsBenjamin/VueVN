@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+// @ts-ignore - no types available
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 import App from '@editor/App.vue';
 import '@editor/index.css';
@@ -21,6 +22,6 @@ const gameState = useGameState();
 // Create temporary gameRoot - will be replaced when Game.vue mounts
 const tempGameRoot = document.createElement('div');
 const engine = new Engine(gameState, engineState, tempGameRoot);
-console.log(`Init engine: ${engine}`);
+console.log(`Init engine at location: ${engine.gameState.location_id}`);
 
 app.mount('#app');

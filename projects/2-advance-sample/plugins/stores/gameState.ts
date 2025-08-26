@@ -7,7 +7,7 @@ function createGameState(): GameState
 {
   return {
     player: playerCreator(),
-    location_id: "",//start.id,
+    location_id: "bedroom",
     gameTime: timeCreator(),
     neighbor: neighborCreator(),
     mother:  motherCreator(),
