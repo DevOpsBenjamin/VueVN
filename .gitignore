@@ -25,6 +25,8 @@ dist-ssr
 
 public/
 generate/
+!scripts/generate/
+!scripts/generate/**
 
 projects/*
 # FOR GPT
