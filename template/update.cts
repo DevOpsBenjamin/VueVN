@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --loader tsx
+#!/usr/bin/env -S node --import tsx
 import fs from 'fs';
 import path from 'path';
 import AdmZip from 'adm-zip';
