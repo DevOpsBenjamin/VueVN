@@ -18,7 +18,7 @@ export default class LocationManager {
 	
 	initializeLocationLinks() {		
 		// Call the project-specific LocationLinker
-		LocationLinker.initLocationLinks(this.locationDataDico);
+		LocationLinker.initLocationLinks(this);
 		
 		// Validate that all locations were properly linked
 		this.validateLocationLinks();
@@ -66,4 +66,13 @@ export default class LocationManager {
       this.updateCallback();
     }
   }
+
+  // #regin Linker
+  link(location: LocationData, access: LocationData[]) {
+    for (const toAdd of access) {
+      const current = this.locationDataDico[location.id];
+      current.accessibles[toAdd.id] = toAdd.info!;
+    }
+  }
+  // #endregion
 }
