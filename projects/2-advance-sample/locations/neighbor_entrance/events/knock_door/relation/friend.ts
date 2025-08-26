@@ -1,10 +1,9 @@
-import type { VNEvent } from '@/generate/types';
-import { TimeHelper } from '@/generate/runtime';
+import type { VNEvent } from '@generate/types';
+import { TimeHelper } from '@generate/engine';
 
 const knockDoorFriend: VNEvent = {
-  id: 'knock-door-friend',
   name: 'Knock Door - Friend',
-  foreground: 'assets/images/background/neighbor/entrance.png',
+  foreground: '/global/images/menu.png', // Placeholder - no neighbor entrance background
   conditions: () => false, // Never triggers directly - only via jump
   unlocked: (state) => true,
   locked: (state) => false,
@@ -56,7 +55,7 @@ const knockDoorFriend: VNEvent = {
         
         // Check for relationship status upgrade
         if (state.neighbor.relation > 80) {
-          state.neighbor.relationshipStatus = 'close_friend';
+          state.neighbor.relationship = 'close_friend';
           await engine.showText("You feel like you've become really close friends!", "System");
         }
         
@@ -133,7 +132,7 @@ const knockDoorFriend: VNEvent = {
         state.player.energy = Math.max(state.player.energy - 10, 0);
         
         if (state.neighbor.relation > 80) {
-          state.neighbor.relationshipStatus = 'close_friend';
+          state.neighbor.relationship = 'close_friend';
           await engine.showText("Your helpful nature has made you close friends!", "System");
         }
         

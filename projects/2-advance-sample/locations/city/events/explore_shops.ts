@@ -34,7 +34,7 @@ const explore_shops: VNEvent = {
         await engine.showText("You step into the warm cafe.");
         await engine.showText("The aroma of fresh coffee and baked goods fills the air.");
         
-        if (state.player.flags.hadCoffee) {
+        if (state.player.daily.hadCoffee) {
           await engine.showText("You've already had your coffee for the day.");
           await engine.showText("The barista smiles and says: 'Maybe try our tea next time!'");
         } 
@@ -56,8 +56,8 @@ const explore_shops: VNEvent = {
     buy_coffee: {
       async execute(engine, state) {
         state.player.pocketMoney -= 5;
-        state.player.stat = Math.min(state.player.stat + 15, 100);
-        state.player.flags.hadCoffee = true;
+        state.player.energy = Math.min(state.player.energy + 15, 100);
+        state.player.daily.hadCoffee = true;
         
         await engine.showText("You buy a delicious coffee and feel more energized!");
         await engine.showText(`Pocket money: $${state.player.pocketMoney}`, "System");

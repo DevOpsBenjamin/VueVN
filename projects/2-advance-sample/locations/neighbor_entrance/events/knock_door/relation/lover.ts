@@ -1,8 +1,7 @@
-import type { VNEvent } from '@/generate/types';
-import { TimeHelper } from '@/generate/runtime';
+import type { VNEvent } from '@generate/types';
+import { TimeHelper } from '@generate/engine';
 
 const knockDoorLover: VNEvent = {
-  id: 'knock-door-lover',
   name: 'Knock Door - Lover',
   foreground: 'assets/images/background/neighbor/entrance.png',
   conditions: () => false, // Never triggers directly - only via jump

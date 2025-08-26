@@ -1,10 +1,9 @@
-import type { VNEvent } from '@/generate/types';
-import { TimeHelper } from '@/generate/runtime';
+import type { VNEvent } from '@generate/types';
+import { TimeHelper } from '@generate/engine';
 
 const try_sleep: VNEvent = {
-  id: 'try_sleep',
   name: 'Go to Sleep',
-  foreground: 'assets/images/background/bedroom/night.png',
+  foreground: '/bedroom/images/background/night.png',
   conditions: (state) => state.flags.try_sleep === true,
   unlocked: () => true,
   locked: () => false,

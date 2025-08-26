@@ -1,8 +1,7 @@
-import type { VNEvent } from '@/generate/types';
-import { TimeHelper } from '@/generate/runtime';
+import type { VNEvent } from '@generate/types';
+import { TimeHelper } from '@generate/engine';
 
 const knockDoorStranger: VNEvent = {
-  id: 'knock-door-stranger',
   name: 'Knock Door - Stranger',
   foreground: 'assets/images/background/neighbor/entrance.png',
   conditions: () => false, // Never triggers directly - only via jump
@@ -35,7 +34,7 @@ const knockDoorStranger: VNEvent = {
         // Improve relationship
         state.neighbor.relation = Math.min(state.neighbor.relation + 3, 100);
         if (state.neighbor.relation > 20) {
-          state.neighbor.relationshipStatus = 'acquaintance';
+          state.neighbor.relationship = 'acquaintance';
         }
         
         // Mark daily interaction and advance time

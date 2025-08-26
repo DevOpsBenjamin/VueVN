@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { gameState as useGameState } from '@/generate/stores';
+import { gameState as useGameState } from '@generate/stores';
 import UserInfoPanel from './UserInfoPanel.vue';
 
 const gameState = useGameState();

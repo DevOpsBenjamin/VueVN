@@ -9,7 +9,6 @@ const info: Location = {
       value: "assets/images/background/city/night.png",
     }
   ],
-  accessibleLocations: ["outside"],
   unlocked: () => true,
   accessErrors: [
     {

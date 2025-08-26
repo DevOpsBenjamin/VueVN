@@ -1,7 +1,6 @@
-import type { VNEvent } from '@/generate/types';
+import type { VNEvent } from '@generate/types';
 
 const look_neighbor: VNEvent = {
-  id: 'look_neighbor',
   name: 'Look at neighbor',
   foreground: 'assets/images/background/garden/day.png',
   conditions: (state) => state.flags.look_neighbor === true,

@@ -1,8 +1,6 @@
-import { neighbor_entrance, home_outside } from '@/generate/locations';
-import type { VNEvent } from '@/generate/types';
+import type { VNEvent } from '@generate/types';
 
 const knock_door: VNEvent = {
-  id: 'knock_door',
   name: 'Knock on Neighbor Door',
   foreground: 'assets/images/background/neighbor/entrance.png',
   conditions: (state) => state.flags.knock_door === true && (state.gameTime.hour >= 9 && state.gameTime.hour <= 16),
@@ -15,7 +13,7 @@ const knock_door: VNEvent = {
     await engine.showText("*knock knock*");
     
     // Check relation level for different responses
-    const relationStatus = state.neighbor.relationshipStatus;
+    const relationStatus = state.neighbor.relationship;
     
     if (relationStatus === 'stranger') {
       await engine.showText("The door opens slightly. A suspicious face peers out.");
@@ -39,10 +37,10 @@ const knock_door: VNEvent = {
     chat: {
       async execute(engine, state) {
         const currentRelation = state.neighbor.relation;
-        const relationStatus = state.neighbor.relationshipStatus;
+        const relationStatus = state.neighbor.relationship;
 
         if (relationStatus === 'stranger') {
-          state.neighbor.relationshipStatus = 'acquaintance';
+          state.neighbor.relationship = 'acquaintance';
           await engine.showText(`Hello i'm ${state.player.name} your new neighbor nice to meet you!`, `${state.player.name}`);
           await engine.showText(`Hello ${state.player.name} my name is ${state.neighbor.name}, nice to meet you young man!`, `${state.neighbor.name}`);
           await engine.showText(`My mom told me to come to present myself and invite you to join us on diner so we can meet our new neighboor.\nWould you be available tonight?`, `${state.player.name}`);
@@ -56,11 +54,11 @@ const knock_door: VNEvent = {
         }
 
         // Update relationship status based on relation points
-        if (state.neighbor.relation >= 30 && state.neighbor.relationshipStatus === 'acquaintance') {
-          state.neighbor.relationshipStatus = 'friend';
+        if (state.neighbor.relation >= 30 && state.neighbor.relationship === 'acquaintance') {
+          state.neighbor.relationship = 'friend';
           await engine.showText("You sense a real friendship forming!", "System");
-        } else if (state.neighbor.relation >= 60 && state.neighbor.relationshipStatus === 'friend') {
-          state.neighbor.relationshipStatus = 'close_friend';
+        } else if (state.neighbor.relation >= 60 && state.neighbor.relationship === 'friend') {
+          state.neighbor.relationship = 'close_friend';
           await engine.showText("You've become close friends with your neighbor!", "System");
         }
       }

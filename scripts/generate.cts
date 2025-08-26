@@ -39,6 +39,7 @@ function generate_files() {
   run("generate-components.cts");
   run("generate-locations.cts");
   run("generate-project.cts");
+  run("generate-i18n.cts");
 }
 
 generate_files()
@@ -51,6 +52,7 @@ if (process.argv.includes("--watch")) {
     "engine_src/**/*.ts",
     `projects/${currentProject}/**/*.vue`,
     `projects/${currentProject}/**/*.ts`,
+    `projects/${currentProject}/**/texts/**/*.ts`, // Watch text files for i18n
   ];
 
   console.log("👁️  Watching for changes...");

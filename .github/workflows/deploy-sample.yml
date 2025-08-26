@@ -24,8 +24,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build sample project
-        run: npm run build sample
+      - name: Build advance sample project
+        run: npm run build 2-advance-sample
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3.0.1
