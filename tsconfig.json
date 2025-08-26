@@ -22,7 +22,7 @@
         "editor_src/*"
       ],
       "@project/*": [
-        "projects/1-beginer-sample/*"
+        "projects/2-advance-sample/*"
       ],
       "@generate/*": [
         "generate/*"
@@ -34,8 +34,8 @@
     "engine_src/**/*.vue",
     "editor_src/**/*.ts",
     "editor_src/**/*.vue",
-    "projects/1-beginer-sample/**/*.ts",
-    "projects/1-beginer-sample/**/*.vue",
+    "projects/2-advance-sample/**/*.ts",
+    "projects/2-advance-sample/**/*.vue",
     "generate/**/*.ts"
   ],
   "exclude": [

@@ -5,4 +5,5 @@ export interface LocationData {
   info?: Location;
   actions: Record<string, Action>;
   events: Record<string, VNEvent>;
+  accessibles: Record<string, Location>;
 }

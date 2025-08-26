@@ -9,7 +9,6 @@ const info: Location = {
       value: "assets/images/background/night.png",
     }
   ],
-  accessibleLocations: ["hallway"],
   unlocked: () => true,
   accessErrors: []
 };

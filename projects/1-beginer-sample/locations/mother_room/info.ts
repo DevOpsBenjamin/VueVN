@@ -4,7 +4,6 @@ const info: Location = {
   name: "Mother's Room",
   baseBackground: "assets/images/background/mother_bedroom/day.png",
   timeBackgrounds: [],
-  accessibleLocations: ["hallway"],
   unlocked: (state) => state.flags.metMother === true,
   accessErrors: [
     {

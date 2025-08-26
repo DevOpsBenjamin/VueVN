@@ -114,7 +114,8 @@ const ${locationName}: LocationData = {
   id: "${locationName}",
   info,
   actions: actionsList,
-  events: eventsList
+  events: eventsList,
+  accessibles: {}
 };
 
 export default ${locationName};
@@ -134,7 +135,8 @@ import { eventsList } from './events';
 const global: LocationData = {
   id: "global",
   actions: actionsList,
-  events: eventsList
+  events: eventsList,
+  accessibles: {}
 };
 
 export default global;

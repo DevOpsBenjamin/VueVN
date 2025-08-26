@@ -1,4 +1,4 @@
-import type { Action } from '@/generate/types';
+import type { Action } from '@generate/types';
 
 const look_neighbor: Action = {
     id: "look_neighbor",

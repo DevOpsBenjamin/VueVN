@@ -9,7 +9,6 @@ const info: Location = {
       value: "assets/images/background/home/front_door_night.png",
     }
   ],
-  accessibleLocations: ["hallway", "city"],
   unlocked: () => true,
   accessErrors: []
 };

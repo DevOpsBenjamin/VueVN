@@ -1,6 +1,4 @@
-import { TimeHelper } from '@/generate/runtime';
-import type { Action } from '@/generate/types';
-import { neighbor_entrance }  from '@/generate/locations';
+import type { Action } from '@generate/types';
 
 //THIS ACTION CONTRARY TO city/explore HANDLE IT'S EXECUTION RIGHT
 const knock_door: Action = {

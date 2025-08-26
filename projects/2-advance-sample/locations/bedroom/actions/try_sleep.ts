@@ -1,6 +1,5 @@
-import { TimeHelper } from '@/generate/runtime';
-import type { Action } from '@/generate/types';
-import { bedroom }  from '@/generate/locations';
+import { TimeHelper } from '@generate/engine';
+import type { Action } from '@generate/types';
 
 //THIS ACTION CONTRARY TO city/explore HANDLE IT'S EXECUTION RIGHT
 const try_sleep: Action = {
