@@ -1,6 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 
+// Normalize path separators to always use forward slashes for imports
+function normalizeImportPath(pathString: string): string {
+  return pathString.replace(/\\/g, '/');
+}
+
 export interface GeneratorConfig {
   resourceType: string;           // e.g., 'types', 'components', 'stores', 'enums', 'engine'
   emoji: string;                  // e.g., '🔧', '🎯', '🏪'
@@ -23,7 +28,7 @@ function getAllFiles(dir: string, fileExtension: string, basePath: string = ''):
       files.push(...getAllFiles(fullPath, fileExtension, relativePath));
     } else if (entry.isFile()) {
       if (entry.name.endsWith(fileExtension)) {
-        const nameWithoutExt = relativePath.replace(new RegExp(`\\${fileExtension}$`), '');
+        const nameWithoutExt = normalizeImportPath(relativePath).replace(new RegExp(`\\${fileExtension}$`), '');
         files.push(nameWithoutExt);
       } else {
         console.warn(`⚠️  Warning: Invalid file found in ${dir}: ${relativePath} - skipping`);
