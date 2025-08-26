@@ -8,9 +8,6 @@
       <!-- Dashboard -->
       <Dashboard v-if="editorState.activeModule === 'dashboard'" />
       
-      <!-- Project Editor -->
-      <ProjectEditor v-else-if="editorState.activeModule === 'projectEditor'" />
-      
       <!-- Asset Manager -->
       <AssetManager v-else-if="editorState.activeModule === 'assetManager'" />
       
@@ -33,7 +30,6 @@
 <script setup lang="ts">
 import Header from '@editor/components/Header.vue';
 import Dashboard from '@editor/components/Dashboard.vue';
-import ProjectEditor from '@editor/components/ProjectEditor.vue';
 import AssetManager from '@editor/components/Asset/AssetManager.vue';
 import LocationManager from '@editor/components/Location/LocationManager.vue';
 import LocalizationManager from '@editor/components/Localization/LocalizationManager.vue';

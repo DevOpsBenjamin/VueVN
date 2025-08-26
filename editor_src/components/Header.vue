@@ -28,7 +28,7 @@
       </div>
       
       <div class="flex items-center space-x-3">
-        <!-- Preview Button (only show on Events page) -->
+        <!-- Preview Button -->
         <button
           @click="togglePreview"
           :class="[
@@ -77,7 +77,6 @@ const project = ref<{ name?: string }>({});
 
 const modules = [
   { key: 'dashboard', label: 'Dashboard', icon: '📊' },
-  { key: 'projectEditor', label: 'Events', icon: '📝' },
   { key: 'assetManager', label: 'Assets', icon: '🖼️' },
   { key: 'locationManager', label: 'Locations', icon: '🗺️' },
   { key: 'localizationManager', label: 'i18n', icon: '🌍' }

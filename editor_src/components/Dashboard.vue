@@ -14,11 +14,7 @@
           </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-white/5 rounded-lg p-4 border border-white/5">
-            <h3 class="text-white font-medium mb-2">📝 Event System</h3>
-            <p class="text-white/70 text-sm">Write interactive stories with natural TypeScript syntax</p>
-          </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="bg-white/5 rounded-lg p-4 border border-white/5">
             <h3 class="text-white font-medium mb-2">🗺️ Location-Centric</h3>
             <p class="text-white/70 text-sm">Organize content by locations for complex sandbox games</p>
@@ -37,18 +33,7 @@
           Quick Actions
         </h2>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <button
-            @click="editorState.activeModule = 'projectEditor'"
-            class="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 rounded-lg border border-white/10 transition-all duration-200"
-          >
-            <span class="text-2xl">📝</span>
-            <div class="text-left">
-              <div class="text-white font-medium text-sm">Edit Events</div>
-              <div class="text-white/70 text-xs">Create story content</div>
-            </div>
-          </button>
-          
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <button
             @click="editorState.activeModule = 'assetManager'"
             class="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-500/20 to-teal-500/20 hover:from-green-500/30 hover:to-teal-500/30 rounded-lg border border-white/10 transition-all duration-200"
@@ -124,14 +109,6 @@
             <div>
               <div class="text-white font-medium text-sm">Engine Initialized</div>
               <div class="text-white/70 text-xs">VueVN engine is ready for development</div>
-            </div>
-          </div>
-          
-          <div class="flex items-start space-x-3 p-3 bg-white/5 rounded-lg opacity-60">
-            <span class="text-gray-400 mt-0.5">⏳</span>
-            <div>
-              <div class="text-white font-medium text-sm">Create Your First Event</div>
-              <div class="text-white/70 text-xs">Start building your visual novel story</div>
             </div>
           </div>
           
