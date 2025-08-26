@@ -27,6 +27,9 @@ function run(script: string): void {
   }
 }
 
+// Generate project-specific tsconfig first (only once, not watched)
+run("generate-tsconfig.cts");
+
 function generate_files() {
   // Run all generation scripts
   run("generate-types.cts");
@@ -58,8 +61,8 @@ if (process.argv.includes("--watch")) {
   });
 
   watcher.on("all", (event: string, filePath: string) => {
-    console.log(`🔄 File ${event}: ${filePath}`);
-    
+    console.log(`🔄 File ${event}: ${filePath}`);    
+
     generate_files()
   });
 

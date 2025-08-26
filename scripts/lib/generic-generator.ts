@@ -97,7 +97,7 @@ export async function generateDifferentialExports(config: GeneratorConfig): Prom
         .map(resourceName => {
           const source = resourceSourceMap.get(resourceName);
           const importPath = source === 'project' 
-            ? `@projects/${projectName}/plugins/${config.resourceType}/${resourceName}`
+            ? `@project/plugins/${config.resourceType}/${resourceName}`
             : `@engine/${config.resourceType}/${resourceName}`;
           
           const resourceBaseName = path.basename(resourceName);
@@ -116,9 +116,11 @@ ${imports}
         .sort()
         .map(resourceName => {
           const source = resourceSourceMap.get(resourceName);
+          // Only add extension for non-.ts files (like .vue)
+          const extension = config.fileExtension === '.ts' ? '' : config.fileExtension;
           const importPath = source === 'project' 
-            ? `@projects/${projectName}/plugins/${config.resourceType}/${resourceName}`
-            : `@engine/${config.resourceType}/${resourceName}`;
+            ? `@project/plugins/${config.resourceType}/${resourceName}${extension}`
+            : `@engine/${config.resourceType}/${resourceName}${extension}`;
           
           const resourceBaseName = path.basename(resourceName);
           return `import ${resourceBaseName} from '${importPath}';`;

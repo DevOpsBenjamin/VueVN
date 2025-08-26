@@ -139,8 +139,7 @@ import { Engine } from '@generate/engine';
 import type { SaveData } from '@generate/types';
 
 const engineState = useEngineState();
-import { PROJECT_ID } from "@generate/components";
-
+import projectData from "@generate/project";
 const slotsPerPage = 8;
 const maxSlots = 24;
 const page = ref(0);
@@ -168,7 +167,7 @@ function formatDate(timestamp: string) {
 function loadSaves() {
   saves.value = [];
   for (let i = 1; i <= maxSlots; i++) {
-    const raw = localStorage.getItem(`Save_${PROJECT_ID}_${i}`);
+    const raw = localStorage.getItem(`Save_${projectData.project_id}_${i}`);
     if (raw) {
       try {
         const data: SaveData = JSON.parse(raw);

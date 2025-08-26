@@ -11,9 +11,6 @@ import type { GameState, EngineAPI, Branch } from '@generate/types';
  * 4. **Locked**: Event is permanently removed from consideration (e.g., one-time events)
  */
 export interface VNEvent {
-  /** Unique identifier for this event */
-  id: string;
-  
   /** Human-readable name for this event */
   name: string;
   

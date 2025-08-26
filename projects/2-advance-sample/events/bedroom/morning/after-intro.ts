@@ -1,11 +1,9 @@
-import type { VNEvent } from '@/generate/types';
-import { bedroom } from '@/generate/locations';
+import type { VNEvent } from '@generate/types';
 
 const afterIntro: VNEvent = {
-  id: 'after-intro',
   name: 'After Introduction',
   foreground: 'assets/images/background/bedroom/morning.png',
-  conditions: (state) => state.location_id === bedroom.id,
+  conditions: () => true,
   unlocked: (state) => state.flags.introSeen,
   locked: (state) => state.flags.introAct,
   

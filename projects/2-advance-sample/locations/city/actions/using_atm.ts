@@ -1,4 +1,4 @@
-import type { Action } from '@/generate/types';
+import type { Action } from '@generate/types';
 
 const using_atm: Action = {
     id: "using_atm",

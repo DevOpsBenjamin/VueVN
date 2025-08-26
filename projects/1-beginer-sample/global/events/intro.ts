@@ -1,8 +1,7 @@
-import { bedroom } from '@/generate/locations';
-import type { VNEvent } from '@/generate/types';
+import type { VNEvent } from '@generate/types';
+import bedroom from '@generate/locations/bedroom'
 
 const intro: VNEvent = {
-  id: 'intro',
   name: 'Introduction',
   foreground: 'assets/images/background/intro/hall.png',
   conditions: () => true,

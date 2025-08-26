@@ -1,14 +1,8 @@
-import type { Action, VNEvent } from '@generate/types';
-
-export interface LocationInfo {
-  name: string;
-  description?: string;
-  [key: string]: any;
-}
+import type { Action, VNEvent, Location } from '@generate/types';
 
 export interface LocationData {
   id: string;
-  info: LocationInfo;
+  info?: Location;
   actions: Record<string, Action>;
   events: Record<string, VNEvent>;
 }

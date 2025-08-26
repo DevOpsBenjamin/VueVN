@@ -35,10 +35,10 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch, computed } from "vue";
-import { loadMonaco } from "@/editor/utils/monacoLoader.js";
-import { registerEventTypes } from "@/editor/utils/eventTypes";
-import { verifyEvent } from "@/editor/utils/verifyEvent";
-import { useEditorState } from "@/editor/stores/editorState";
+import { loadMonaco } from "@editor/utils/monacoLoader.js";
+import { registerEventTypes } from "@editor/utils/eventTypes";
+import { verifyEvent } from "@editor/utils/verifyEvent";
+import { useEditorState } from "@editor/stores/editorState";
 
 const editorContainer = ref<HTMLDivElement | null>(null);
 let editorInstance: any = null;

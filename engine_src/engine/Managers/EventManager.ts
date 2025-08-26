@@ -1,5 +1,5 @@
-import { gameState } from "@generate/stores";
 import type { GameState, VNEvent } from '@generate/types';
+import projectData from '@generate/project'
 
 interface EventLookup {
   immediateEvent: VNEvent | null;
@@ -7,9 +7,9 @@ interface EventLookup {
 }
 
 interface EventCache {
-  notReady: VNEvent[]; 
-  unlocked: VNEvent[]; 
-  locked: VNEvent[]
+  notReady: Record<string, VNEvent>; 
+  unlocked: Record<string, VNEvent>; 
+  locked: Record<string, VNEvent>;
 }
 
 function isDrawingEvent(e: VNEvent): boolean {
@@ -19,11 +19,11 @@ function isDrawingEvent(e: VNEvent): boolean {
 export default class EventManager
 {
   eventCache: Record<string, EventCache>;
-  eventById: Map<string, VNEvent>;
+  globalCache: EventCache
 
   constructor() {
     this.eventCache = {};
-    this.eventById = new Map<string, VNEvent>();
+    this.globalCache = { locked: {}, notReady: {}, unlocked: {} };
   }
 
   resetEvents(gameState: GameState): void{
@@ -31,40 +31,20 @@ export default class EventManager
     this.updateEventsCache(gameState);
   }
 
-  async getEvents(gameState: GameState): Promise<EventLookup> {
-    const location = gameState.location_id;
-    // Only check unlocked events - locked events are permanently excluded
-    const locationEvents = this.eventCache[location];
-    let eventList: VNEvent[] = [];
-    if (locationEvents) {
-      eventList = locationEvents.unlocked;
-    }
-    const drawableEvents: VNEvent[] = [];
-
-    for (const event of eventList) {
-      if (event.conditions(gameState)) {
-        if (!isDrawingEvent(event)) {
-          return { immediateEvent: event, drawableEvents: [] };
-        } else {
-          drawableEvents.push(event);
-        }
-      }
-    }
-    return { immediateEvent: null, drawableEvents };  
-  }
-
   initEventsCopy(): void {
     this.eventCache = {};
-    for (const location in eventIndex) {
-      const list = eventIndex[location];      
-      this.eventCache[location] = {
-        notReady: [...list],
-        unlocked: [],
-        locked: [],
+    for (const location_id in projectData.locations) {
+      const list = projectData.locations[location_id].events;      
+      this.eventCache[location_id] = {
+        notReady: list,
+        unlocked: {},
+        locked: {},
       };
-      for (const event of list) {
-        this.eventById.set(event.id, event);
-      }
+    }
+    this.globalCache = {
+      notReady: projectData.global.events,
+      locked: {},
+      unlocked: {}
     }
   }
 
@@ -73,63 +53,72 @@ export default class EventManager
     
     for (const loc of locations) {
       const cache = this.eventCache[loc];
-      if (!cache) continue;
-      
-      // Move NotReady → Unlocked
-      const stillNotReady: VNEvent[] = [];
-      for (const event of cache.notReady) {
-        if (event.unlocked(gameState)) {
-          cache.unlocked.push(event);
-        } else {
-          stillNotReady.push(event);
-        }
+      if (!cache) {
+        continue;
       }
-      cache.notReady = stillNotReady;
-
-      // Move Unlocked → Locked
-      const stillUnlocked: VNEvent[] = [];
-      for (const event of cache.unlocked) {
-        if (event.locked(gameState)) {
-          cache.locked.push(event);
-        } else {
-          stillUnlocked.push(event);
-        }
-      }
-      cache.unlocked = stillUnlocked;
-
-      // Locked events stay locked - no processing needed
+      this.refreshCache(gameState, cache);
     }
     
+    this.refreshCache(gameState, this.globalCache);
     console.log('Cache updated:', this.eventCache);
   }
+  
+  refreshCache(gameState: GameState, cache: EventCache): void {
+    // Move NotReady → Unlocked
+    const stillNotReady: Record<string, VNEvent> = {};
+    for (const [eventId, event] of Object.entries(cache.notReady)) {
+      if (event.unlocked(gameState)) {
+        cache.unlocked[eventId] = event;
+      } else {
+        stillNotReady[eventId] = event;
+      }
+    }
+    cache.notReady = stillNotReady;
 
-  findEventById(eventId: string): VNEvent | undefined {
-    return this.eventById.get(eventId);
+    // Move Unlocked → Locked
+    const stillUnlocked: Record<string, VNEvent> = {};
+    for (const [eventId, event] of Object.entries(cache.unlocked)) {
+      if (event.locked(gameState)) {
+        cache.locked[eventId] = event;
+      } else {
+        stillUnlocked[eventId] = event;
+      }
+    }
+    cache.unlocked = stillUnlocked;
+
+    // Locked events stay locked - no processing needed
+  }
+  
+  async getEvents(gameState: GameState): Promise<EventLookup> {
+    const location = gameState.location_id;
+    const drawableEvents: VNEvent[] = [];
+
+    // Get location-specific unlocked events
+    const locationEvents = this.eventCache[location];
+    let locationEventList: VNEvent[] = [];
+    if (locationEvents) {
+      locationEventList = Object.values(locationEvents.unlocked);
+    }
+
+    // Get global unlocked events (always available)
+    const globalEventList: VNEvent[] = Object.values(this.globalCache.unlocked);
+
+    // Combine location and global events
+    const allEvents = [...locationEventList, ...globalEventList];
+
+    // Process all events
+    for (const event of allEvents) {
+      if (event.conditions(gameState)) {
+        if (!isDrawingEvent(event)) {
+          // Immediate event found - return it with empty drawableEvents
+          return { immediateEvent: event, drawableEvents: [] };
+        } else {
+          drawableEvents.push(event);
+        }
+      }
+    }
+    
+    // No immediate events found, return drawable events
+    return { immediateEvent: null, drawableEvents };  
   }
 }
-
-/*
-const handleEvent = async (engine: Engine, event: VNEvent): Promise<void> => {
-  console.debug("Executing immediate event:", event.id);
-  try {
-    await event.execute(engine, engine.gameState);
-  } catch (err) {
-    if (err instanceof VNInterruptError) {
-      throw err;
-    }
-    const location = engine.gameState.location;
-    const cache = engine.eventCache[location];
-    if (cache) {
-      cache.unlocked = cache.unlocked.filter((ev) => ev !== event);
-      cache.locked.push(event);
-    }
-    window.alert(
-      `An error occurred in event '${
-        event.id
-      }'.\nThis event will be skipped.\nPlease report this to the game creator.\n\nError: ${
-        (err as Error).message
-      }`,
-    );
-  }
-};
-*/

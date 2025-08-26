@@ -1,10 +1,11 @@
-import type { Location } from '@/generate/types';
+import type { Location } from '@generate/types';
 
 const info: Location = {
   name: "Hallway",
   baseBackground: "assets/images/background/intro/hall.png",
   timeBackgrounds: [],
-  unlocked: (state) => true,
+  accessibleLocations: ["bedroom", "mother_room", "outside"],
+  unlocked: () => true,
   accessErrors: []
 };
 

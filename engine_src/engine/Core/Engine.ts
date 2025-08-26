@@ -53,9 +53,6 @@ class Engine {
     this.locationManager = new LocationManager();
     this.actionManager = new ActionManager();
 
-    // Connect managers for location-centric resource loading
-    this.actionManager.setLocationManager(this.locationManager);
-
     // Initialize NavigationManager first (ActionExecutor needs it)
     this.navigationManager = new NavigationManager(this.historyManager);
     this.actionExecutor = new ActionExecutor(
@@ -187,9 +184,8 @@ class Engine {
    */
   private async handleLocation(): Promise<void> {
     try {
-      const currentLocation = this.locationManager.findLocationById(
-        this.gameState.location_id
-      );
+      const currentLocation = this.locationManager.findById(this.gameState.location_id);
+      this.locationManager.updateLocations(this.gameState.location_id);
 
       // Set base background
       this.engineState.background = currentLocation.baseBackground;

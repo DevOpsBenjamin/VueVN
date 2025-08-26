@@ -1,14 +1,14 @@
 <template>
   <div
-    v-if="accessibleLocations.length > 0"
+    v-if="Object.keys(accessibleLocations).length > 0"
     class="absolute top-0 left-0 w-full h-full z-10 pointer-events-none flex items-end justify-end p-4"
   >
     <!-- Location navigation circles -->
     <div class="flex flex-wrap gap-6 justify-center items-center pointer-events-auto">
       <button
-        v-for="location in accessibleLocations"
-        :key="location.id"
-        @click.stop.prevent="navigateToLocation(location.id)"
+        v-for="(location, locationId) in accessibleLocations"
+        :key="locationId"
+        @click.stop.prevent="navigateToLocation(locationId)"
         class="location-circle group relative overflow-hidden transition-all duration-300 ease-out transform hover:scale-110 hover:-translate-y-2 focus:outline-none border-none"
         :style="{ width: circleSize + 'px', height: circleSize + 'px' }"
         :title="location.name"
@@ -40,7 +40,7 @@ import { gameState as useGameState } from '@generate/stores';
 import type { Location } from '@generate/types';
 
 const gameState = useGameState();
-const accessibleLocations = ref<Location[]>([]);
+const accessibleLocations = ref<Record<string, Location>>({});
 
 // Calculate circle size as 1/8 of gameRoot size (using smaller dimension)
 const circleSize = computed(() => {
@@ -60,11 +60,10 @@ const updateAccessibleLocations = () => {
   }
   
   try {
-    const currentLocation = engine.locationManager.findLocationById(gameState.location_id);
-    accessibleLocations.value = currentLocation.accessibleLocations;
+    accessibleLocations.value = engine.locationManager.getAccessibleLocations();
   } catch (error) {
     console.error('[LocationOverlay] Error updating accessible locations:', error);
-    accessibleLocations.value = [];
+    accessibleLocations.value = {};
   }
 };
 
@@ -83,12 +82,15 @@ const navigateToLocation = (locationId: string) => {
   engine.navigationManager.actionManager.resolve();
 };
 
+
+
 onMounted(() => {
-  // Watch for location changes
-  watch(
-    () => gameState.location_id,
-    updateAccessibleLocations,
-    { immediate: true }
-  );
+  updateAccessibleLocations();
+  
+  // Register for updates when engine recalculates actions
+  const engine = Engine.getInstance();
+  if (engine) {
+    engine.locationManager.setUpdateCallback(updateAccessibleLocations);
+  }
 });
 </script>

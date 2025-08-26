@@ -1,7 +1,5 @@
 import { defineStore } from "pinia";
-import { neighbor, mother, player } from "@/generate/npcs";
-import type { GameState, GameStateActions } from "@/generate/types";
-import { start } from "@/generate/locations";
+import type { GameState, GameStateActions } from "@generate/types";
 
 //SEE CUSTOM SAMPLE FOR BETTER TYPING
 function createGameState(): GameState
@@ -12,7 +10,7 @@ function createGameState(): GameState
       stat: 100,
       flags: {}
     },
-    location_id: start.id,
+    location_id: "",//start.id,
     gameTime: {
       hour: 8,
       day: 1,

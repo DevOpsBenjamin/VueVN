@@ -1,8 +1,6 @@
-import { bedroom } from '@/generate/locations';
-import type { VNEvent } from '@/generate/types';
+import type { VNEvent } from '@generate/types';
 
 const intro: VNEvent = {
-  id: 'intro',
   name: 'Introduction',
   foreground: 'assets/images/background/intro/hall.png',
   conditions: () => true,
@@ -47,7 +45,7 @@ You can either start directly or learn about the framework`;
     start_adventure: {
       async execute(engine, state) {    
         state.flags.introSeen = true; // Verrouille l'intro
-        state.location_id = bedroom.id;
+        //state.location_id = bedroom.id;
         await engine.showText("Great! Let's begin your adventure.");
         await engine.showText("You head to your bedroom to start your journey.");
       }

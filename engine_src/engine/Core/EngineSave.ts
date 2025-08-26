@@ -1,4 +1,4 @@
-import { PROJECT_ID } from '@generate/components';
+import projectData from '@generate/project';
 import type { EngineState, SaveData } from '@generate/types'
 import { EngineStateEnum } from '@generate/enums'
 import type { Engine } from '@generate/engine';
@@ -19,7 +19,7 @@ export const startNewGame = async (engine: Engine): Promise<void> => {
 };
 
 export const loadGame = async (engine: Engine, slot: number): Promise<void> => {
-  const raw = localStorage.getItem(`Save_${PROJECT_ID}_${slot}`);
+  const raw = localStorage.getItem(`Save_${projectData.project_id}_${slot}`);
   if (!raw) {
     throw new Error('No save found');
   }
@@ -34,12 +34,6 @@ export const loadGame = async (engine: Engine, slot: number): Promise<void> => {
   Object.assign(engine.engineState.$state, data.engineState);
 
   engine.navigationManager.rejectWaiters();
-  if (engine.engineState.currentEvent != null) {
-    const event = engine.eventManager.findEventById(engine.engineState.currentEvent);
-    if (event != null) {
-      await engine.actionExecutor.runEvent(event);
-    }
-  }
 };
 
 export const saveGame = (engine: Engine, slot: number, name?: string): void => {
@@ -58,7 +52,7 @@ export const saveGame = (engine: Engine, slot: number, name?: string): void => {
     historyState: historyStateCopy,
   };
 
-  localStorage.setItem(`Save_${PROJECT_ID}_${slot}`, JSON.stringify(data));
+  localStorage.setItem(`Save_${projectData.project_id}_${slot}`, JSON.stringify(data));
 };
 
 export default {

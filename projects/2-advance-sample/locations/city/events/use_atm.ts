@@ -1,7 +1,6 @@
-import type { VNEvent } from '@/generate/types';
+import type { VNEvent } from '@generate/types';
 
 const useATM: VNEvent = {
-  id: 'use_atm',
   name: 'Use ATM',
   foreground: 'assets/images/background/city/day.png',
   conditions: (state) => state.flags.using_atm === true,

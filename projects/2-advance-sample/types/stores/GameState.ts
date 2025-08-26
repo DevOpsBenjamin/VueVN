@@ -1,4 +1,4 @@
-import type { NPC, GameTime } from '@/generate/types';
+import type { NPC, GameTime } from '@generate/types';
 // Sample project specific GameState
 export interface GameState {
   player: NPC;

@@ -1,4 +1,4 @@
-import type { Action } from '@/generate/types';
+import type { Action } from '@generate/types';
 
 //THIS ACTION WORK ALL TIME CAUSE WE WANT TO USE EVENT TO TALK TO PLAYER
 const explore_shops: Action = {

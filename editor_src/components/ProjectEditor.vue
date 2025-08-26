@@ -26,11 +26,11 @@
 
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { loadMonaco } from "@/editor/utils/monacoLoader.js";
-import MonacoEditor from "@/editor/components/MonacoEditor.vue";
-import StateEditorPanel from "@/editor/components/StateEditorPanel.vue";
-import FloatingGame from "@/editor/components/FloatingGame.vue";
-import ProjectExplorer from "@/editor/components/ProjectExplorer.vue";
+import { loadMonaco } from "@editor/utils/monacoLoader.js";
+import MonacoEditor from "@editor/components/MonacoEditor.vue";
+import StateEditorPanel from "@editor/components/StateEditorPanel.vue";
+import FloatingGame from "@editor/components/FloatingGame.vue";
+import ProjectExplorer from "@editor/components/ProjectExplorer.vue";
 
 onMounted(async () => {
   await loadMonaco();

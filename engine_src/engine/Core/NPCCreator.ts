@@ -1,4 +1,4 @@
-import { NPC } from "@generate/types";
+import { NPC } from "@engine/types/stores/NPC";
 
 class NPCCreator implements NPC {
   name: string;

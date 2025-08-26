@@ -47,10 +47,10 @@ export async function generateResourceFile(
       const locationPath = isGlobal ? 'global' : locationName;
       console.log(`${emoji} Found ${resourceFiles.length} ${resourceType} in ${locationPath}: ${resourceFiles.join(', ')}`);
       
-      // Generate imports with @projects alias
+      // Generate imports with @project alias
       const importPath = isGlobal 
-        ? `@projects/${projectName}/global/${resourceType}`
-        : `@projects/${projectName}/locations/${locationName}/${resourceType}`;
+        ? `@project/global/${resourceType}`
+        : `@project/locations/${locationName}/${resourceType}`;
       
       imports = resourceFiles
         .map(resourceName => `import ${resourceName} from '${importPath}/${resourceName}';`)
@@ -106,7 +106,7 @@ export async function generateLocationIndex(projectName: string, projectPath: st
 
   const locationIndexContent = `// Generated index for location: ${locationName}
 import type { LocationData } from '@generate/types';
-import info from '@projects/${projectName}/locations/${locationName}/info';
+import info from '@project/locations/${locationName}/info';
 import { actionsList } from './actions';
 import { eventsList } from './events';
 
@@ -133,10 +133,6 @@ import { eventsList } from './events';
 
 const global: LocationData = {
   id: "global",
-  info: {
-    name: "Global",
-    description: "Global events and actions available everywhere"
-  },
   actions: actionsList,
   events: eventsList
 };

@@ -1,4 +1,4 @@
-import type { Location } from '@/generate/types';
+import type { Location } from '@generate/types';
 
 const info: Location = {
   name: "City Center",
@@ -9,6 +9,7 @@ const info: Location = {
       value: "assets/images/background/city/night.png",
     }
   ],
+  accessibleLocations: ["outside"],
   unlocked: () => true,
   accessErrors: [
     {

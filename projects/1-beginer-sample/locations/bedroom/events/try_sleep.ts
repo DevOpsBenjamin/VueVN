@@ -1,8 +1,7 @@
-import type { VNEvent } from '@/generate/types';
-import { TimeHelper } from '@/generate/runtime';
+import type { VNEvent } from '@generate/types';
+import { TimeHelper } from '@generate/engine';
 
 const try_sleep: VNEvent = {
-  id: 'try_sleep',
   name: 'Go to Sleep',
   foreground: 'assets/images/background/bedroom/night.png',
   conditions: (state) => state.flags.try_sleep === true,
@@ -13,8 +12,8 @@ const try_sleep: VNEvent = {
     // Reset the sleep flag immediately
     state.flags.try_sleep = false;
     // Full sleep - reset daily activities and restore energy
-    state.player.daily = {};
-    state.player.energy = 100;
+    state.player.flags = {};
+    state.player.stat = 100;
     TimeHelper.sleep(state.gameTime);
     await engine.showText("You lie down on your comfortable bed and close your eyes.");
     await engine.showText("...");

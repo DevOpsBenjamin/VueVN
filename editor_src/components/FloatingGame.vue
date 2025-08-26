@@ -45,8 +45,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useEditorState } from '@/editor/stores/editorState';
-import { Game } from '@/generate/components';
+import { useEditorState } from '@editor/stores/editorState';
+import { Game } from '@generate/components';
 
 const editorState = useEditorState();
 const visible = computed(() => editorState?.previewVisible ?? true);

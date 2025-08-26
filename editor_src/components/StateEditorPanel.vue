@@ -42,7 +42,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
-import { loadMonaco } from "@/editor/utils/monacoLoader.js";
+import { loadMonaco } from "@editor/utils/monacoLoader.js";
 
 // Editor container refs
 const engineEditorContainer = ref<HTMLElement | null>(null);
@@ -56,7 +56,7 @@ let gameEditorInstance: any = null;
 import {
   engineState as useEngineState,
   gameState as useGameState,
-} from "@/generate/stores";
+} from "@generate/stores";
 
 const engineState = useEngineState();
 const gameState = useGameState();

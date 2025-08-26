@@ -1,5 +1,5 @@
 import type { GameState, Action, LocationActions } from '@generate/types';
-import { locations } from '@generate/locations'
+import projectData from '@generate/project'
 
 export default class ActionManager {
   private allActions: LocationActions = {};
@@ -13,9 +13,9 @@ export default class ActionManager {
 
   buildActionsRecords() {
     this.allActions = {};
-    for (const location_id in locations) {
+    for (const location_id in projectData.locations) {
       try {
-        this.allActions[location_id] = locations[location_id].actions;
+        this.allActions[location_id] = projectData.locations[location_id].actions;
       }
       catch (e) {
         console.warn(`Invalid action: ${location_id}`, e);
@@ -25,9 +25,10 @@ export default class ActionManager {
   
   updateAccessibleActions(gameState: GameState): void {
     const localActions = this.allActions[gameState.location_id];
+    const globalActions = projectData.global.actions;
     
     //Add global Action
-    this.currentActions = localActions;
+    this.currentActions = { ...globalActions, ...localActions };
     this.unlockedActions = Object.values(localActions).filter(action => action.unlocked(gameState));
     
     if (this.updateCallback) {

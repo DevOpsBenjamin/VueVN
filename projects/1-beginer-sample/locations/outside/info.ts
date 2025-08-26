@@ -1,4 +1,4 @@
-import type { Location } from '@/generate/types';
+import type { Location } from '@generate/types';
 
 const info: Location = {
   name: "Home Front Door",
@@ -9,7 +9,8 @@ const info: Location = {
       value: "assets/images/background/home/front_door_night.png",
     }
   ],
-  unlocked: (state) => true,
+  accessibleLocations: ["hallway", "city"],
+  unlocked: () => true,
   accessErrors: []
 };
 

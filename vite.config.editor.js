@@ -5,7 +5,7 @@ import viteApiPlugin from './vite-plugins/api.ts';
 import serveStatic from 'serve-static';
 
 // Dynamically resolve the current project
-const currentProject = process.env.VUEVN_PROJECT || 'sample';
+const currentProject = process.env.VUEVN_PROJECT || '1-beginer-sample';
 
 export default defineConfig({
   plugins: [
@@ -28,13 +28,13 @@ export default defineConfig({
     alias: {
       '@engine': path.resolve(__dirname, 'engine_src'),
       '@editor': path.resolve(__dirname, 'editor_src'),
-      '@projects': path.resolve(__dirname, 'projects'),
+      '@project': path.resolve(__dirname, 'projects', currentProject),
       '@generate': path.resolve(__dirname, 'generate'),
     },
   },
   build: {
     rollupOptions: {
-      input: path.resolve(__dirname, 'editor_src/main.ts'), // Editor entry point
+      input: path.resolve(__dirname, 'editor.html'), // Editor HTML entry point
     },
   },
   server: {
