@@ -10,7 +10,7 @@ function createGameState(): GameState
     stat: 100,
     flags: {}
   },
-  location_id: "intro",
+  location_id: "bedroom",
   gameTime: {
     hour: 8,
     day: 1,

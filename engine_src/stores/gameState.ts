@@ -6,7 +6,7 @@ function createGameState(): GameState
 {
   return {
     player: { name: "MC" },
-    location_id: "intro",
+    location_id: "bedroom",
     flags: {},
     gameTime: {
       hour: 8,
