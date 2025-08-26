@@ -27,6 +27,14 @@ jobs:
       - name: Build advance sample project
         run: npm run build 2-advance-sample
 
+      - name: Rename game.html -> index.html
+        run: |
+          if [ ! -f dist/game.html ]; then
+            echo "dist/game.html not found"
+            exit 1
+          fi
+          mv dist/game.html dist/index.html
+
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3.0.1
         with:
