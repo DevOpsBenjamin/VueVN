@@ -1,5 +1,6 @@
 <template>
-  <div
+  <div v-if="gameState.flags.showUserInfo === true"
+    @keydown.stop.prevent="onOverlayKey"
     class="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-10">
     <!-- Left Column - Character Selection -->
     <div class="w-1/3 pr-4 border-r border-white/20">
@@ -52,7 +53,7 @@
       
       <!-- Close Button -->
       <button
-        @click="$emit('close')"
+        @click.stop.prevent="closeUserInfo"
         class="w-full mt-4 bg-red-600/80 hover:bg-red-600 text-white p-2 rounded transition-colors"
       >
         Close
@@ -60,7 +61,7 @@
     </div>
     
     <!-- Right Column - Dynamic Info Display -->
-    <div class="w-2/3 pl-4">
+    <div class="w-2/3 px-4 pl-4">
       <PlayerInfoPanel v-if="selectedCharacter === 'player'" :player="gameState.player" />
       <NeighborInfoPanel v-else-if="selectedCharacter === 'neighbor'" :neighbor="gameState.neighbor" />
       <MotherInfoPanel v-else-if="selectedCharacter === 'mother'" :mother="gameState.mother" />
@@ -69,11 +70,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { gameState as useGameState } from '@generate/stores';
 import { PlayerInfoPanel, NeighborInfoPanel, MotherInfoPanel } from '@generate/components';
-defineEmits(['close']);
 
 const gameState = useGameState();
 const selectedCharacter = ref<'player' | 'neighbor' | 'mother'>('player');
+
+function closeUserInfo() {
+  gameState.flags.showUserInfo = false;
+}
+
+function onOverlayKey(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    closeUserInfo();
+  }
+}
 </script>

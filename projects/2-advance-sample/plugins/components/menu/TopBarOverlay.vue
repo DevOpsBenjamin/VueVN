@@ -16,7 +16,7 @@
           Phone
         </button>
         <button
-          @click="showUserInfo = !showUserInfo"
+          @click.stop.prevent="showUserInfo"
           class="bg-black/30 backdrop-blur-sm text-white p-2 rounded"
         >
           👤
@@ -25,9 +25,7 @@
     </div>
   </div>
   <!-- User Info Panel -->
-  <div v-if="showUserInfo">
-    <UserInfoPanel @close="showUserInfo = false" />
-  </div>
+  <UserInfoPanel />
 </template>
 
 <script setup lang="ts">
@@ -36,10 +34,17 @@ import { gameState as useGameState } from '@generate/stores';
 import UserInfoPanel from './UserInfoPanel.vue';
 
 const gameState = useGameState();
-const showUserInfo = ref(false);
+
+function showUserInfo() {
+  if (gameState.flags.showUserInfo === true) {
+    gameState.flags.showUserInfo = false
+  } else {
+    gameState.flags.showUserInfo = true
+  }
+}
 
 const formattedDate = computed(() => {
-  const { year, month, day, hour } = gameState.gameTime;
+  const { month, day, hour } = gameState.gameTime;
   const m = String(month).padStart(2, '0');
   const d = String(day).padStart(2, '0');
   const h = String(hour).padStart(2, '0');
