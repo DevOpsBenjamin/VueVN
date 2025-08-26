@@ -1,67 +1,70 @@
 <template>
-  <div class="p-4 bg-gray-900 border-b border-gray-800 text-gray-100">
-    <div class="flex items-center justify-between">
-      <h1 class="text-lg font-bold">{{ project.name || 'No project loaded' }}</h1>
-      <div class="space-x-2">
+  <header class="bg-black/20 backdrop-blur-sm border-b border-white/10">
+    <div class="flex items-center justify-between px-6 py-3">
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <span class="text-white font-bold text-sm">VN</span>
+          </div>
+          <h1 class="text-white font-semibold text-lg">{{ project.name || 'VueVN Editor' }}</h1>
+        </div>
+        <div class="h-6 w-px bg-white/20"></div>
+        <nav class="flex space-x-1">
+          <button
+            v-for="module in modules"
+            :key="module.key"
+            @click="setModule(module.key)"
+            :class="[
+              'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+              editorState.activeModule === module.key
+                ? 'bg-white/20 text-white shadow-lg ring-2 ring-white/20'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            ]"
+          >
+            <span class="mr-2">{{ module.icon }}</span>
+            {{ module.label }}
+          </button>
+        </nav>
+      </div>
+      
+      <div class="flex items-center space-x-3">
+        <!-- Preview Button (only show on Events page) -->
         <button
           @click="togglePreview"
-          class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-sm"
+          :class="[
+            'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200',
+            editorState.previewVisible
+              ? 'bg-purple-500/30 text-purple-300 ring-2 ring-purple-500/50'
+              : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300'
+          ]"
         >
-          Preview
+          {{ editorState.previewVisible ? '👁️ Hide Preview' : '👁️ Preview' }}
         </button>
+        
+        <!-- State Management Buttons -->
         <button
-          class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
           @click="editorState.showEnginePopup = true"
+          class="px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-md text-sm font-medium transition-all duration-200"
         >
-          Engine State
+          🔧 Engine
         </button>
         <button
-          class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
           @click="editorState.showGamePopup = true"
+          class="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-md text-sm font-medium transition-all duration-200"
         >
-          Game State
+          🎮 Game
         </button>
+        
+        <!-- Reset Button -->
         <button
-          class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
           @click="resetAll"
+          class="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-md text-sm font-medium transition-all duration-200"
         >
-          Reset Stores
+          🔄 Reset
         </button>
       </div>
     </div>
-    <div class="mt-2 space-x-2">
-      <button
-        class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
-        @click="setModule('dashboard')"
-      >
-        Dashboard
-      </button>
-      <button
-        class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
-        @click="setModule('locationManager')"
-      >
-        Location Manager
-      </button>
-      <button
-        class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
-        @click="setModule('assetManager')"
-      >
-        Asset Manager
-      </button>
-      <button
-        class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
-        @click="setModule('localizationManager')"
-      >
-        Localization Manager
-      </button>
-      <button
-        class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
-        @click="setModule('projectEditor')"
-      >
-        Action Editor
-      </button>
-    </div>
-  </div>
+  </header>
 </template>
 
 <script setup lang="ts">
@@ -71,6 +74,14 @@ import { useEditorState } from '@editor/stores/editorState';
 
 const editorState = useEditorState();
 const project = ref<{ name?: string }>({});
+
+const modules = [
+  { key: 'dashboard', label: 'Dashboard', icon: '📊' },
+  { key: 'projectEditor', label: 'Events', icon: '📝' },
+  { key: 'assetManager', label: 'Assets', icon: '🖼️' },
+  { key: 'locationManager', label: 'Locations', icon: '🗺️' },
+  { key: 'localizationManager', label: 'i18n', icon: '🌍' }
+];
 
 onMounted(async () => {
   try {
@@ -96,4 +107,3 @@ function resetAll() {
   });
 }
 </script>
-
