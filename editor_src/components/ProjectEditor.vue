@@ -13,8 +13,6 @@
     <div class="flex-1 min-h-0">
       <MonacoEditor />
     </div>
-    <!-- Floating runtime preview -->
-    <FloatingGame />
   </div>
 </template>
 
@@ -22,7 +20,6 @@
 import { onMounted } from "vue";
 import { loadMonaco } from "@editor/utils/monacoLoader.js";
 import MonacoEditor from "@editor/components/MonacoEditor.vue";
-import FloatingGame from "@editor/components/FloatingGame.vue";
 import ProjectExplorer from "@editor/components/ProjectExplorer.vue";
 
 onMounted(async () => {

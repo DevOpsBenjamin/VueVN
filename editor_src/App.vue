@@ -8,6 +8,8 @@
       <LocationManager v-else-if="editorState.activeModule === 'locationManager'" />
       <LocalizationManager v-else-if="editorState.activeModule === 'localizationManager'" />
     </div>
+    <!-- Floating runtime preview -->
+    <FloatingGame />
     <EngineStatePopup v-if="editorState.showEnginePopup" />
     <GameStatePopup v-if="editorState.showGamePopup" />
   </div>
@@ -20,8 +22,9 @@ import ProjectEditor from '@editor/components/ProjectEditor.vue';
 import AssetManager from '@editor/components/Asset/AssetManager.vue';
 import LocationManager from '@editor/components/Location/LocationManager.vue';
 import LocalizationManager from '@editor/components/Localization/LocalizationManager.vue';
-import EngineStatePopup from '@editor/components/EngineStatePopup.vue';
-import GameStatePopup from '@editor/components/GameStatePopup.vue';
+import EngineStatePopup from '@editor/components/Popup/EngineStatePopup.vue';
+import GameStatePopup from '@editor/components/Popup/GameStatePopup.vue';
+import FloatingGame from "@editor/components/Popup/FloatingGame.vue";
 import { useEditorState } from '@editor/stores/editorState';
 
 const editorState = useEditorState();
