@@ -11,6 +11,7 @@ export default defineConfig({
     vue(),
     viteSingleFile(), // For production single-file builds
   ],
+  publicDir: 'public', // Ensure public directory is served
   resolve: {
     alias: {
       '@engine': path.resolve(__dirname, 'engine_src'),
