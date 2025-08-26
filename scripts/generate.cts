@@ -43,7 +43,6 @@ function generate_files() {
   run('generate/generate-locations.cts');
   run('generate/generate-project.cts');
   run('generate/generate-i18n.cts');
-  console.log(`✅ Done`);
 }
 
 generate_files();
@@ -69,6 +68,7 @@ if (process.argv.includes('--watch')) {
   watcher.on('all', (event: string, filePath: string) => {
     console.log(`🔄 File ${event}: ${filePath}`);
     generate_files();
+    console.log(`✅ Done`);
   });
 
   watcher.on('error', (error: Error) => {

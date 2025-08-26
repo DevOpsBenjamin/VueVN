@@ -7,6 +7,7 @@ function createEditorState(): EditorState
   return {
     currentFile: null,
     activeModule: 'dashboard',
+    selectedLocation: null,
     previewVisible: false,
     showEnginePopup: false,
     showGamePopup: false,

@@ -16,6 +16,7 @@
                 <th class="px-4 py-3 text-left text-white font-medium text-sm">Location</th>
                 <th class="px-4 py-3 text-center text-white font-medium text-sm">Events</th>
                 <th class="px-4 py-3 text-center text-white font-medium text-sm">Actions</th>
+                <th class="px-4 py-3 text-center text-white font-medium text-sm w-32">Manage</th>
               </tr>
             </thead>
             <tbody>
@@ -35,6 +36,15 @@
                 <td class="px-4 py-3 text-center">
                   <span class="text-green-400 font-bold">{{ globalStats.actionCount }}</span>
                 </td>
+                <td class="px-4 py-3 text-center">
+                  <button
+                    @click="editLocation('global')"
+                    class="inline-flex items-center space-x-1 px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
+                  >
+                    <span>✏️</span>
+                    <span>Edit</span>
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -43,10 +53,19 @@
 
       <!-- Locations Overview -->
       <section class="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-        <h2 class="text-white text-lg font-semibold mb-4 flex items-center">
-          <span class="mr-2">🗺️</span>
-          Locations
-        </h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-white text-lg font-semibold flex items-center">
+            <span class="mr-2">🗺️</span>
+            Locations
+          </h2>
+          <button
+            @click="addNewLocation"
+            class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 rounded-lg border border-white/20 transition-all duration-200 text-white"
+          >
+            <span class="text-lg">➕</span>
+            <span class="font-medium">Add Location</span>
+          </button>
+        </div>
         
         <div class="overflow-hidden rounded-lg border border-white/10">
           <table class="w-full">
@@ -55,6 +74,7 @@
                 <th class="px-4 py-3 text-left text-white font-medium text-sm">Location</th>
                 <th class="px-4 py-3 text-center text-white font-medium text-sm">Events</th>
                 <th class="px-4 py-3 text-center text-white font-medium text-sm">Actions</th>
+                <th class="px-4 py-3 text-center text-white font-medium text-sm w-32">Manage</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-white/5">
@@ -72,6 +92,24 @@
                 </td>
                 <td class="px-4 py-3 text-center">
                   <span class="text-green-400 font-bold">{{ location.actionCount }}</span>
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <div class="flex items-center justify-center space-x-2">
+                    <button
+                      @click="editLocation(location.id)"
+                      class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
+                    >
+                      <span>✏️</span>
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      @click="deleteLocation(location.id)"
+                      class="inline-flex items-center space-x-1 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 rounded border border-red-500/30 text-red-400 text-xs transition-all duration-200"
+                    >
+                      <span>🗑️</span>
+                      <span>Del</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
               <tr v-if="locationsArray.length === 0" class="hover:bg-white/5">
@@ -95,6 +133,24 @@
 import projectData from '@generate/project';
 import { useEditorState } from '@editor/stores/editorState';
 const editorState = useEditorState();
+
+// Add new location handler
+function addNewLocation() {
+  // TODO: Implement add location functionality
+  console.log('Add new location');
+}
+
+// Edit location handler
+function editLocation(locationId: string) {
+  editorState.selectedLocation = locationId;
+  editorState.activeModule = 'locationEdit';
+}
+
+// Delete location handler
+function deleteLocation(locationId: string) {
+  // TODO: Implement delete location functionality
+  console.log('Delete location:', locationId);
+}
 
 // Calculate global events and actions count
 const globalStats = {

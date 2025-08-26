@@ -35,25 +35,24 @@ const env = {
   VUEVN_ROOT: rootFolder,
 };
 
-console.log('🖨️  Copying assets...');
 // Step 3: Copy assets
+console.log('🖨️  Copying assets...');
 execSync('tsx scripts/build/copy-assets.cts', { stdio: 'inherit', env });
+console.log(`✅ Done`);
 
 console.log(`🎮 Starting dev server for: ${projectName}`);
-// Configure concurrently options based on verbose flag
-const concurrentlyArgs = [
-  'concurrently',
-  '-k',
-  '-n',
-  'AUTO_GEN,VITE',
-  '-c',
-  'green,cyan',
-  'tsx scripts/generate.cts --watch',
-  'vite',
-];
 
 // Run concurrently with the project name in environment
-spawn('npx', concurrentlyArgs, {
+spawn('npx', [
+  'concurrently', 
+  '-k', 
+  '-n', 
+  'AUTO_GEN,VITE', 
+  '-c', 
+  'green,cyan', 
+  '"tsx scripts/generate.cts --watch"', 
+  'vite'
+], {
   stdio: 'inherit',
   shell: true,
   env,

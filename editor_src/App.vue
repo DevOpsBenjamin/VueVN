@@ -14,6 +14,9 @@
       <!-- Location Manager -->
       <LocationManager v-else-if="editorState.activeModule === 'locationManager'" />
       
+      <!-- Location Edit View -->
+      <LocationEditView v-else-if="editorState.activeModule === 'locationEdit'" />
+      
       <!-- Localization Manager -->
       <LocalizationManager v-else-if="editorState.activeModule === 'localizationManager'" />
     </main>
@@ -32,6 +35,7 @@ import Header from '@editor/components/Header.vue';
 import Dashboard from '@editor/components/Dashboard.vue';
 import AssetManager from '@editor/components/Asset/AssetManager.vue';
 import LocationManager from '@editor/components/Location/LocationManager.vue';
+import LocationEditView from '@editor/components/Location/LocationEditView.vue';
 import LocalizationManager from '@editor/components/Localization/LocalizationManager.vue';
 import EngineStatePopup from '@editor/components/Popup/EngineStatePopup.vue';
 import GameStatePopup from '@editor/components/Popup/GameStatePopup.vue';
