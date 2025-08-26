@@ -21,13 +21,22 @@ npm run add-project <project-name>
 npm run update-template
 
 # Start development server for a project (with hot-reload and file watching)
-npm run dev <project-name>
+npm run dev <project-name> [-- --verbose]
 
 # Build a project for production
-npm run build <project-name>
+npm run build <project-name> [-- --ignore-translations --verbose]
 
-# Type checking (may fail but builds still work)
-npm run check
+# Verify project quality (TypeScript + i18n)
+npm run verify <project-name> [-- --ignore-translations --verbose]
+
+# Type checking (legacy)
+npm run type-check
+
+# Export texts for translation team
+npm run export-texts
+
+# Import translated texts
+npm run import-texts <archive-path>
 ```
 
 ## Key Architecture
