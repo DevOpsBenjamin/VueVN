@@ -4,33 +4,29 @@
       <div class="bg-black/30 backdrop-blur-sm text-white px-4 py-2 rounded">
         {{ formattedDate }}
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-4">
         <button
-          class="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded"
+          class="bg-black/30 backdrop-blur-sm text-white p-2 rounded"
         >
           Inventory
         </button>
         <button
-          class="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded"
+          class="bg-black/30 backdrop-blur-sm text-white p-2 rounded"
         >
           Phone
         </button>
         <button
           @click="showUserInfo = !showUserInfo"
-          class="bg-black/30 backdrop-blur-sm text-white px-3 py-2 rounded"
+          class="bg-black/30 backdrop-blur-sm text-white p-2 rounded"
         >
           👤
         </button>
       </div>
-      
-      <!-- User Info Panel -->
-      <div 
-        v-if="showUserInfo"
-        class="absolute top-16 right-4 bg-black/80 backdrop-blur-sm text-white p-4 rounded-lg w-96 max-h-96 overflow-y-auto"
-      >
-        <UserInfoPanel @close="showUserInfo = false" />
-      </div>
     </div>
+  </div>
+  <!-- User Info Panel -->
+  <div v-if="showUserInfo">
+    <UserInfoPanel @close="showUserInfo = false" />
   </div>
 </template>
 

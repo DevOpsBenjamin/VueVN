@@ -1,5 +1,6 @@
 <template>
-  <div class="flex h-full">
+  <div
+    class="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-10">
     <!-- Left Column - Character Selection -->
     <div class="w-1/3 pr-4 border-r border-white/20">
       <h3 class="text-lg font-bold mb-3">Characters</h3>

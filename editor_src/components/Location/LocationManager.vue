@@ -24,8 +24,8 @@
                   <div class="flex items-center space-x-2">
                     <span class="text-lg">🌐</span>
                     <div>
-                      <div class="text-white font-medium text-sm">System Events</div>
-                      <div class="text-white/70 text-xs">Non-location specific events</div>
+                      <div class="text-white font-medium text-sm">System</div>
+                      <div class="text-white/70 text-xs">Non-location specific</div>
                     </div>
                   </div>
                 </td>

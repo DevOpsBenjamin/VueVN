@@ -56,7 +56,7 @@ ${locationsItems}
 
 const projectData: ProjectData = {
   project_id: "${projectName}",
-  config: config,
+  config: config(),
   locations: locations,
   global: global
 };
