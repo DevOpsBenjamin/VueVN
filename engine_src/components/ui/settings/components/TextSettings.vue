@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { useEngineState } from '@generate/stores';
+import { engineState as useEngineState } from '@generate/stores';
 
 const engineState = useEngineState();
 

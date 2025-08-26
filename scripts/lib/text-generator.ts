@@ -213,7 +213,7 @@ function extractLanguageData(structure: any, language: string): any {
 
 function generateTextProvider(languages: string[]): string {
   return `// Generated text provider - i18n system
-import { useEngineState } from '@generate/stores';
+import { engineState as useEngineState } from '@generate/stores';
 import { textTree, availableLanguages, type TextTree } from './textTree';
 
 class TextProvider {

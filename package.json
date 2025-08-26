@@ -12,6 +12,7 @@
     "dev": "tsx scripts/dev.cts",
     "build": "tsx scripts/build.cts",
     "preview": "vite preview",
+    "type-check": "npx vue-tsc --noEmit",
     "verify": "tsx scripts/verify-project.cts",
     "export-texts": "tsx scripts/export-texts.cts",
     "import-texts": "tsx scripts/import-texts.cts"

@@ -27,14 +27,14 @@ console.log(`🏗️  Building project: ${projectName}`);
 const env = { ...process.env, VUEVN_PROJECT: projectName };
 
 try {
-  // Step 1: Verify project before building
+  // Step 1: Generate files
+  execSync('tsx scripts/generate.cts', { stdio: 'inherit', env });
+
+  // Step 2: Verify project before building
   console.log('🔍 Verifying project quality...');
   const verifyCommand = `tsx scripts/verify-project.cts ${projectName}${ignoreTranslations ? ' --ignore-translations' : ''}`;
   execSync(verifyCommand, { stdio: 'inherit', env });
   
-  // Step 2: Generate files
-  execSync('tsx scripts/generate.cts', { stdio: 'inherit', env });
-
   // Build with Vite using game config
   execSync('vite build --config vite.config.game.js', { stdio: 'inherit', env });
 

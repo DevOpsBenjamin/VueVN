@@ -102,7 +102,7 @@ async function verifyTypeScript(projectName: string): Promise<VerificationResult
     
     // Provide helpful suggestions
     console.log('\n💡 Fix suggestions:');
-    console.log('   → Run: npm run check  (for detailed error analysis)');
+    console.log('   → Run: npm run type-check  (for detailed error analysis)');
     console.log('   → Check for missing imports, type mismatches, or syntax errors');
     console.log('   → Ensure all @generate imports are available (run npm run dev first)');
   }
