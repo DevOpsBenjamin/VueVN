@@ -45,6 +45,7 @@ async function main() {
       .join(',\n');
 
     const projectContent = `// Generated project data index
+import config from '@project/config';
 import type { LocationData, ProjectData } from '@generate/types';
 ${locationImports}${globalImport ? '\n' + globalImport : ''}
 
@@ -55,6 +56,7 @@ ${locationsItems}
 
 const projectData: ProjectData = {
   project_id: "${projectName}",
+  config: config,
   locations: locations,
   global: global
 };
