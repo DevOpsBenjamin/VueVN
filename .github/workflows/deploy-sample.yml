@@ -25,7 +25,7 @@ jobs:
         run: npm install
 
       - name: Build advance sample project
-        run: npm run build 2-advance-sample
+        run: npm run build 2-advance-sample /verbose
 
       - name: Rename game.html -> index.html
         run: |
@@ -38,9 +38,9 @@ jobs:
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3.0.1
         with:
-          name:  github-pages
-          path: dist/   
-            
+          name: github-pages
+          path: dist/
+
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4.0.5
         with:

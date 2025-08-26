@@ -17,31 +17,17 @@ npm install
 # Create a new project
 npm run add-project <project-name>
 
-# Update project template (copies latest engine files to projects)
-npm run update-template
-
 # Start development server for a project (with hot-reload and file watching)
-npm run dev <project-name> [-- --verbose]
+npm run dev <project-name> [/verbose]
 
 # Build a project for production
-npm run build <project-name> [-- --ignore-translations --verbose]
-
-# Verify project quality (TypeScript + i18n)
-npm run verify <project-name> [-- --ignore-translations --verbose]
-
-# Type checking (legacy)
-npm run type-check
-
-# Export texts for translation team
-npm run export-texts
-
-# Import translated texts
-npm run import-texts <archive-path>
+npm run build <project-name> [/ignore-translations /verbose]
 ```
 
 ## Key Architecture
 
 ### Location-Centric Project System
+
 - Individual visual novels stored in `projects/` directory with location-centric architecture
 - `VUEVN_PROJECT` environment variable determines active project
 - Projects are isolated but share the same engine runtime
@@ -65,11 +51,12 @@ npm run import-texts <archive-path>
   ```
 
 ### Dual-Phase Engine Architecture
+
 - **Simulation Phase**: Events execute to generate action sequences
 - **Playback Phase**: Actions replay with user interaction
 - **Manager-Based**: Engine delegates to specialized managers:
   - `HistoryManager`: Save/load and text-by-text navigation
-  - `ActionExecutor`: Action playback and state management  
+  - `ActionExecutor`: Action playback and state management
   - `EventManager`: Event execution and jumping
   - `LocationManager`: **NEW** Location-specific resource loading
   - `NavigationManager`: Menu and UI state management
@@ -78,6 +65,7 @@ npm run import-texts <archive-path>
 - **Natural Development**: Standard async/await TypeScript code for events
 
 ### Code Generation System
+
 - Build system generates TypeScript files from project data using `scripts/generate.cts`
 - Generated files in `src/generate/` provide type-safe access to project resources
 - Automatic generation during development with file watching
@@ -96,7 +84,7 @@ npm run import-texts <archive-path>
 import { Engine } from '@/generate/runtime';
 import type { EngineState } from '@/generate/types';
 
-// ❌ WRONG - Prevents user customization  
+// ❌ WRONG - Prevents user customization
 import Engine from './Engine';
 ```
 
@@ -116,6 +104,7 @@ This preserves plugin capability - users can override any engine component throu
 ## 📋 Comprehensive Documentation
 
 **For detailed development procedures, architectural decisions, and current project status, see:**
+
 - `Claude/CLAUDE.md` - Complete development guide
 - `Claude/DEVELOPMENT_WORKFLOW.md` - Development procedures and commit strategies
 - `Claude/PROJECT_REPORT.md` - Comprehensive codebase analysis
@@ -123,13 +112,16 @@ This preserves plugin capability - users can override any engine component throu
 ## Development Workflow
 
 ### Testing Strategy
+
 No formal test suite - testing done via `sample` project with test events:
+
 - `projects/sample/events/start/intro.ts`: Basic narrative flow
 - `projects/sample/events/bedroom/morning/after-intro.ts`: Text and background testing
-- `projects/sample/events/bedroom/choice-event.ts`: Choice navigation testing  
+- `projects/sample/events/bedroom/choice-event.ts`: Choice navigation testing
 - `projects/sample/events/bedroom/timing-event.ts`: Minigame and custom logic testing
 
 ### Build System Architecture
+
 - `scripts/dev.cts`: Development server with hot-reload and file watching
 - `scripts/build.cts`: Production builds with Vite single-file plugin
 - `scripts/generate.cts`: Master code generation orchestrator
@@ -137,10 +129,12 @@ No formal test suite - testing done via `sample` project with test events:
 - All scripts require `VUEVN_PROJECT` environment variable
 
 ### Current Status
+
 **Build Status:** ✅ Production builds succeed (120.89 kB output)  
 **Type Status:** ⚠️ TypeScript errors in UI components (build still works)
 
 **Known Issues:**
+
 - TypeScript errors in SaveLoadMenu.vue, Game.vue, and other UI components
 - Engine core functionality works despite UI type errors
 - `npm run check` fails but `npm run build` succeeds

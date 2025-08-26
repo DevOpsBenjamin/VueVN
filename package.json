@@ -7,15 +7,14 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "add-project": "tsx scripts/add-project.cts",
     "update-template": "tsx scripts/update-template.cts",
+    "export-texts": "tsx scripts/export-texts.cts",
+    "import-texts": "tsx scripts/import-texts.cts",
+    "add-project": "tsx scripts/add-project.cts",
     "dev": "tsx scripts/dev.cts",
     "build": "tsx scripts/build.cts",
-    "preview": "vite preview",
-    "type-check": "npx vue-tsc --noEmit",
     "verify": "tsx scripts/verify-project.cts",
-    "export-texts": "tsx scripts/export-texts.cts",
-    "import-texts": "tsx scripts/import-texts.cts"
+    "type-check": "npx vue-tsc --noEmit"
   },
   "dependencies": {
     "autoprefixer": "^10.4.21",

@@ -1,19 +1,23 @@
 #!/usr/bin/env node
-
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
-const args = process.argv.slice(2);
-const projectName: string | undefined = args[0];
-const verbose = args.includes('--verbose');
+const argv = process.argv.slice(2);
+const slashOpts = argv.filter((a) => a.startsWith('/'));
+const Opts = argv.filter((a) => !a.startsWith('/'));
 
-if (!projectName) {
+const ignoreTranslations = slashOpts.includes('/ignore-translations');
+const verbose = slashOpts.includes('/verbose');
+
+if (Opts.length !== 1) {
   console.error('❌ Error: Please provide a project name');
-  console.error('Usage: npm run dev <project-name> [--verbose]');
+  console.error(
+    '❌ Usage: npm run build <project> [/ignore-translations] [/verbose]'
+  );
   process.exit(1);
 }
-
+const projectName = Opts[0];
 const projectPath: string = path.join(__dirname, '..', 'projects', projectName);
 
 if (!fs.existsSync(projectPath)) {
@@ -21,11 +25,15 @@ if (!fs.existsSync(projectPath)) {
   process.exit(1);
 }
 
+// Set environment variable and run commands
+const env = {
+  ...process.env,
+  VUEVN_PROJECT: projectName,
+  VUEVN_IGNORE_TRANSLATIONS: ignoreTranslations ? 'true' : 'false',
+  VUEVN_VERBOSE: verbose ? 'true' : 'false',
+};
+
 console.log(`🎮 Starting dev server for: ${projectName}`);
-
-// Set environment variable and run the dev command
-const env = { ...process.env, VUEVN_PROJECT: projectName };
-
 // Configure concurrently options based on verbose flag
 const concurrentlyArgs = [
   'concurrently',
@@ -33,16 +41,10 @@ const concurrentlyArgs = [
   '-n',
   'AUTO_GEN,VITE',
   '-c',
-  'green,cyan'
+  'green,cyan',
+  'tsx scripts/generate.cts --watch',
+  'vite',
 ];
-
-if (!verbose) {
-  concurrentlyArgs.push(`"tsx scripts/generate.cts --watch"`,);
-}
-else {  
-  concurrentlyArgs.push(`"tsx scripts/generate.cts --watch -- --verbose"`,);
-}
-concurrentlyArgs.push('"vite"');
 
 // Run concurrently with the project name in environment
 spawn('npx', concurrentlyArgs, {

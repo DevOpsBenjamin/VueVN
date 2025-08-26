@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": true,
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "types": [
+      "vite/client"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@engine/*": [
+        "engine_src/*"
+      ],
+      "@editor/*": [
+        "editor_src/*"
+      ],
+      "@project/*": [
+        "projects/2-advance-sample/*"
+      ],
+      "@generate/*": [
+        "generate/*"
+      ]
+    }
+  },
+  "include": [
+    "engine_src/**/*.ts",
+    "engine_src/**/*.vue",
+    "editor_src/**/*.ts",
+    "editor_src/**/*.vue",
+    "projects/2-advance-sample/**/*.ts",
+    "projects/2-advance-sample/**/*.vue",
+    "generate/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
