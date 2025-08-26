@@ -1,0 +1,44 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "@me"
+    assignees:
+      - "@me"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Group updates for related packages
+    groups:
+      vue-ecosystem:
+        patterns:
+          - "vue*"
+          - "@vue/*"
+          - "vite*"
+          - "@vitejs/*"
+      typescript-ecosystem:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "tsx"
+      build-tools:
+        patterns:
+          - "concurrently"
+          - "chokidar"
+          - "adm-zip"
+    # Ignore specific packages if needed
+    ignore:
+      # Pin major versions that might break compatibility
+      - dependency-name: "vue"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]

@@ -1,5 +1,5 @@
-// Script unique pour générer tous les index (components, engine, events)
-// Usage: tsx scripts/generate.cts [--watch]
+// Main script to generate all index files (components, engine, events)
+// Usage: tsx scripts/generate.cts [--watch] [--verbose]
 import { execSync } from "child_process";
 import path from "path";
 import chokidar from "chokidar";
@@ -13,12 +13,14 @@ if (!currentProject) {
   process.exit(1);
 }
 
-console.log(`📦 Generating files for project: ${currentProject}`);
+const args = process.argv.slice(2);
+const verbose = args.includes('--verbose');
 
 function run(script: string): void {
   try {
-    execSync(`tsx ${path.join(__dirname, script)}`, {
-      stdio: "inherit",
+    const verboseFlag = verbose ? ' --verbose' : '';
+    execSync(`tsx ${path.join(__dirname, script)}${verboseFlag}`, {
+      stdio: verbose ? "inherit" : "pipe",
       env: process.env, // Pass environment variables
     });
   } catch (error) {
@@ -31,6 +33,7 @@ function run(script: string): void {
 run("generate-tsconfig.cts");
 
 function generate_files() {
+  console.log(`📦 Generating files for project: ${currentProject}`);
   // Run all generation scripts
   run("generate-types.cts");
   run("generate-enums.cts");
@@ -39,6 +42,8 @@ function generate_files() {
   run("generate-components.cts");
   run("generate-locations.cts");
   run("generate-project.cts");
+  run("generate-i18n.cts");
+  console.log(`✅ Done`);
 }
 
 generate_files()
@@ -51,6 +56,7 @@ if (process.argv.includes("--watch")) {
     "engine_src/**/*.ts",
     `projects/${currentProject}/**/*.vue`,
     `projects/${currentProject}/**/*.ts`,
+    `projects/${currentProject}/**/texts/**/*.ts`, // Watch text files for i18n
   ];
 
   console.log("👁️  Watching for changes...");
@@ -61,8 +67,7 @@ if (process.argv.includes("--watch")) {
   });
 
   watcher.on("all", (event: string, filePath: string) => {
-    console.log(`🔄 File ${event}: ${filePath}`);    
-
+    console.log(`🔄 File ${event}: ${filePath}`);
     generate_files()
   });
 

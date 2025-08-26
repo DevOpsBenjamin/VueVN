@@ -4,11 +4,13 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
-const projectName: string | undefined = process.argv[2];
+const args = process.argv.slice(2);
+const projectName: string | undefined = args[0];
+const verbose = args.includes('--verbose');
 
 if (!projectName) {
   console.error('❌ Error: Please provide a project name');
-  console.error('Usage: npm run dev <project-name>');
+  console.error('Usage: npm run dev <project-name> [--verbose]');
   process.exit(1);
 }
 
@@ -24,22 +26,27 @@ console.log(`🎮 Starting dev server for: ${projectName}`);
 // Set environment variable and run the dev command
 const env = { ...process.env, VUEVN_PROJECT: projectName };
 
+// Configure concurrently options based on verbose flag
+const concurrentlyArgs = [
+  'concurrently',
+  '-k',
+  '-n',
+  'AUTO_GEN,VITE',
+  '-c',
+  'green,cyan'
+];
+
+if (!verbose) {
+  concurrentlyArgs.push(`"tsx scripts/generate.cts --watch"`,);
+}
+else {  
+  concurrentlyArgs.push(`"tsx scripts/generate.cts --watch -- --verbose"`,);
+}
+concurrentlyArgs.push('"vite"');
+
 // Run concurrently with the project name in environment
-spawn(
-  'npx',
-  [
-    'concurrently',
-    '-k',
-    '-n',
-    'GEN,VITE',
-    '-c',
-    'green,cyan',
-    `"tsx scripts/generate.cts --watch"`,
-    '"vite"',
-  ],
-  {
-    stdio: 'inherit',
-    shell: true,
-    env,
-  }
-);
+spawn('npx', concurrentlyArgs, {
+  stdio: 'inherit',
+  shell: true,
+  env,
+});

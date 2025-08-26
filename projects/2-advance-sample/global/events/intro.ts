@@ -6,7 +6,7 @@ const intro: VNEvent = {
   foreground: '/global/images/intro/hall.png',
   conditions: () => true,
   unlocked: () => true,
-  locked: (state) => state.flags.introSeen, // Se verrouille seulement après "start adventure"
+  locked: (state) => state.flags.introSeen, // Locks only after "start adventure"
   
   async execute(engine, state) {
     const multiline_text = `Welcome to VueVN game sample!
@@ -45,7 +45,7 @@ You can either start directly or learn about the framework`;
     },    
     start_adventure: {
       async execute(engine, state) {    
-        state.flags.introSeen = true; // Verrouille l'intro
+        state.flags.introSeen = true; // Lock the intro
         state.location_id = bedroom.id;
         await engine.showText("Great! Let's begin your adventure.");
         await engine.showText("You head to your bedroom to start your journey.");

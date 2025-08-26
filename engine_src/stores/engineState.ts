@@ -1,6 +1,17 @@
 import { defineStore } from 'pinia';
-import type { EngineState, EngineStateActions } from '@generate/types';
+import type { EngineState, EngineStateActions, Settings } from '@generate/types';
 import { EngineStateEnum } from '@generate/enums';
+
+function createDefaultSettings(): Settings {
+  return {
+    language: 'en',
+    soundVolume: 80,
+    musicVolume: 60,
+    textSpeed: 50,
+    autoAdvance: false,
+    autoAdvanceDelay: 3000
+  };
+}
 
 function createEngineState(): EngineState
 {
@@ -14,7 +25,8 @@ function createEngineState(): EngineState
     currentStep: 0,
     choices: null,
     customArgs: null,
-    jumpEvent: null
+    jumpEvent: null,
+    settings: createDefaultSettings()
   }
 }
 

@@ -1,4 +1,4 @@
-import type { Dialogue, Choice, CustomArgs } from '@generate/types';
+import type { Dialogue, Choice, CustomArgs, Settings } from '@generate/types';
 
 export interface EngineState {
   initialized: boolean;
@@ -11,6 +11,7 @@ export interface EngineState {
   state: string;
   currentEvent: string | null;
   currentStep: number;
+  settings: Settings;
 
   //USE?
   //isSimulating: boolean;

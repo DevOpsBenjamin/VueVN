@@ -13,16 +13,16 @@ const timingEvent: VNEvent = {
     await engine.showText("It's beeping in a weird pattern - almost like a code!");
     await engine.showText("Maybe if you can match the timing, something will happen?");
     
-    // Le mini-jeu gère tout lui-même - pas de code après
+    // The minigame handles everything itself - no code after
     /*
     await engine.runCustomLogic('timingMinigame', { 
       difficulty: 2,
-      context: 'alarm_clock' // Context pour que le mini-jeu sache quoi faire
+      context: 'alarm_clock' // Context so the minigame knows what to do
     });
     */
     
-    // ❌ PLUS DE CODE ICI - le mini-jeu gère ses conséquences
-    // L'événement se termine ici, le game loop redémarre après le mini-jeu
+    // ❌ NO MORE CODE HERE - the minigame handles its consequences
+    // The event ends here, the game loop restarts after the minigame
   }
 };
 

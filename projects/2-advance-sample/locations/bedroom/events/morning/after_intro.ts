@@ -27,7 +27,7 @@ const afterIntro: VNEvent = {
         await engine.showText("You look around your bedroom carefully.");
         await engine.showText("You notice some interesting books on your shelf.");
         await engine.showText("There's also a mysterious box under your bed...");
-        // Reste dans bedroom, d'autres événements peuvent apparaître
+        // Stay in bedroom, other events may appear
       }
     },
     
