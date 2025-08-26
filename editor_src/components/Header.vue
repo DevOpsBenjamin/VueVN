@@ -6,7 +6,7 @@
           <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
             <span class="text-white font-bold text-sm">VN</span>
           </div>
-          <h1 class="text-white font-semibold text-lg">{{ project.name || 'VueVN Editor' }}</h1>
+          <h1 class="text-white font-semibold text-lg">{{ projectData.config.name }}</h1>
         </div>
         <div class="h-6 w-px bg-white/20"></div>
         <nav class="flex space-x-1">
@@ -68,12 +68,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
 import { getActivePinia } from 'pinia';
 import { useEditorState } from '@editor/stores/editorState';
+import projectData from '@generate/project';
 
 const editorState = useEditorState();
-const project = ref<{ name?: string }>({});
 
 const modules = [
   { key: 'dashboard', label: 'Dashboard', icon: '📊' },
@@ -81,15 +80,6 @@ const modules = [
   { key: 'locationManager', label: 'Locations', icon: '🗺️' },
   { key: 'localizationManager', label: 'i18n', icon: '🌍' }
 ];
-
-onMounted(async () => {
-  try {
-    const res = await fetch('/projects/2-advance-sample/config.json');
-    project.value = await res.json();
-  } catch (err) {
-    console.error('Failed to load project config', err);
-  }
-});
 
 function togglePreview() {
   editorState.previewVisible = !editorState.previewVisible;

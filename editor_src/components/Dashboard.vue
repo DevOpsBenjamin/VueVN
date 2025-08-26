@@ -78,7 +78,7 @@
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
-            <div class="text-2xl text-green-400 font-bold mb-1">0</div>
+            <div class="text-2xl text-green-400 font-bold mb-1">{{ locationsArray.length }}</div>
             <div class="text-white/70 text-sm">Locations</div>
           </div>
           <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
@@ -91,138 +91,28 @@
           </div>
         </div>
       </section>
-
-      <!-- Global Events -->
-      <section class="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-        <h2 class="text-white text-lg font-semibold mb-4 flex items-center">
-          <span class="mr-2">🌍</span>
-          Global
-        </h2>
-        
-        <div class="overflow-hidden rounded-lg border border-white/10">
-          <table class="w-full">
-            <thead class="bg-white/5">
-              <tr>
-                <th class="px-4 py-3 text-left text-white font-medium text-sm">Location</th>
-                <th class="px-4 py-3 text-center text-white font-medium text-sm">Events</th>
-                <th class="px-4 py-3 text-center text-white font-medium text-sm">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="hover:bg-white/5 transition-colors">
-                <td class="px-4 py-3">
-                  <div class="flex items-center space-x-2">
-                    <span class="text-lg">🌐</span>
-                    <div>
-                      <div class="text-white font-medium text-sm">System Events</div>
-                      <div class="text-white/70 text-xs">Non-location specific events</div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-blue-400 font-bold">{{ globalLocation.eventCount }}</span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-green-400 font-bold">{{ globalLocation.actionCount }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Locations Overview -->
-      <section class="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-        <h2 class="text-white text-lg font-semibold mb-4 flex items-center">
-          <span class="mr-2">🗺️</span>
-          Locations
-        </h2>
-        
-        <div class="overflow-hidden rounded-lg border border-white/10">
-          <table class="w-full">
-            <thead class="bg-white/5">
-              <tr>
-                <th class="px-4 py-3 text-left text-white font-medium text-sm">Location</th>
-                <th class="px-4 py-3 text-center text-white font-medium text-sm">Events</th>
-                <th class="px-4 py-3 text-center text-white font-medium text-sm">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-white/5">
-              <tr v-for="location in locations" :key="location.name" class="hover:bg-white/5 transition-colors">
-                <td class="px-4 py-3">
-                  <div class="flex items-center space-x-2">
-                    <span class="text-lg">{{ location.icon }}</span>
-                    <div>
-                      <div class="text-white font-medium text-sm">{{ location.name }}</div>
-                      <div class="text-white/70 text-xs">{{ location.id }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-blue-400 font-bold">{{ location.eventCount }}</span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-green-400 font-bold">{{ location.actionCount }}</span>
-                </td>
-              </tr>
-              <tr v-if="locations.length === 0" class="hover:bg-white/5">
-                <td colspan="3" class="px-4 py-8 text-center text-white/70 text-sm">
-                  <div class="flex flex-col items-center space-y-2">
-                    <span class="text-2xl opacity-50">📍</span>
-                    <span>No locations configured yet</span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import { useEditorState } from '@editor/stores/editorState';
+import projectData from '@generate/project';
 
 const editorState = useEditorState();
 
-// Global location data (system events, cutscenes, etc.)
-const globalLocation = ref({
-  eventCount: 2,
-  actionCount: 5
-});
+// Calculate global events and actions count
+const globalStats = {
+  eventCount: Object.keys(projectData.global.events).length,
+  actionCount: Object.keys(projectData.global.actions).length
+};
 
-// Mock locations data - will be replaced with real data later
-const locations = ref([
-  {
-    id: 'bedroom',
-    name: 'Bedroom',
-    icon: '🛏️',
-    eventCount: 5,
-    actionCount: 12
-  },
-  {
-    id: 'kitchen',
-    name: 'Kitchen',
-    icon: '🍳',
-    eventCount: 3,
-    actionCount: 8
-  },
-  {
-    id: 'living_room',
-    name: 'Living Room',
-    icon: '🛋️',
-    eventCount: 2,
-    actionCount: 6
-  },
-  {
-    id: 'outside',
-    name: 'Outside',
-    icon: '🌳',
-    eventCount: 4,
-    actionCount: 10
-  }
-]);
+// Convert locations record to array with stats and icons
+const locationsArray = Object.entries(projectData.locations).map(([id, locationData]) => ({
+    id,
+    name: locationData.info!.name,
+    eventCount: Object.keys(locationData.events).length,
+    actionCount: Object.keys(locationData.actions).length
+  }));
 </script>
