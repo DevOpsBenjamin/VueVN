@@ -5,7 +5,7 @@ import path from 'path';
 import AdmZip from 'adm-zip';
 
 const rootDir = path.join(__dirname, '..');
-const templatePath = path.join(rootDir, 'template.zip');
+const templatePath = path.join(rootDir, 'template', 'project.zip');
 
 // Get project name from command line
 const projectName: string | undefined = process.argv[2];
