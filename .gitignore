@@ -23,11 +23,17 @@ dist-ssr
 *.sln
 *.sw?
 
-src/generate/
+generate/
 
 projects/*
 # FOR GPT
 !projects/AGENTS.md
-#CoreDevProject for testing feature and provide some sample
-!projects/sample/
-!projects/sample/**
+# Minimal template used by add-projects
+!projects/0-template/
+!projects/0-template/**
+# Beginer sample
+!projects/1-beginer-sample/
+!projects/1-beginer-sample/**
+# Advance sample
+!projects/2-advance-sample/
+!projects/2-advance-sample/**

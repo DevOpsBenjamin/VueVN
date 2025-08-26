@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 VueVN is a visual novel engine built with Vue 3, TypeScript, and Vite that provides a natural TypeScript development experience with perfect save/load and history functionality like Ren'Py.
 
-**Current Status:** ✅ **Dual-Phase Engine Implemented** - The engine architecture redesign has been implemented with dual-phase execution, history navigation, and TypeScript event development. Some TypeScript errors remain in UI components but core engine functionality is working.
+**Current Status:** ✅ **Location-Centric Architecture Implemented** - The engine has been successfully migrated to location-centric architecture with automatic resource loading, supporting complex sandbox games with dozens of locations while maintaining developer simplicity and engine performance.
 
 ## Essential Development Commands
 
@@ -32,12 +32,28 @@ npm run check
 
 ## Key Architecture
 
-### Project System
-- Individual visual novels stored in `projects/` directory
-- Each project has `config.json`, events, assets, components, stores, types
+### Location-Centric Project System
+- Individual visual novels stored in `projects/` directory with location-centric architecture
 - `VUEVN_PROJECT` environment variable determines active project
 - Projects are isolated but share the same engine runtime
-- Project structure: `events/`, `assets/`, `components/`, `stores/`, `types/`, `locations/`, `npcs/`
+- **New Structure:**
+  ```
+  projects/sample/
+  ├── locations/           # Location-specific resources
+  │   ├── bedroom/
+  │   │   ├── actions/     # Actions available in bedroom
+  │   │   ├── events/      # Events that happen in bedroom
+  │   │   ├── assets/      # Bedroom-specific images/sounds
+  │   │   └── location.ts  # Location configuration
+  │   └── city/
+  ├── global/              # Non-location resources
+  │   ├── events/          # System events (intro, cutscenes)
+  │   └── assets/          # Global UI assets
+  └── shared/              # Project-wide resources
+      ├── npcs/
+      ├── stores/
+      └── types/
+  ```
 
 ### Dual-Phase Engine Architecture
 - **Simulation Phase**: Events execute to generate action sequences
@@ -46,6 +62,7 @@ npm run check
   - `HistoryManager`: Save/load and text-by-text navigation
   - `ActionExecutor`: Action playback and state management  
   - `EventManager`: Event execution and jumping
+  - `LocationManager`: **NEW** Location-specific resource loading
   - `NavigationManager`: Menu and UI state management
   - `InputManager`: User input handling
   - `SimulateRunner`: Event simulation orchestration
@@ -55,8 +72,11 @@ npm run check
 - Build system generates TypeScript files from project data using `scripts/generate.cts`
 - Generated files in `src/generate/` provide type-safe access to project resources
 - Automatic generation during development with file watching
-- Individual generators: `generate-types-index.cts`, `generate-events-index.cts`, `generate-components-index.cts`, `generate-engine-index.cts`
-- Generates: runtime exports, type definitions, event registrations, component registrations
+- **New Generators:**
+  - `generate-location-resources.cts`: Per-location resource indexes
+  - `generate-global-events.cts`: Global event registration
+- **Legacy Generators**: `generate-types-index.cts`, `generate-events-index.cts`, `generate-components-index.cts`, `generate-engine-index.cts`
+- **Generates**: Location registries, global event indexes, type-safe resource access
 
 ## 🚨 Critical Import Rules
 

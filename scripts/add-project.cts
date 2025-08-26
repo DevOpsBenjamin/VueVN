@@ -2,7 +2,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
 import AdmZip from 'adm-zip';
 
 const rootDir = path.join(__dirname, '..');

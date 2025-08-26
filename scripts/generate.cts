@@ -1,9 +1,7 @@
 // Script unique pour générer tous les index (components, engine, events)
 // Usage: tsx scripts/generate.cts [--watch]
-
 import { execSync } from "child_process";
 import path from "path";
-import fs from "fs";
 import chokidar from "chokidar";
 
 // Verify we have a project
@@ -29,19 +27,28 @@ function run(script: string): void {
   }
 }
 
-// Run all generation scripts
-run("generate-components-index.cts");
-run("generate-engine-index.cts");
-run("generate-events-index.cts");
-run("generate-types-index.cts");
+// Generate project-specific tsconfig first (only once, not watched)
+run("generate-tsconfig.cts");
+
+function generate_files() {
+  // Run all generation scripts
+  run("generate-types.cts");
+  run("generate-enums.cts");
+  run("generate-stores.cts");
+  run("generate-engine.cts");
+  run("generate-components.cts");
+  run("generate-locations.cts");
+  run("generate-project.cts");
+}
+
+generate_files()
 
 // Mode watch (dev)
 if (process.argv.includes("--watch")) {
-
   // Watch paths specific to the current project
   const watchList: string[] = [
-    "src/engine/**/*.vue",
-    "src/engine/**/*.ts",
+    "engine_src/**/*.vue",
+    "engine_src/**/*.ts",
     `projects/${currentProject}/**/*.vue`,
     `projects/${currentProject}/**/*.ts`,
   ];
@@ -54,12 +61,9 @@ if (process.argv.includes("--watch")) {
   });
 
   watcher.on("all", (event: string, filePath: string) => {
-    console.log(`🔄 File ${event}: ${filePath}`);
+    console.log(`🔄 File ${event}: ${filePath}`);    
 
-    run("generate-components-index.cts");
-    run("generate-engine-index.cts");
-    run("generate-events-index.cts");
-    run("generate-types-index.cts");
+    generate_files()
   });
 
   watcher.on("error", (error: Error) => {

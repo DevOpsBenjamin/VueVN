@@ -10,17 +10,36 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
-    "types": ["vite/client"],
+    "types": [
+      "vite/client"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@engine/*": [
+        "engine_src/*"
+      ],
+      "@editor/*": [
+        "editor_src/*"
+      ],
+      "@project/*": [
+        "projects/1-beginer-sample/*"
+      ],
+      "@generate/*": [
+        "generate/*"
+      ]
     }
   },
   "include": [
-    "src/**/*.ts",
-    "projects/**/*.ts",
-    "src/**/*.vue",
-    "projects/**/*.vue",
+    "engine_src/**/*.ts",
+    "engine_src/**/*.vue",
+    "editor_src/**/*.ts",
+    "editor_src/**/*.vue",
+    "projects/1-beginer-sample/**/*.ts",
+    "projects/1-beginer-sample/**/*.vue",
+    "generate/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
