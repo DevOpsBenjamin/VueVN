@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import viteApiPlugin from './vite-plugins/api.ts';
 import serveStatic from 'serve-static';
+import vueDevTools from 'vite-plugin-vue-devtools';
 
 // Dynamically resolve the current project
 const currentProject = process.env.VUEVN_PROJECT || '1-beginer-sample';
@@ -10,6 +11,7 @@ const currentProject = process.env.VUEVN_PROJECT || '1-beginer-sample';
 export default defineConfig({
   plugins: [
     vue(),
+    vueDevTools(),
     viteApiPlugin(), // File API plugin for editor
     {
       name: 'serve-project-assets',
@@ -38,7 +40,7 @@ export default defineConfig({
     },
   },
   server: {
-    host: true,             // 0.0.0.0 so it's reachable in Docker
+    host: true, // 0.0.0.0 so it's reachable in Docker
     port: 5173,
     strictPort: true,
     allowedHosts: ['dev.jetdail.fr'],

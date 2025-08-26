@@ -184,7 +184,9 @@ class Engine {
    */
   private async handleLocation(): Promise<void> {
     try {
-      const currentLocation = this.locationManager.findById(this.gameState.location_id);
+      const currentLocation = this.locationManager.findById(
+        this.gameState.location_id
+      );
       this.locationManager.updateLocations(this.gameState.location_id);
 
       // Set base background
@@ -226,7 +228,10 @@ class Engine {
       if (error.message === 'JumpInterrupt') {
         // Jump was triggered - the ActionExecutor has already set engineState.currentEvent
         // Let the engine loop handle the new event
-        console.log('Jump interrupt caught - will execute new event:', this.engineState.currentEvent);
+        console.log(
+          'Jump interrupt caught - will execute new event:',
+          this.engineState.currentEvent
+        );
         return;
       }
       console.error('Event execution error:', error);

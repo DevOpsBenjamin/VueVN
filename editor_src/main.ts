@@ -1,8 +1,8 @@
-import { createApp } from "vue";
-import { createPinia } from "pinia";
-import App from "./App.vue";
-import "./index.css";
-import { Engine } from "@generate/engine";
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import App from '@editor/App.vue';
+import '@editor/index.css';
+import { Engine } from '@generate/engine';
 import {
   engineState as useEngineState,
   gameState as useGameState,
@@ -19,6 +19,6 @@ const gameState = useGameState();
 // Create temporary gameRoot - will be replaced when Game.vue mounts
 const tempGameRoot = document.createElement('div');
 const engine = new Engine(gameState, engineState, tempGameRoot);
-console.log(`Init engine: ${engine}`)
+console.log(`Init engine: ${engine}`);
 
-app.mount("#app");
+app.mount('#app');
