@@ -1,6 +1,6 @@
 <template>
   <div class="flex h-screen">
-    <!-- Explorer de fichiers à gauche -->
+    <!-- File explorer on the left -->
     <div
       class="w-1/5 h-full border-r border-gray-800 bg-gray-900 flex flex-col"
     >
@@ -9,17 +9,11 @@
       </div>
       <ProjectExplorer />
     </div>
-    <!-- Centre : Monaco Editor + State Inspector -->
-    <div class="flex-1 flex flex-col">
-      <div class="flex-1 min-h-0">
-        <!-- Monaco Editor -->
-        <MonacoEditor />
-      </div>
-      <div class="h-1/3 border-t border-gray-800 bg-gray-950">
-        <StateEditorPanel />
-      </div>
+    <!-- Center: Monaco Editor -->
+    <div class="flex-1 min-h-0">
+      <MonacoEditor />
     </div>
-    <!-- Preview runtime flottant -->
+    <!-- Floating runtime preview -->
     <FloatingGame />
   </div>
 </template>
@@ -28,7 +22,6 @@
 import { onMounted } from "vue";
 import { loadMonaco } from "@editor/utils/monacoLoader.js";
 import MonacoEditor from "@editor/components/MonacoEditor.vue";
-import StateEditorPanel from "@editor/components/StateEditorPanel.vue";
 import FloatingGame from "@editor/components/FloatingGame.vue";
 import ProjectExplorer from "@editor/components/ProjectExplorer.vue";
 
