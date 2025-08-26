@@ -22,6 +22,7 @@ export const useGameState = defineStore("gameState", {
       Object.assign(this, createGameState());
     },
   } satisfies GameStateActions,
+  persist: true
 });
 
 export default useGameState;

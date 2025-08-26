@@ -37,6 +37,7 @@ export const useEngineState = defineStore('engineState', {
       Object.assign(this, createEngineState());
     },
   } satisfies EngineStateActions,
+  persist: true
 });
 
 export default useEngineState;

@@ -1,5 +1,6 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 import App from "@engine/App.vue";
 import "@engine/index.css";
 import { Engine } from "@generate/engine";
@@ -10,6 +11,7 @@ import {
 
 const app = createApp(App);
 const pinia = createPinia();
+pinia.use(piniaPluginPersistedstate);
 app.use(pinia);
 
 // Create Engine instance before mounting so components can access it

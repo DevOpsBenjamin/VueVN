@@ -6,9 +6,19 @@
         <div class="space-x-2">
           <button
             @click="applyEngineState"
-            class="bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded text-xs shadow"
+            :disabled="isSaving"
+            :class="[
+              'px-3 py-1 rounded text-xs shadow transition-all duration-200',
+              isSaving 
+                ? 'bg-gray-600 text-gray-300 cursor-not-allowed' 
+                : 'bg-green-700 hover:bg-green-600 text-white'
+            ]"
           >
-            Save
+            <span v-if="isSaving" class="flex items-center space-x-1">
+              <div class="w-3 h-3 border border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+              <span>Saving...</span>
+            </span>
+            <span v-else>Save</span>
           </button>
           <button
             @click="editorState.showEnginePopup = false"
@@ -25,7 +35,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { loadMonaco } from '@editor/utils/monacoLoader.js';
+import { loadMonaco } from '@editor/utils/monacoLoader';
 import { engineState as useEngineState } from '@generate/stores';
 import { useEditorState } from '@editor/stores/editorState';
 
@@ -34,6 +44,7 @@ let editorInstance: any = null;
 const engineState = useEngineState();
 const editorJson = ref('');
 const editorState = useEditorState();
+const isSaving = ref(false);
 
 watch(
   () => JSON.stringify(engineState, null, 2),
@@ -63,16 +74,25 @@ onBeforeUnmount(() => {
   if (editorInstance) editorInstance.dispose();
 });
 
-function applyEngineState() {
+async function applyEngineState() {
+  if (isSaving.value) return;
+  
   try {
+    isSaving.value = true;
     const value = editorInstance.getValue();
     const updated = JSON.parse(value);
+    
     if (typeof updated === 'object' && updated !== null) {
       engineState.$patch(updated);
-      alert('Engine State updated successfully!');
+      
+      // Show loading for a moment to give visual feedback
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
-  } catch {
-    alert('EngineState JSON is invalid!');
+  } catch (error) {
+    console.error('Failed to parse Engine State JSON:', error);
+    // Could add a toast notification here instead of alert
+  } finally {
+    isSaving.value = false;
   }
 }
 </script>

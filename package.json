@@ -34,7 +34,6 @@
     "chokidar-cli": "^3.0.0",
     "concurrently": "^9.2.0",
     "fs-extra": "^11.3.0",
-    "monaco-editor-vue3": "^0.1.10",
     "serve-static": "^2.2.0",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
