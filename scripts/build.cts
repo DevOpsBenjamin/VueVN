@@ -4,11 +4,13 @@ import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
-const projectName: string | undefined = process.argv[2];
+const args = process.argv.slice(2);
+const projectName: string | undefined = args[0];
+const ignoreTranslations = args.includes('--ignore-translations');
 
 if (!projectName) {
   console.error('❌ Error: Please provide a project name');
-  console.error('Usage: npm run build <project-name>');
+  console.error('Usage: npm run build <project-name> [--ignore-translations]');
   process.exit(1);
 }
 
@@ -25,7 +27,12 @@ console.log(`🏗️  Building project: ${projectName}`);
 const env = { ...process.env, VUEVN_PROJECT: projectName };
 
 try {
-  // Generate files
+  // Step 1: Verify project before building
+  console.log('🔍 Verifying project quality...');
+  const verifyCommand = `tsx scripts/verify-project.cts ${projectName}${ignoreTranslations ? ' --ignore-translations' : ''}`;
+  execSync(verifyCommand, { stdio: 'inherit', env });
+  
+  // Step 2: Generate files
   execSync('tsx scripts/generate.cts', { stdio: 'inherit', env });
 
   // Build with Vite using game config
