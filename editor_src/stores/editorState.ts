@@ -1,20 +1,34 @@
 import { defineStore } from 'pinia';
-import { ref, Ref } from 'vue';
+import { ref } from 'vue';
 
-export const useEditorState = defineStore('editorState', () => {
-  // Current file being edited (relative path in the project)
-  const currentFile: Ref<string | null> = ref(null);
+export const useEditorState = defineStore(
+  'editorState',
+  () => {
+    // Current file being edited (relative path in the project)
+    const currentFile = ref<string | null>(null);
 
-  // Preview visibility
-  const previewVisible: Ref<boolean> = ref(false);
+    // Preview visibility
+    const previewVisible = ref(false);
 
-  function selectFile(file: string) {
-    currentFile.value = file;
-  }
+    // Currently active module component
+    const activeModule = ref('dashboard');
 
-  return {
-    currentFile,
-    previewVisible,
-    selectFile,
-  };
-});
+    // Popup visibility flags
+    const showEnginePopup = ref(false);
+    const showGamePopup = ref(false);
+
+    function selectFile(file: string) {
+      currentFile.value = file;
+    }
+
+    return {
+      currentFile,
+      previewVisible,
+      activeModule,
+      showEnginePopup,
+      showGamePopup,
+      selectFile,
+    };
+  },
+  { persist: true }
+);
