@@ -5,7 +5,7 @@ import AdmZip from 'adm-zip';
 
 const rootDir = path.join(__dirname, '..');
 const templateDir = path.join(rootDir, 'projects', '0-template');
-const templatePath = path.join(rootDir, 'template', 'template.zip');
+const templatePath = path.join(rootDir, 'template', 'project.zip');
 
 console.log('📦 Updating project template from 0-template...');
 
