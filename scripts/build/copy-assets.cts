@@ -5,14 +5,9 @@ import fs from 'fs';
 import fsExtra from 'fs-extra';
 
 const projectName: string = process.env.VUEVN_PROJECT!;
+const rootFolder: string = process.env.VUEVN_ROOT!;
 const verbose: boolean = process.env.VUEVN_VERBOSE! == 'true';
-const projectPath: string = path.join(
-  __dirname,
-  '..',
-  '..',
-  'projects',
-  projectName
-);
+const projectPath: string = path.join(rootFolder, 'projects', projectName);
 
 if (!fs.existsSync(projectPath)) {
   console.error(`❌ Error: Project "${projectName}" does not exist`);
@@ -23,7 +18,7 @@ if (verbose) {
   console.log(`🖨️  Copying assets for project: ${projectName}`);
 }
 
-const publicDir: string = path.join(__dirname, '..', 'public');
+const publicDir: string = path.join(rootFolder, 'public');
 
 // Ensure public directory exists
 if (!fs.existsSync(publicDir)) {

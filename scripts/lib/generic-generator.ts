@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 const verbose: boolean = process.env.VUEVN_VERBOSE! == 'true';
+const projectName: string = process.env.VUEVN_PROJECT!;
+const rootFolder: string = process.env.VUEVN_ROOT!;
 
 // Normalize path separators to always use forward slashes for imports
 function normalizeImportPath(pathString: string): string {
@@ -57,11 +59,9 @@ function getAllFiles(
 export async function generateDifferentialExports(
   config: GeneratorConfig
 ): Promise<void> {
-  const projectName: string = process.env.VUEVN_PROJECT!;
-
-  const projectPath = path.join(process.cwd(), 'projects', projectName);
+  const projectPath = path.join(rootFolder, 'projects', projectName);
   const engineResourcePath = path.join(
-    process.cwd(),
+    rootFolder,
     'engine_src',
     config.resourceType
   );
@@ -70,7 +70,7 @@ export async function generateDifferentialExports(
     'plugins',
     config.resourceType
   );
-  const generatePath = path.join(process.cwd(), 'generate');
+  const generatePath = path.join(rootFolder, 'generate');
 
   if (verbose) {
     console.log(

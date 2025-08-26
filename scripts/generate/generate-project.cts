@@ -5,8 +5,9 @@ import path from 'path';
 
 const projectName: string = process.env.VUEVN_PROJECT!;
 const verbose: boolean = process.env.VUEVN_VERBOSE! == 'true';
+const rootFolder: string = process.env.VUEVN_ROOT!;
 
-const generatePath = path.join(__dirname, '..', 'generate');
+const generatePath = path.join(rootFolder, 'generate');
 const generateLocationsPath = path.join(generatePath, 'locations');
 
 if (verbose) {

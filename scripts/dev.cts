@@ -6,6 +6,7 @@ import fs from 'fs';
 const argv = process.argv.slice(2);
 const slashOpts = argv.filter((a) => a.startsWith('/'));
 const Opts = argv.filter((a) => !a.startsWith('/'));
+const rootFolder = path.join(__dirname, '..');
 
 const ignoreTranslations = slashOpts.includes('/ignore-translations');
 const verbose = slashOpts.includes('/verbose');
@@ -18,7 +19,7 @@ if (Opts.length !== 1) {
   process.exit(1);
 }
 const projectName = Opts[0];
-const projectPath: string = path.join(__dirname, '..', 'projects', projectName);
+const projectPath: string = path.join(rootFolder, 'projects', projectName);
 
 if (!fs.existsSync(projectPath)) {
   console.error(`❌ Error: Project "${projectName}" does not exist`);
@@ -31,6 +32,7 @@ const env = {
   VUEVN_PROJECT: projectName,
   VUEVN_IGNORE_TRANSLATIONS: ignoreTranslations ? 'true' : 'false',
   VUEVN_VERBOSE: verbose ? 'true' : 'false',
+  VUEVN_ROOT: rootFolder,
 };
 
 console.log(`🎮 Starting dev server for: ${projectName}`);

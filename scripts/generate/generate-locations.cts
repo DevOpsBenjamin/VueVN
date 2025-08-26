@@ -10,11 +10,12 @@ import {
 } from '../lib/location-generator';
 
 const projectName: string = process.env.VUEVN_PROJECT!;
+const rootFolder: string = process.env.VUEVN_ROOT!;
 const verbose: boolean = process.env.VUEVN_VERBOSE! == 'true';
 
-const projectPath = path.join(__dirname, '..', 'projects', projectName);
+const projectPath = path.join(rootFolder, 'projects', projectName);
 const locationsPath = path.join(projectPath, 'locations');
-const generatePath = path.join(__dirname, '..', 'generate');
+const generatePath = path.join(rootFolder, 'generate');
 const generateLocationsPath = path.join(generatePath, 'locations');
 const generateGlobalPath = path.join(generatePath, 'global');
 

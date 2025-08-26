@@ -7,7 +7,7 @@ import * as path from 'path';
 const verbose: boolean = process.env.VUEVN_VERBOSE! == 'true';
 const projectName: string = process.env.VUEVN_PROJECT!;
 const ignoreTranslations = process.env.VUEVN_IGNORE_TRANSLATIONS! == 'true';
-
+const rootFolder: string = process.env.VUEVN_ROOT!;
 interface VerificationResult {
   success: boolean;
   errors: string[];
@@ -16,7 +16,7 @@ interface VerificationResult {
 
 async function main() {
   // Verify project exists
-  const projectPath = path.join(process.cwd(), 'projects', projectName);
+  const projectPath = path.join(rootFolder, 'projects', projectName);
   if (!fs.existsSync(projectPath)) {
     console.error(`❌ Project not found: ${projectName}`);
     console.error(
@@ -102,15 +102,12 @@ async function verifyTypeScript(
   };
 
   try {
-    // Set environment variable for project-specific checking
-    const env = { ...process.env, VUEVN_PROJECT: projectName };
-
     if (verbose) {
       console.log('   Checking TypeScript compilation...');
     }
     execSync('npx vue-tsc --noEmit', {
       stdio: 'pipe',
-      env,
+      env: process.env,
       encoding: 'utf8',
     });
 
@@ -158,15 +155,12 @@ async function verifyTranslations(
   };
 
   try {
-    // Set environment variable
-    const env = { ...process.env, VUEVN_PROJECT: projectName };
-
     if (verbose) {
       console.log('   Checking translation completeness...');
     }
     execSync('tsx scripts/check-i18n.cts', {
       stdio: 'pipe',
-      env,
+      env: process.env,
       encoding: 'utf8',
     });
 
