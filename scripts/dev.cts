@@ -35,7 +35,7 @@ spawn(
     '-c',
     'green,cyan',
     `"tsx scripts/generate.cts --watch"`,
-    '"vite --config vite.config.editor.js"',
+    '"vite"',
   ],
   {
     stdio: 'inherit',

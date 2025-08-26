@@ -15,14 +15,13 @@ export default defineConfig({
   resolve: {
     alias: {
       '@engine': path.resolve(__dirname, 'engine_src'),
-      '@editor': path.resolve(__dirname, 'editor_src'),
       '@project': path.resolve(__dirname, 'projects', currentProject),
       '@generate': path.resolve(__dirname, 'generate'),
     },
   },
   build: {
     rollupOptions: {
-      input: path.resolve(__dirname, 'engine.html'), // Engine HTML entry point
+      input: path.resolve(__dirname, 'game.html'), // Game HTML entry point
     },
   },
 });

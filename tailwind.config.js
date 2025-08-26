@@ -1,10 +1,9 @@
 module.exports = {
   content: [
-    './engine.html',
-    './editor.html',
+    './game.html',
+    './index.html',
     './engine_src/**/*.{vue,js,ts,jsx,tsx}',
     './editor_src/**/*.{vue,js,ts,jsx,tsx}',
-    './public/game/events/**/*.js',
   ],
   theme: {
     extend: {

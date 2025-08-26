@@ -28,8 +28,8 @@ try {
   // Generate files
   execSync('tsx scripts/generate.cts', { stdio: 'inherit', env });
 
-  // Build with Vite using engine config
-  execSync('vite build --config vite.config.engine.js', { stdio: 'inherit', env });
+  // Build with Vite using game config
+  execSync('vite build --config vite.config.game.js', { stdio: 'inherit', env });
 
   // Copy assets
   execSync('tsx scripts/copy-assets.cts', { stdio: 'inherit', env });

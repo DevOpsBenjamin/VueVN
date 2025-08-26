@@ -37,7 +37,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      input: path.resolve(__dirname, 'editor.html'), // Editor HTML entry point
+      input: path.resolve(__dirname, 'index.html'), // Main HTML entry point
     },
   },
   server: {
