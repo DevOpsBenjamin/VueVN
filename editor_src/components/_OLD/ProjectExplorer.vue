@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useEditorState } from "@editor/stores/editorState";
-import FileTree from "@editor/components/Tree/FileTree.vue";
+import FileTree from "@editor/components/_OLD/Tree/FileTree.vue";
 
 interface FileItem {
   name: string;

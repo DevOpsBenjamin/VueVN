@@ -19,8 +19,8 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { loadMonaco } from "@editor/utils/monacoLoader.js";
-import MonacoEditor from "@editor/components/MonacoEditor.vue";
-import ProjectExplorer from "@editor/components/ProjectExplorer.vue";
+import MonacoEditor from "@editor/components/_OLD/MonacoEditor.vue";
+import ProjectExplorer from "@editor/components/_OLD/ProjectExplorer.vue";
 
 onMounted(async () => {
   await loadMonaco();

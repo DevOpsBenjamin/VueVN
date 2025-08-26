@@ -20,7 +20,7 @@ function createGameState(): GameState
 export const useGameState = defineStore("gameState", {
   state: (): GameState => (createGameState()),
   actions: {
-    resetGame(): void {
+    $reset() {
       Object.assign(this, createGameState());
     },
   } satisfies GameStateActions,

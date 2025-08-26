@@ -8,8 +8,8 @@ export const startNewGame = async (engine: Engine): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 100));
   
   // Access store action methods directly (properly typed)
-  engine.gameState.resetGame();
-  engine.engineState.resetState();
+  engine.gameState.$reset();
+  engine.engineState.$reset();
   
   engine.historyManager.resetHistory();
   engine.eventManager.resetEvents(engine.gameState);

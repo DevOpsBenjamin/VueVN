@@ -1,34 +1,29 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import type { EditorState } from '@editor/stores/types/EditorState'
+import type { EditorStateActions } from '@editor/stores/types/EditorStateActions'
 
-export const useEditorState = defineStore(
-  'editorState',
-  () => {
-    // Current file being edited (relative path in the project)
-    const currentFile = ref<string | null>(null);
+function createEditorState(): EditorState
+{
+  return {
+    currentFile: null,
+    activeModule: 'dashboard',
+    previewVisible: false,
+    showEnginePopup: false,
+    showGamePopup: false,
+  }
+}
 
-    // Preview visibility
-    const previewVisible = ref(false);
-
-    // Currently active module component
-    const activeModule = ref('dashboard');
-
-    // Popup visibility flags
-    const showEnginePopup = ref(false);
-    const showGamePopup = ref(false);
-
-    function selectFile(file: string) {
-      currentFile.value = file;
+export const useEditorState = defineStore('editorState', {
+  state: (): EditorState => (createEditorState()),
+  actions: {
+    $reset(): void {
+      Object.assign(this, createEditorState());
+    },
+    selectFile(file: string): void {
+      this.currentFile = file;
     }
+  } satisfies EditorStateActions,
+  persist: true
+});
 
-    return {
-      currentFile,
-      previewVisible,
-      activeModule,
-      showEnginePopup,
-      showGamePopup,
-      selectFile,
-    };
-  },
-  { persist: true }
-);
+export default useEditorState;

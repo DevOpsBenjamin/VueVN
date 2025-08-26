@@ -33,7 +33,7 @@ function createEngineState(): EngineState
 export const useEngineState = defineStore('engineState', {
   state: (): EngineState => (createEngineState()),
   actions: {
-    resetState(): void {
+    $reset(): void {
       Object.assign(this, createEngineState());
     },
   } satisfies EngineStateActions,
