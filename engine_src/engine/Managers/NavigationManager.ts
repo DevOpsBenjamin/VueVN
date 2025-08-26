@@ -17,7 +17,6 @@ export default class NavigationManager {
   // #region Navigation methode
   async goForward(): Promise<void> {
     if (this.continueManager.hasWaiter()) {
-      console.warn("Going forward ...");
       this.historyManager.goForward();
       this.continueManager.resolve();
     }
@@ -33,11 +32,7 @@ export default class NavigationManager {
   }
   
   async goBack(): Promise<void> {
-    if (!this.historyManager.canGoBack()) {
-      console.warn("Can't goBack..."); 
-    }
-    else {
-      console.warn("Going back in history...");
+    if (this.historyManager.canGoBack()) {
       this.historyManager.goBack();
     }
     this.continueManager.reject();

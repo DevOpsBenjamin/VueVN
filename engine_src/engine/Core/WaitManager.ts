@@ -11,8 +11,6 @@ export default class WaitManager<T> {
 
   async wait(): Promise<T> {
     this.reject(); // Cancel any existing waiter
-    
-    console.warn(`wait${this.name}`);
     return new Promise<T>((resolve, reject) => {
       this.resolveFunction = resolve;
       this.rejectFunction = reject;
@@ -29,7 +27,6 @@ export default class WaitManager<T> {
 
   resolve(value: T): void {
     if (this.resolveFunction) {
-      console.warn(`${this.name}Manager: Resolving ${this.name.toLowerCase()}`);
       this.resolveFunction(value);
       this.resolveFunction = null;
       this.rejectFunction = null;

@@ -56,7 +56,6 @@ export default class InputManager {
     if (e.key === 'Control') {
       if (!this.skipMode) {
         this.skipMode = true;
-        console.warn('Skip mode ON');
       }
       return;
     }
@@ -80,7 +79,6 @@ export default class InputManager {
     if (e.key === 'Control') {
       if (this.skipMode) {
         this.skipMode = false;
-        console.warn('Skip mode OFF');
       }
     }
   }
@@ -96,10 +94,8 @@ export default class InputManager {
     const midpoint = rect.left + rect.width / 2;
 
     if (e.clientX > midpoint) {
-      console.warn("CLICK FORWARD");
       this.forward();
     } else {
-      console.warn("CLICK BACKWARD");
       this.backward();
     }
   }
