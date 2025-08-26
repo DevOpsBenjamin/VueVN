@@ -158,7 +158,13 @@ async function verifyTranslations(
     if (verbose) {
       console.log('   Checking translation completeness...');
     }
-    execSync('tsx scripts/check-i18n.cts', {
+    const scriptPath = path.resolve(
+      process.cwd(),
+      'scripts',
+      'build',
+      'check-i18n.cts'
+    );
+    execSync(`tsx ${scriptPath}`, {
       stdio: 'pipe',
       env: process.env,
       encoding: 'utf8',
