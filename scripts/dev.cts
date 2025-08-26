@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
@@ -34,6 +34,10 @@ const env = {
   VUEVN_VERBOSE: verbose ? 'true' : 'false',
   VUEVN_ROOT: rootFolder,
 };
+
+console.log('🖨️  Copying assets...');
+// Step 3: Copy assets
+execSync('tsx scripts/build/copy-assets.cts', { stdio: 'inherit', env });
 
 console.log(`🎮 Starting dev server for: ${projectName}`);
 // Configure concurrently options based on verbose flag

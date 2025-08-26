@@ -50,16 +50,16 @@ try {
   console.log('🔍 Verifying project quality...');
   execSync('tsx scripts/build/verify-project.cts', { stdio: 'inherit', env });
 
+  console.log('🖨️  Copying assets...');
+  // Step 3: Copy assets
+  execSync('tsx scripts/build/copy-assets.cts', { stdio: 'inherit', env });
+
   // Step 3: Build with Vite
   console.log('🏗️  Building with Vite...');
   execSync('npx vite build --config vite.config.game.js', {
     stdio: verbose ? 'inherit' : 'ignore',
     env,
   });
-
-  console.log('🖨️  Copying assets...');
-  // Step 4: Copy assets
-  execSync('tsx scripts/build/copy-assets.cts', { stdio: 'inherit', env });
 
   console.log(`✅ Build complete for: ${projectName}`);
 } catch (error: any) {
