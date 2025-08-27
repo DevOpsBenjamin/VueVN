@@ -255,10 +255,128 @@ function extractLanguageData(structure: any, language: string): any {
   return result;
 }
 
+function generateTextTypes(): string {
+  const projectInfo = getProjectInfo();
+  
+  // Scan for text files to generate types
+  const textFiles = scanTextFilesSync(projectInfo.projectPath);
+  const textStructure = buildTextStructure(textFiles);
+  
+  // Generate global text types
+  const globalTypes = generateInterfaceFromStructure(textStructure.global, 'GlobalTexts');
+  
+  // Generate location text types  
+  const locationTypes = generateInterfaceFromStructure(textStructure.locations, 'LocationTexts');
+  
+  return `// Auto-generated TypeScript definitions for text tree
+${globalTypes}
+
+${locationTypes}`;
+}
+
+function scanTextFilesSync(projectPath: string): TextFile[] {
+  const textFiles: TextFile[] = [];
+
+  // Scan global texts
+  const globalTextsPath = path.join(projectPath, 'global', 'texts');
+  if (fs.existsSync(globalTextsPath)) {
+    scanDirectorySync(globalTextsPath, 'global', textFiles);
+  }
+
+  // Scan location texts
+  const locationsPath = path.join(projectPath, 'locations');
+  if (fs.existsSync(locationsPath)) {
+    const locations = fs
+      .readdirSync(locationsPath)
+      .filter((item) =>
+        fs.statSync(path.join(locationsPath, item)).isDirectory()
+      );
+
+    for (const location of locations) {
+      const locationTextsPath = path.join(locationsPath, location, 'texts');
+      if (fs.existsSync(locationTextsPath)) {
+        scanDirectorySync(
+          locationTextsPath,
+          `locations.${location}`,
+          textFiles
+        );
+      }
+    }
+  }
+
+  return textFiles;
+}
+
+function scanDirectorySync(
+  dirPath: string,
+  prefix: string,
+  textFiles: TextFile[]
+) {
+  const items = fs.readdirSync(dirPath);
+
+  for (const item of items) {
+    const itemPath = path.join(dirPath, item);
+    const stat = fs.statSync(itemPath);
+
+    if (stat.isDirectory()) {
+      scanDirectorySync(itemPath, `${prefix}.${item}`, textFiles);
+    } else if (item.endsWith('.ts') && item === 'en.ts') {
+      // Only process English files for type generation
+      try {
+        const modulePath = path.resolve(itemPath);
+        delete require.cache[modulePath];
+        const module = require(modulePath);
+        const content = module.default || module;
+
+        textFiles.push({
+          path: prefix,
+          lang: 'en',
+          content,
+        });
+      } catch (error) {
+        console.warn(`⚠️  Failed to load text file for types: ${itemPath}`, error);
+      }
+    }
+  }
+}
+
+function generateInterfaceFromStructure(structure: any, interfaceName: string): string {
+  const generateType = (obj: any, depth = 0): string => {
+    if (!obj || typeof obj !== 'object') return 'string';
+    
+    const indent = '  '.repeat(depth + 1);
+    const props = Object.keys(obj).map(key => {
+      const value = obj[key];
+      if (typeof value === 'string') {
+        return `${indent}${key}: string;`;
+      } else if (typeof value === 'object' && value.en && typeof value.en === 'object') {
+        // This is a nested text structure
+        return `${indent}${key}: {\n${generateType(value.en, depth + 1)}\n${indent}};`;
+      } else if (typeof value === 'object') {
+        return `${indent}${key}: {\n${generateType(value, depth + 1)}\n${indent}};`;
+      }
+      return `${indent}${key}: string;`;
+    }).join('\n');
+    
+    return props;
+  };
+
+  return `export interface ${interfaceName} {
+${generateType(structure)}
+}`;
+}
+
 function generateTextProvider(languages: string[]): string {
+  const projectInfo = getProjectInfo();
+  
+  // Generate type definitions for text tree
+  const typeDefinitions = generateTextTypes();
+  
   return `// Generated text provider - i18n system
 import { engineState as useEngineState } from '@generate/stores';
 import { textTree, availableLanguages, type TextTree } from './textTree';
+
+${typeDefinitions}
 
 class TextProvider {
   private engineState = useEngineState();
@@ -317,16 +435,50 @@ class TextProvider {
 // Global text provider instance
 export const t = new TextProvider();
 
-// Helper function for current context
-export function createContextHelper(basePath: string) {
-  return new Proxy({}, {
+// Type-safe text helpers
+export const text = {
+  global: new Proxy({} as GlobalTexts, {
     get(target, prop) {
       if (typeof prop === 'string') {
-        return t.getText(\`\${basePath}.\${prop}\`);
+        return new Proxy({}, {
+          get(target2, prop2) {
+            if (typeof prop2 === 'string') {
+              return t.getText(\`global.\${prop}.\${prop2}\`);
+            }
+          }
+        });
       }
-      return undefined;
     }
-  });
+  }),
+  
+  locations: new Proxy({} as LocationTexts, {
+    get(target, locationName) {
+      if (typeof locationName === 'string') {
+        return new Proxy({}, {
+          get(target2, eventName) {
+            if (typeof eventName === 'string') {
+              return new Proxy({}, {
+                get(target3, textKey) {
+                  if (typeof textKey === 'string') {
+                    return t.getText(\`locations.\${locationName}.\${eventName}.\${textKey}\`);
+                  }
+                }
+              });
+            }
+          }
+        });
+      }
+    }
+  })
+};
+
+// Helper function for variable interpolation
+export function interpolate(text: string, variables: Record<string, string>): string {
+  let result = text;
+  for (const [key, value] of Object.entries(variables)) {
+    result = result.replace(new RegExp(\`%\${key}%\`, 'g'), value);
+  }
+  return result;
 }
 `;
 }
