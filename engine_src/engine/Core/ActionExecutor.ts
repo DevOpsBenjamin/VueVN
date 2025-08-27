@@ -132,17 +132,11 @@ export default class ActionExecutor {
   }
 
   private async handleJumpAction(event: VNEvent, action: VNAction): Promise<void> {
+    // THIS NOT WAI USER INPUT ITS LIKE A CHOICE EVENT BUT CODE CONDITIONAL
     // Jump should exit the current event execution and trigger new event
-    const jumpEventId = action.engineState?.jumpEvent;
-    if (jumpEventId) {
-      // Set the target event in engine state for the main engine to pick up
-      this.engineState.currentEvent = jumpEventId;
-      this.engineState.currentStep = 0;
-      
-      // Throw error to break out of current event execution
-      throw new Error('JumpInterrupt');
-    } else {
-      console.error('Jump action missing target event ID');
+    const branch_id = action.event_id;     
+    if (event.branches?.[branch_id]) {
+      await this.simulateEvent(event.branches[branch_id].execute);
     }
   }
 }

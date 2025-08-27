@@ -65,18 +65,14 @@ export default class SimulateRunner implements EngineAPI
     
     async jump(eventId: string): Promise<void> {
         this.engineState.currentStep++;
-        this.engineState.jumpEvent = eventId
 
         // Create action with state snapshot (WITH jump type)
         this.actions.push({
           type: VNActionEnum.JUMP,
-          event_id: this.event_id,
+          event_id: eventId,
           gameState: JSON.parse(JSON.stringify(this.gameState)),
           engineState: JSON.parse(JSON.stringify(this.engineState))
         });
-        
-        // Clear jump after capturing - clean state for next action
-        this.engineState.jumpEvent = null
     }
 
     setBackground(imagePath: string): void {

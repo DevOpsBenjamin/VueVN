@@ -1,5 +1,6 @@
 import type { GameState } from '@generate/types';
-import type { DateableNPC, RelationLevel } from '../../types/stores/npcs/DateableNPC';
+import type { DateableNPC } from 'generate/types';
+import { RelationLevel } from '@generate/enums';
 
 class RelationManager {
   static readonly THRESHOLDS = {
@@ -13,53 +14,53 @@ class RelationManager {
     npc.relation = Math.min(npc.relation + amount, max);
     this.updateRelationshipLevel(npc);
     
-    if (oldLevel === 'stranger' && npc.relationship !== 'stranger') {
+    if (oldLevel === RelationLevel.STRANGER && npc.relationship !== RelationLevel.STRANGER) {
       npc.flags.first_relationship_upgrade = true;
     }
   }
 
   static removeRelation(npc: DateableNPC, amount: number, min: number = 10): void {
     npc.relation = Math.max(npc.relation - amount, min);
-    if (npc.relationship !== 'stranger') {
+    if (npc.relationship !== RelationLevel.STRANGER) {
       this.updateRelationshipLevel(npc);
     }
   }
 
   static setRelation(npc: DateableNPC, amount: number): void {
     npc.relation = Math.max(10, Math.min(amount, 100));
-    if (npc.relationship !== 'stranger') {
+    if (npc.relationship !== RelationLevel.STRANGER) {
       this.updateRelationshipLevel(npc);
     }
   }
 
   static updateRelationshipLevel(npc: DateableNPC): void {
-    if (npc.relation >= this.THRESHOLDS.close_friend && npc.relationship !== 'close_friend') {
-      npc.relationship = 'close_friend';
-    } else if (npc.relation >= this.THRESHOLDS.friend && npc.relationship === 'acquaintance') {
-      npc.relationship = 'friend';
-    } else if (npc.relation >= this.THRESHOLDS.acquaintance && npc.relationship === 'stranger') {
-      npc.relationship = 'acquaintance';
+    if (npc.relation >= this.THRESHOLDS.close_friend && npc.relationship !== RelationLevel.CLOSE_FRIEND) {
+      npc.relationship = RelationLevel.CLOSE_FRIEND;
+    } else if (npc.relation >= this.THRESHOLDS.friend && npc.relationship === RelationLevel.ACQUAINTANCE) {
+      npc.relationship = RelationLevel.FRIEND;
+    } else if (npc.relation >= this.THRESHOLDS.acquaintance && npc.relationship === RelationLevel.STRANGER) {
+      npc.relationship = RelationLevel.ACQUAINTANCE;
     }
   }
 
   static canDowngrade(npc: DateableNPC): boolean {
-    return npc.relationship !== 'stranger';
+    return npc.relationship !== RelationLevel.STRANGER;
   }
 
   static getRelationStatus(npc: DateableNPC): { level: RelationLevel; points: number; nextThreshold: number | null } {
     let nextThreshold: number | null = null;
     
     switch (npc.relationship) {
-      case 'stranger':
+      case RelationLevel.STRANGER:
         nextThreshold = this.THRESHOLDS.acquaintance;
         break;
-      case 'acquaintance':
+      case RelationLevel.ACQUAINTANCE:
         nextThreshold = this.THRESHOLDS.friend;
         break;
-      case 'friend':
+      case RelationLevel.FRIEND:
         nextThreshold = this.THRESHOLDS.close_friend;
         break;
-      case 'close_friend':
+      case RelationLevel.CLOSE_FRIEND:
         nextThreshold = null;
         break;
     }
@@ -72,7 +73,7 @@ class RelationManager {
   }
 
   static isRelationAtLeast(npc: DateableNPC, level: RelationLevel): boolean {
-    const levels: RelationLevel[] = ['stranger', 'acquaintance', 'friend', 'close_friend'];
+    const levels: RelationLevel[] = [RelationLevel.STRANGER, RelationLevel.ACQUAINTANCE, RelationLevel.FRIEND, RelationLevel.CLOSE_FRIEND];
     const currentIndex = levels.indexOf(npc.relationship);
     const targetIndex = levels.indexOf(level);
     return currentIndex >= targetIndex;

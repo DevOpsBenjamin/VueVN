@@ -1,4 +1,4 @@
-import { DateableNPC } from "./DateableNPC";
+import { DateableNPC } from "@generate/types";
 
 export interface Barista extends DateableNPC {
   workSchedule: {

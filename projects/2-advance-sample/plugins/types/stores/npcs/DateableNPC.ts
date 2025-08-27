@@ -1,6 +1,5 @@
 import { NPC } from "@generate/types";
-
-export type RelationLevel = 'stranger' | 'acquaintance' | 'friend' | 'close_friend';
+import { RelationLevel } from "@generate/enums";
 
 export interface DateableNPC extends NPC {
   name: string;
