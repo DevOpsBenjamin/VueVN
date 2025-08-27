@@ -6,4 +6,6 @@ export interface EditorState {
   previewVisible: boolean;
   showEnginePopup: boolean;
   showGamePopup: boolean;
+  showTextPopup: boolean;
+  textFilePath: string | null;
 }

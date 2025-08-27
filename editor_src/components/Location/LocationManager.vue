@@ -130,6 +130,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import projectData from '@generate/project';
 import { useEditorState } from '@editor/stores/editorState';
 const editorState = useEditorState();
@@ -147,9 +148,10 @@ function editLocation(locationId: string) {
 }
 
 // Delete location handler
-function deleteLocation(locationId: string) {
-  // TODO: Implement delete location functionality
-  console.log('Delete location:', locationId);
+async function deleteLocation(locationId: string) {
+  await fetch(`/api/delete?path=${encodeURIComponent(`locations/${locationId}`)}`, { method: 'DELETE' });
+  locationsArray.value = locationsArray.value.filter((loc) => loc.id !== locationId);
+  delete (projectData as any).locations[locationId];
 }
 
 // Calculate global events and actions count
@@ -158,11 +160,13 @@ const globalStats = {
   actionCount: Object.keys(projectData.global.actions).length
 };
 
-// Convert locations record to array with stats and icons
-const locationsArray = Object.entries(projectData.locations).map(([id, locationData]) => ({
+// Convert locations record to array with stats
+const locationsArray = ref(
+  Object.entries(projectData.locations).map(([id, locationData]) => ({
     id,
     name: locationData.info!.name,
     eventCount: Object.keys(locationData.events).length,
     actionCount: Object.keys(locationData.actions).length
-  }));
+  }))
+);
 </script>

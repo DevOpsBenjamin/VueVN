@@ -11,6 +11,8 @@ function createEditorState(): EditorState
     previewVisible: false,
     showEnginePopup: false,
     showGamePopup: false,
+    showTextPopup: false,
+    textFilePath: null,
   }
 }
 
@@ -22,6 +24,10 @@ export const useEditorState = defineStore('editorState', {
     },
     selectFile(file: string): void {
       this.currentFile = file;
+    },
+    openTextFile(path: string): void {
+      this.textFilePath = path;
+      this.showTextPopup = true;
     }
   } satisfies EditorStateActions,
   persist: true
