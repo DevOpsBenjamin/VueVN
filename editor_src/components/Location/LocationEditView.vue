@@ -13,14 +13,24 @@
               <span>←</span>
               <span>Back</span>
             </button>
-            
+
             <!-- Location Name -->
             <div class="flex-shrink-0">
               <h1 class="text-white text-xl font-bold">
                 {{ isGlobal ? '🌐 Global Resources' : `📍 ${locationName}` }}
               </h1>
             </div>
-            
+
+            <!-- Edit Location Info -->
+            <button
+              v-if="!isGlobal"
+              @click="editLocationInfo"
+              class="flex items-center space-x-1 px-3 py-2 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-sm flex-shrink-0"
+            >
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+
             <!-- Tabs Navigation -->
             <div class="flex-1 flex items-center justify-center">
               <div class="flex items-center space-x-1 bg-white/5 rounded-lg p-1">
@@ -72,7 +82,7 @@
                     <th class="px-4 py-3 text-center text-white font-medium text-sm">Status</th>
                     <th class="px-4 py-3 text-center text-white font-medium text-sm">Locked</th>
                     <th class="px-4 py-3 text-center text-white font-medium text-sm">Condition</th>
-                    <th class="px-4 py-3 text-center text-white font-medium text-sm w-32">Manage</th>
+                    <th class="px-4 py-3 text-center text-white font-medium text-sm w-40">Manage</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
@@ -97,13 +107,22 @@
                       </span>
                     </td>
                     <td class="px-4 py-3 text-center">
-                      <button
-                        @click="editAction(action.id)"
-                        class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
-                      >
-                        <span>✏️</span>
-                        <span>Edit</span>
-                      </button>
+                      <div class="flex items-center justify-center space-x-2">
+                        <button
+                          @click="editAction(action.id)"
+                          class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
+                        >
+                          <span>✏️</span>
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          @click="deleteAction(action.id)"
+                          class="inline-flex items-center space-x-1 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 rounded border border-red-500/30 text-red-400 text-xs transition-all duration-200"
+                        >
+                          <span>🗑️</span>
+                          <span>Del</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   <tr v-if="actionsList.length === 0">
@@ -143,7 +162,7 @@
                     <th class="px-4 py-3 text-center text-white font-medium text-sm">Status</th>
                     <th class="px-4 py-3 text-center text-white font-medium text-sm">Locked</th>
                     <th class="px-4 py-3 text-center text-white font-medium text-sm">Condition</th>
-                    <th class="px-4 py-3 text-center text-white font-medium text-sm w-32">Manage</th>
+                    <th class="px-4 py-3 text-center text-white font-medium text-sm w-40">Manage</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
@@ -168,13 +187,22 @@
                       </span>
                     </td>
                     <td class="px-4 py-3 text-center">
-                      <button
-                        @click="editEvent(event.id)"
-                        class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
-                      >
-                        <span>✏️</span>
-                        <span>Edit</span>
-                      </button>
+                      <div class="flex items-center justify-center space-x-2">
+                        <button
+                          @click="editEvent(event.id)"
+                          class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
+                        >
+                          <span>✏️</span>
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          @click="deleteEvent(event.id)"
+                          class="inline-flex items-center space-x-1 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 rounded border border-red-500/30 text-red-400 text-xs transition-all duration-200"
+                        >
+                          <span>🗑️</span>
+                          <span>Del</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   <tr v-if="eventsList.length === 0">
@@ -182,6 +210,56 @@
                       <div class="flex flex-col items-center space-y-2">
                         <span class="text-2xl opacity-50">📅</span>
                         <span>No events configured yet</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- i18n Tab -->
+          <div v-if="activeTab === 'i18n'">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-white text-lg font-semibold flex items-center">
+                <span class="mr-2">🌐</span>
+                i18n
+              </h2>
+            </div>
+            <div class="overflow-hidden rounded-lg border border-white/10">
+              <table class="w-full">
+                <thead class="bg-white/5">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-white font-medium text-sm">Action</th>
+                    <th class="px-4 py-3 text-left text-white font-medium text-sm">Key</th>
+                    <th class="px-4 py-3 text-left text-white font-medium text-sm">EN</th>
+                    <th class="px-4 py-3 text-left text-white font-medium text-sm">FR</th>
+                    <th class="px-4 py-3 text-center text-white font-medium text-sm w-32">Manage</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                  <tr v-for="entry in i18nEntries" :key="entry.action + entry.key" class="hover:bg-white/5 transition-colors">
+                    <td class="px-4 py-3 text-white text-sm">{{ entry.action }}</td>
+                    <td class="px-4 py-3 text-white text-sm">{{ entry.key }}</td>
+                    <td class="px-4 py-3 text-white/70 text-sm">{{ entry.en }}</td>
+                    <td class="px-4 py-3 text-sm" :class="entry.fr ? 'text-white/70' : 'text-red-400'">
+                      {{ entry.fr || 'Missing' }}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                      <button
+                        @click="openTextFile(entry.file)"
+                        class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
+                      >
+                        <span>✏️</span>
+                        <span>Edit</span>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="i18nEntries.length === 0">
+                    <td colspan="5" class="px-4 py-8 text-center text-white/70 text-sm">
+                      <div class="flex flex-col items-center space-y-2">
+                        <span class="text-2xl opacity-50">🌐</span>
+                        <span>No texts found</span>
                       </div>
                     </td>
                   </tr>
@@ -234,27 +312,6 @@
             </div>
           </div>
 
-          <!-- Texts Tab -->
-          <div v-if="activeTab === 'texts'">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-white text-lg font-semibold flex items-center">
-                <span class="mr-2">📝</span>
-                Texts
-              </h2>
-              <button
-                @click="addNewText"
-                class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30 rounded-lg border border-white/20 transition-all duration-200 text-white"
-              >
-                <span class="text-lg">➕</span>
-                <span class="font-medium">Add Text</span>
-              </button>
-            </div>
-            <div class="text-center py-12">
-              <div class="text-6xl mb-4">📝</div>
-              <h3 class="text-white text-xl font-semibold mb-2">Texts Management</h3>
-              <p class="text-white/70 mb-4">Text management interface coming soon...</p>
-            </div>
-          </div>
         </section>
       </div>
     </div>
@@ -265,6 +322,7 @@
 import { computed, ref } from 'vue';
 import { useEditorState } from '@editor/stores/editorState';
 import projectData from '@generate/project';
+import texts from '@generate/texts';
 
 const editorState = useEditorState();
 
@@ -314,6 +372,29 @@ const eventsList = computed(() => {
   }));
 });
 
+// i18n entries for this location
+const i18nEntries = computed(() => {
+  const result: { action: string; key: string; en: string; fr: string | null; file: string }[] = [];
+  if (isGlobal.value) {
+    return result;
+  }
+  const locTexts = (texts as any).locations?.[selectedLocation.value];
+  if (!locTexts) return result;
+  for (const [action, actionTexts] of Object.entries(locTexts)) {
+    for (const [key, value] of Object.entries(actionTexts as any)) {
+      const textObj = value as any;
+      result.push({
+        action,
+        key,
+        en: textObj.en,
+        fr: textObj.fr,
+        file: `locations/${selectedLocation.value}/texts/${action}/fr.ts`
+      });
+    }
+  }
+  return result;
+});
+
 // Tabs configuration
 const tabs = computed(() => [
   {
@@ -329,6 +410,12 @@ const tabs = computed(() => [
     count: actionsList.value.length
   },
   {
+    id: 'i18n',
+    name: 'i18n',
+    icon: '🌐',
+    count: i18nEntries.value.length
+  },
+  {
     id: 'images',
     name: 'Images',
     icon: '🖼️',
@@ -338,12 +425,6 @@ const tabs = computed(() => [
     id: 'sounds',
     name: 'Sounds',
     icon: '🔊',
-    count: 0 // TODO: Get from assets
-  },
-  {
-    id: 'texts',
-    name: 'Texts',
-    icon: '📝',
     count: 0 // TODO: Get from assets
   }
 ]);
@@ -361,8 +442,18 @@ function addNewAction() {
 }
 
 function editAction(actionId: string) {
-  // TODO: Implement edit action functionality
-  console.log('Edit action:', actionId, 'in location:', selectedLocation.value);
+  const base = isGlobal.value ? 'global/actions' : `locations/${selectedLocation.value}/actions`;
+  editorState.openTextFile(`${base}/${actionId}.ts`);
+}
+
+async function deleteAction(actionId: string) {
+  const base = isGlobal.value ? 'global/actions' : `locations/${selectedLocation.value}/actions`;
+  await fetch(`/api/delete?path=${encodeURIComponent(`${base}/${actionId}.ts`)}`, { method: 'DELETE' });
+  if (isGlobal.value) {
+    delete (projectData as any).global.actions[actionId];
+  } else {
+    delete (projectData as any).locations[selectedLocation.value].actions[actionId];
+  }
 }
 
 function addNewEvent() {
@@ -371,8 +462,18 @@ function addNewEvent() {
 }
 
 function editEvent(eventId: string) {
-  // TODO: Implement edit event functionality
-  console.log('Edit event:', eventId, 'in location:', selectedLocation.value);
+  const base = isGlobal.value ? 'global/events' : `locations/${selectedLocation.value}/events`;
+  editorState.openTextFile(`${base}/${eventId}.ts`);
+}
+
+async function deleteEvent(eventId: string) {
+  const base = isGlobal.value ? 'global/events' : `locations/${selectedLocation.value}/events`;
+  await fetch(`/api/delete?path=${encodeURIComponent(`${base}/${eventId}.ts`)}`, { method: 'DELETE' });
+  if (isGlobal.value) {
+    delete (projectData as any).global.events[eventId];
+  } else {
+    delete (projectData as any).locations[selectedLocation.value].events[eventId];
+  }
 }
 
 // Asset handlers (placeholder)
@@ -384,7 +485,12 @@ function addNewSound() {
   console.log('Add new sound to:', selectedLocation.value);
 }
 
-function addNewText() {
-  console.log('Add new text to:', selectedLocation.value);
+function openTextFile(path: string) {
+  editorState.openTextFile(path);
+}
+
+function editLocationInfo() {
+  if (isGlobal.value) return;
+  editorState.openTextFile(`locations/${selectedLocation.value}/info.ts`);
 }
 </script>

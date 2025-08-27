@@ -27,6 +27,7 @@
     <!-- State Popups -->
     <EngineStatePopup v-if="editorState.showEnginePopup" />
     <GameStatePopup v-if="editorState.showGamePopup" />
+    <TextEditorPopup v-if="editorState.showTextPopup" />
   </div>
 </template>
 
@@ -40,6 +41,7 @@ import LocalizationManager from '@editor/components/Localization/LocalizationMan
 import EngineStatePopup from '@editor/components/Popup/EngineStatePopup.vue';
 import GameStatePopup from '@editor/components/Popup/GameStatePopup.vue';
 import FloatingGame from "@editor/components/Popup/FloatingGame.vue";
+import TextEditorPopup from '@editor/components/Popup/TextEditorPopup.vue';
 import { useEditorState } from '@editor/stores/editorState';
 
 const editorState = useEditorState();
