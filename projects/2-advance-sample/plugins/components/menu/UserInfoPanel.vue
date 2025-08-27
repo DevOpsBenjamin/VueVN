@@ -36,6 +36,22 @@
           </div>
         </button>
         
+        <!-- Barista Button -->
+        <button
+          @click="selectedCharacter = 'barista'"
+          :class="[
+            'w-full text-left p-2 rounded transition-colors',
+            selectedCharacter === 'barista' 
+              ? 'bg-white/20 text-white' 
+              : 'bg-white/10 text-white/80 hover:bg-white/15'
+          ]"
+        >
+          <div class="font-medium">{{ gameState.barista.name }}</div>
+          <div class="text-sm opacity-75">
+            {{ gameState.barista.relationship || 'Barista' }}
+          </div>
+        </button>
+        
         <!-- Mother Button -->
         <button
           @click="selectedCharacter = 'mother'"
@@ -63,7 +79,8 @@
     <!-- Right Column - Dynamic Info Display -->
     <div class="w-2/3 px-4 pl-4">
       <PlayerInfoPanel v-if="selectedCharacter === 'player'" :player="gameState.player" />
-      <NeighborInfoPanel v-else-if="selectedCharacter === 'neighbor'" :neighbor="gameState.neighbor" />
+      <DateableNPCInfoPanel v-else-if="selectedCharacter === 'neighbor'" :npc="gameState.neighbor" npc-type="neighbor" />
+      <DateableNPCInfoPanel v-else-if="selectedCharacter === 'barista'" :npc="gameState.barista" npc-type="barista" />
       <MotherInfoPanel v-else-if="selectedCharacter === 'mother'" :mother="gameState.mother" />
     </div>
   </div>
@@ -72,10 +89,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { gameState as useGameState } from '@generate/stores';
-import { PlayerInfoPanel, NeighborInfoPanel, MotherInfoPanel } from '@generate/components';
+import { PlayerInfoPanel, MotherInfoPanel, DateableNPCInfoPanel } from '@generate/components';
 
 const gameState = useGameState();
-const selectedCharacter = ref<'player' | 'neighbor' | 'mother'>('player');
+const selectedCharacter = ref<'player' | 'neighbor' | 'barista' | 'mother'>('player');
 
 function closeUserInfo() {
   gameState.flags.showUserInfo = false;

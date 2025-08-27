@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import type { GameState, GameStateActions } from "@generate/types";
-import { playerCreator, neighborCreator, motherCreator, timeCreator } from '@generate/stores'
+import { playerCreator, neighborCreator, motherCreator, timeCreator, baristaCreator } from '@generate/stores'
 
 //SEE CUSTOM SAMPLE FOR BETTER TYPING
 function createGameState(): GameState
@@ -11,6 +11,7 @@ function createGameState(): GameState
     gameTime: timeCreator(),
     neighbor: neighborCreator(),
     mother:  motherCreator(),
+    barista: baristaCreator(),
     flags: {},
   }
 }

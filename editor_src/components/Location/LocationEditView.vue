@@ -93,7 +93,7 @@
                     </td>
                     <td class="px-4 py-3 text-center">
                       <span class="text-white/70 text-xs">
-                        {{ action.condition || 'None' }}
+                        {{ action.unlocked_condition || 'None' }}
                       </span>
                     </td>
                     <td class="px-4 py-3 text-center">
@@ -164,7 +164,7 @@
                     </td>
                     <td class="px-4 py-3 text-center">
                       <span class="text-white/70 text-xs">
-                        {{ event.condition || 'None' }}
+                        {{ event.conditions || 'None' }}
                       </span>
                     </td>
                     <td class="px-4 py-3 text-center">
@@ -297,7 +297,7 @@ const actionsList = computed(() => {
     name: actionData.name || id.charAt(0).toUpperCase() + id.slice(1),
     unlocked: true, // TODO: Get from game state
     locked: false, // TODO: Get from action config
-    condition: actionData.condition || null
+    unlocked_condition: actionData.unlocked || null
   }));
 });
 
@@ -310,7 +310,7 @@ const eventsList = computed(() => {
     name: eventData.name || id.charAt(0).toUpperCase() + id.slice(1),
     unlocked: true, // TODO: Get from game state
     locked: false, // TODO: Get from event config
-    condition: eventData.condition || null
+    conditions: eventData.conditions || null
   }));
 });
 
