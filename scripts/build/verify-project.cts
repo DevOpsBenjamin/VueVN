@@ -42,12 +42,7 @@ async function main() {
   if (!tsResult.success) {
     if (!verbose) {
       console.log('❌ TypeScript errors found - build blocked');
-      console.log('   → Use --verbose flag for detailed error output');
-    } else {
-      console.log(
-        '\n❌ VERIFICATION FAILED: TypeScript errors must be fixed before building'
-      );
-      console.log('═══════════════════════════════════════════');
+      console.log('   → Use /verbose flag for detailed error output');
     }
     process.exit(1);
   }
@@ -105,8 +100,9 @@ async function verifyTypeScript(
     if (verbose) {
       console.log('   Checking TypeScript compilation...');
     }
+    
     execSync('npx vue-tsc --noEmit', {
-      stdio: 'pipe',
+      stdio: verbose ? 'inherit' : 'ignore',
       env: process.env,
       encoding: 'utf8',
     });
@@ -117,27 +113,6 @@ async function verifyTypeScript(
     }
   } catch (error: any) {
     result.success = false;
-    const errorOutput = error.stdout || error.stderr || error.message;
-
-    if (verbose) {
-      console.log('   ❌ TypeScript: Compilation errors found');
-      console.log('   ═══════════════════════════════════════');
-      console.log(errorOutput);
-      console.log('   ═══════════════════════════════════════');
-
-      // Provide helpful suggestions
-      console.log('\n💡 Fix suggestions:');
-      console.log(
-        '   → Run: npm run type-check  (for detailed error analysis)'
-      );
-      console.log(
-        '   → Check for missing imports, type mismatches, or syntax errors'
-      );
-      console.log(
-        '   → Ensure all @generate imports are available (run npm run dev first)'
-      );
-    }
-
     result.errors.push('TypeScript compilation failed');
   }
 
@@ -165,7 +140,7 @@ async function verifyTranslations(
       'check-i18n.cts'
     );
     execSync(`tsx ${scriptPath}`, {
-      stdio: 'pipe',
+      stdio: verbose ? 'inherit' : 'ignore',
       env: process.env,
       encoding: 'utf8',
     });
@@ -185,21 +160,17 @@ async function verifyTranslations(
     } else {
       result.success = false;
 
-      if (verbose) {
+      if (!verbose) {
         console.log('   ⚠️  Translations: Missing translations detected');
-        console.log('   ═══════════════════════════════════════');
-        console.log(errorOutput);
-        console.log('   ═══════════════════════════════════════');
-
-        // Provide helpful suggestions
-        console.log('\n💡 Translation suggestions:');
-        console.log(`   → Export texts: npm run export-texts`);
-        console.log('   → Send archive to translation team');
-        console.log(
-          `   → Import completed: npm run import-texts <archive-path>`
-        );
-        console.log('   → Or build anyway: add /ignore-translations flag');
       }
+      // Provide helpful suggestions
+      console.log('\n💡 Translation suggestions:');
+      console.log(`   → Export texts: npm run export-texts`);
+      console.log('   → Send archive to translation team');
+      console.log(
+        `   → Import completed: npm run import-texts <archive-path>`
+      );
+      console.log('   → Or build anyway: add /ignore-translations flag');
 
       result.warnings.push('Missing translations detected');
     }

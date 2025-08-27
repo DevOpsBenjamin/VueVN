@@ -1,4 +1,5 @@
 import type { VNEvent } from '@generate/types';
+import { RelationLevel } from '@generate/enums';
 
 const knock_door: VNEvent = {
   name: 'Knock on Neighbor Door',
@@ -15,16 +16,16 @@ const knock_door: VNEvent = {
     // Check relation level for different responses
     const relationStatus = state.neighbor.relationship;
     
-    if (relationStatus === 'stranger') {
+    if (relationStatus === RelationLevel.STRANGER) {
       await engine.showText("The door opens slightly. A suspicious face peers out.");
       await engine.showText("'Who are you? What do you want?'", "Neighbor");
-    } else if (relationStatus === 'acquaintance') {
+    } else if (relationStatus === RelationLevel.ACQUAINTANCE) {
       await engine.showText("The door opens. Your neighbor recognizes you.");
       await engine.showText("'Oh, it's you. What brings you here?'", `${state.neighbor.name}`);
-    } else if (relationStatus === 'friend') {
+    } else if (relationStatus === RelationLevel.FRIEND) {
       await engine.showText("The door opens with a smile.");
       await engine.showText("'Hey there! Nice to see you again!'", `${state.neighbor.name}`);
-    } else if (relationStatus === 'close_friend') {
+    } else if (relationStatus === RelationLevel.CLOSE_FRIEND) {
       await engine.showText("The door swings open warmly.");
       await engine.showText("'My friend! Come in, come in!'", `${state.neighbor.name}`);
     }
@@ -39,8 +40,8 @@ const knock_door: VNEvent = {
         const currentRelation = state.neighbor.relation;
         const relationStatus = state.neighbor.relationship;
 
-        if (relationStatus === 'stranger') {
-          state.neighbor.relationship = 'acquaintance';
+        if (relationStatus === RelationLevel.STRANGER) {
+          state.neighbor.relationship = RelationLevel.ACQUAINTANCE;
           await engine.showText(`Hello i'm ${state.player.name} your new neighbor nice to meet you!`, `${state.player.name}`);
           await engine.showText(`Hello ${state.player.name} my name is ${state.neighbor.name}, nice to meet you young man!`, `${state.neighbor.name}`);
           await engine.showText(`My mom told me to come to present myself and invite you to join us on diner so we can meet our new neighboor.\nWould you be available tonight?`, `${state.player.name}`);
@@ -54,11 +55,11 @@ const knock_door: VNEvent = {
         }
 
         // Update relationship status based on relation points
-        if (state.neighbor.relation >= 30 && state.neighbor.relationship === 'acquaintance') {
-          state.neighbor.relationship = 'friend';
+        if (state.neighbor.relation >= 30 && state.neighbor.relationship === RelationLevel.ACQUAINTANCE) {
+          state.neighbor.relationship = RelationLevel.FRIEND;
           await engine.showText("You sense a real friendship forming!", "System");
-        } else if (state.neighbor.relation >= 60 && state.neighbor.relationship === 'friend') {
-          state.neighbor.relationship = 'close_friend';
+        } else if (state.neighbor.relation >= 60 && state.neighbor.relationship === RelationLevel.FRIEND) {
+          state.neighbor.relationship = RelationLevel.CLOSE_FRIEND;
           await engine.showText("You've become close friends with your neighbor!", "System");
         }
       }

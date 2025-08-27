@@ -1,5 +1,6 @@
 import type { VNEvent } from '@generate/types';
 import { TimeHelper } from '@generate/engine';
+import { RelationLevel } from '@generate/enums';
 
 const knockDoorFriend: VNEvent = {
   name: 'Knock Door - Friend',
@@ -55,7 +56,7 @@ const knockDoorFriend: VNEvent = {
         
         // Check for relationship status upgrade
         if (state.neighbor.relation > 80) {
-          state.neighbor.relationship = 'close_friend';
+          state.neighbor.relationship = RelationLevel.CLOSE_FRIEND;
           await engine.showText("You feel like you've become really close friends!", "System");
         }
         
@@ -132,7 +133,7 @@ const knockDoorFriend: VNEvent = {
         state.player.energy = Math.max(state.player.energy - 10, 0);
         
         if (state.neighbor.relation > 80) {
-          state.neighbor.relationship = 'close_friend';
+          state.neighbor.relationship = RelationLevel.CLOSE_FRIEND;
           await engine.showText("Your helpful nature has made you close friends!", "System");
         }
         

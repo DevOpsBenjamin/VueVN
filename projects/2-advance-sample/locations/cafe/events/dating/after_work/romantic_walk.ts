@@ -128,7 +128,7 @@ const romanticWalk: VNEvent = {
       }
     },
     
-    [BRANCHES.FRIEND_LEVEL]: {
+    [BRANCHES.FRIEND]: {
       async execute(engine, state) {
         await engine.showText(`"${state.player.name}! I was hoping you'd be here."`, "Maya");
         await engine.showText("Maya practically bounces over to you, her fatigue seemingly forgotten.");
@@ -201,7 +201,7 @@ const romanticWalk: VNEvent = {
       }
     },
     
-    [BRANCHES.INTIMATE_LEVEL]: {
+    [BRANCHES.CLOSE_FRIEND]: {
       async execute(engine, state) {
         await engine.showText("Maya rushes out of the coffee shop and straight into your arms.");
         await engine.showText(`"God, I missed you today,"` + ` she says, kissing you passionately right there on the street.`);
