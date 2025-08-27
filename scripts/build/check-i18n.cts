@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { getProjectInfo } from '../lib/project-manager';
+import projectInfos from '../lib/project-vars';
 
 interface MissingTranslation {
   path: string;
@@ -12,22 +12,20 @@ interface MissingTranslation {
 }
 
 async function main() {
-  const projectInfo = getProjectInfo();
-
   console.log(
-    `🔍 Checking i18n completeness for project: ${projectInfo.projectName}`
+    `🔍 Checking i18n completeness for project: ${projectInfos.projectName}`
   );
 
   const missingTranslations: MissingTranslation[] = [];
 
   // Check global texts
-  const globalTextsPath = path.join(projectInfo.projectPath, 'global', 'texts');
+  const globalTextsPath = path.join(projectInfos.projectPath, 'global', 'texts');
   if (fs.existsSync(globalTextsPath)) {
     await checkTextsDirectory(globalTextsPath, 'global', missingTranslations);
   }
 
   // Check location texts
-  const locationsPath = path.join(projectInfo.projectPath, 'locations');
+  const locationsPath = path.join(projectInfos.projectPath, 'locations');
   if (fs.existsSync(locationsPath)) {
     const locations = fs
       .readdirSync(locationsPath)

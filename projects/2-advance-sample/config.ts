@@ -4,6 +4,7 @@ function getConfig(): GameConfig
 {
     return {
         name: "Advance Sample",
+        defaultLanguage: "en",
     }
 }
 

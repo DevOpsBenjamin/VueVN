@@ -1,6 +1,7 @@
 // Main script to generate all index files (components, engine, events)
 // Usage: tsx scripts/generate.cts [--watch] [--verbose]
 import { execSync } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import chokidar from 'chokidar';
 
@@ -31,6 +32,14 @@ function run(script: string): void {
 run('generate/generate-tsconfig.cts');
 
 function generate_files() {
+  // Clean up old generated files before regenerating
+  const generatePath = path.join(process.cwd(), 'src/generate');
+  if (fs.existsSync(generatePath)) {
+    fs.rmSync(generatePath, { recursive: true, force: true });
+    if (verbose) {
+      console.log(`🗑️ Removed old generate folder: ${generatePath}`);
+    }
+  }
   if (verbose) {
     console.log(`📦 Generating files for project: ${currentProject}`);
   }
@@ -42,7 +51,7 @@ function generate_files() {
   run('generate/generate-components.cts');
   run('generate/generate-locations.cts');
   run('generate/generate-project.cts');
-  run('generate/generate-i18n.cts');
+  run('generate/generate-i18n-v2.cts');
 }
 
 generate_files();

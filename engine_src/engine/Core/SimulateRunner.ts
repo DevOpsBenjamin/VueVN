@@ -1,5 +1,6 @@
 import { VNActionEnum } from "@generate/enums"
 import type { CustomArgs, EngineAPI, EngineState, GameState, VNAction } from "@generate/types"
+import type { Text } from "@generate/types"
 
 export default class SimulateRunner implements EngineAPI
 {
@@ -15,8 +16,28 @@ export default class SimulateRunner implements EngineAPI
         this.event_id = event_id;
     }
 
-    async showText(text: string, from?: string): Promise<void> {
-        this.engineState.dialogue = { text, from: from };
+    // Helper function to resolve Text objects to current language
+    private resolveText(text: string | Text): string {
+        if (typeof text === 'string') {
+            return text;
+        }
+        const typeText:Text = text;
+        // Get current language from settings (default to 'en')
+        const currentLang = this.engineState.settings.language || 'en';
+        
+        // Try current language first, fallback to English
+        if (typeText.fr) {
+            return typeText.fr!;
+        }
+        
+        return typeText.en;
+    }
+
+    async showText(text: string | Text, from?: string): Promise<void> {
+        // Handle Text objects by extracting the appropriate language text
+        const resolvedText = this.resolveText(text);
+        
+        this.engineState.dialogue = { text: resolvedText, from: from };
         this.engineState.currentStep++;
         
         // Create action with complete state snapshot (WITH dialogue type)
@@ -32,7 +53,13 @@ export default class SimulateRunner implements EngineAPI
     }
 
     async showChoices(choices: Array<any>): Promise<void> {
-        this.engineState.choices = choices;
+        // Handle Text objects in choices by resolving them to current language
+        const resolvedChoices = choices.map(choice => ({
+          ...choice,
+          text: this.resolveText(choice.text)
+        }));
+        
+        this.engineState.choices = resolvedChoices;
         this.engineState.currentStep++;
         
         // Create action with state snapshot (WITH choices type)
