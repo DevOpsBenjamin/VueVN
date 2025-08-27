@@ -51,7 +51,7 @@ function generate_files() {
   run('generate/generate-components.cts');
   run('generate/generate-locations.cts');
   run('generate/generate-project.cts');
-  run('generate/generate-i18n-v2.cts');
+  run('generate/generate-i18n.cts');
 }
 
 generate_files();
