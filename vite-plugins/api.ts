@@ -225,6 +225,20 @@ const viteApiPlugin = (): Plugin => {
 
               const parts = buffer.toString('binary').split(`--${boundary}`);
 
+              // Optional destination subpath under assets category
+              let destSubpath = '';
+              for (const part of parts) {
+                if (part.includes('name="dest"') && !part.includes('filename=')) {
+                  const contentStart = part.indexOf('\r\n\r\n');
+                  if (contentStart !== -1) {
+                    const contentEnd = part.lastIndexOf('\r\n');
+                    const raw = part.slice(contentStart + 4, contentEnd).trim();
+                    destSubpath = raw.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+                    if (destSubpath.includes('..')) destSubpath = '';
+                  }
+                }
+              }
+
               for (const part of parts) {
                 if (part.includes('filename=')) {
                   const filenameMatch = part.match(/filename="(.+)"/);
@@ -243,7 +257,11 @@ const viteApiPlugin = (): Plugin => {
                     else if (contentType.startsWith('audio/')) subfolder = 'sounds';
                     else if (contentType.startsWith('video/')) subfolder = 'videos';
 
-                    const targetDir = path.join(assetsPath, subfolder);
+                    const baseTarget = path.join(assetsPath, subfolder);
+                    const targetDir = destSubpath ? path.join(baseTarget, destSubpath) : baseTarget;
+                    if (!targetDir.startsWith(assetsPath)) {
+                      return sendJson(res, 'Invalid destination', 400);
+                    }
                     if (!fs.existsSync(targetDir)) {
                       fs.mkdirSync(targetDir, { recursive: true });
                     }
@@ -251,7 +269,8 @@ const viteApiPlugin = (): Plugin => {
                     const targetPath = path.join(targetDir, filename);
                     fs.writeFileSync(targetPath, content);
 
-                    return sendJson(res, { success: true, path: `assets/${subfolder}/${filename}`, size: content.length, type: contentType });
+                    const rel = path.relative(projectPath, targetPath).replace(/\\/g, '/');
+                    return sendJson(res, { success: true, path: rel, size: content.length, type: contentType });
                   }
                 }
               }
