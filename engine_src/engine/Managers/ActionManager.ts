@@ -24,13 +24,16 @@ export default class ActionManager {
   }
   
   updateAccessibleActions(gameState: GameState): void {
-    const localActions = this.allActions[gameState.location_id];
-    const globalActions = projectData.global.actions;
-    
-    //Add global Action
-    this.currentActions = { ...globalActions, ...localActions };
-    this.unlockedActions = Object.values(localActions).filter(action => action.unlocked(gameState));
-    
+    const localActions = this.allActions[gameState.location_id] || {};
+    const globalActions = projectData.global.actions || {};
+
+    // Merge global + local for current lookup
+    const merged = { ...globalActions, ...localActions } as Record<string, VNAction>;
+    this.currentActions = merged;
+
+    // Compute unlocked across BOTH global and local
+    this.unlockedActions = Object.values(merged).filter((action) => action.unlocked(gameState));
+
     if (this.updateCallback) {
       this.updateCallback();
     }
