@@ -6,6 +6,7 @@ const enum EngineStateEnum {
   EVENT = "EVENT",
   SAVE = "SAVE",
   LOAD = "LOAD",
+  SETTING = "SETTING",
 }
 
 export default EngineStateEnum;

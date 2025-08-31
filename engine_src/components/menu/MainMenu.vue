@@ -147,7 +147,7 @@ function loadGame() {
 }
 
 function openSettings() {
-  // Implement settings logic
+  engineState.state = EngineStateEnum.SETTING;
 }
 
 function saveGame() {
