@@ -46,4 +46,13 @@ export default class NavigationManager {
     this.choiceManager.reject();
     this.actionManager.reject();
   }
+
+  // Skip mode control
+  enableSkipMode() {
+    this.continueManager.enableSkip();  
+  }
+
+  disableSkipMode() {
+    this.continueManager.disableSkip();
+  }
 }

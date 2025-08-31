@@ -3,6 +3,7 @@ export default class WaitManager<T> {
   private rejectFunction: ((reason: Error) => void) | null = null;
   private readonly name: string;
   private readonly errorClass: new () => Error;
+  private skipMode = false;
 
   constructor(name: string, errorClass: new () => Error) {
     this.name = name;
@@ -11,6 +12,12 @@ export default class WaitManager<T> {
 
   async wait(): Promise<T> {    
     this.reject(); // Cancel any existing waiter
+    
+    // If skip mode is active, resolve immediately
+    if (this.skipMode) {
+      return Promise.resolve() as Promise<T>;
+    }
+    
     return new Promise<T>((resolve, reject) => {
       this.resolveFunction = resolve;
       this.rejectFunction = reject;
@@ -37,5 +44,17 @@ export default class WaitManager<T> {
 
   hasWaiter(): boolean {
     return this.resolveFunction !== null;
+  }
+
+  enableSkip(): void {
+    this.skipMode = true;
+    // Resolve any current waiter immediately
+    if (this.resolveFunction) {
+      this.resolve(undefined as T);
+    }
+  }
+
+  disableSkip(): void {
+    this.skipMode = false;
   }
 }
