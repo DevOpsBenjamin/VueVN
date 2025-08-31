@@ -2,54 +2,11 @@
   <div class="h-full flex flex-col bg-black/10">
     <div class="flex-1 overflow-y-auto">
       <div class="p-6 space-y-6">
-        <!-- Header with Tabs -->
-        <section class="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-          <div class="flex items-center space-x-4">
-            <!-- Back Button -->
-            <button
-              @click="goBack"
-              class="flex items-center space-x-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg border border-white/10 transition-all duration-200 text-white flex-shrink-0"
-            >
-              <span>←</span>
-              <span>Back</span>
-            </button>
-            
-            <!-- Location Name -->
-            <div class="flex-shrink-0">
-              <h1 class="text-white text-xl font-bold">
-                {{ isGlobal ? '🌐 Global Resources' : `📍 ${locationName}` }}
-              </h1>
-            </div>
-            
-            <!-- Tabs Navigation -->
-            <div class="flex-1 flex items-center justify-center">
-              <div class="flex items-center space-x-1 bg-white/5 rounded-lg p-1">
-                <button
-                  v-for="tab in tabs"
-                  :key="tab.id"
-                  @click="activeTab = tab.id"
-                  :class="[
-                    'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200',
-                    activeTab === tab.id
-                      ? 'bg-white/10 text-white border border-white/20'
-                      : 'text-white/70 hover:text-white hover:bg-white/5'
-                  ]"
-                >
-                  <span class="text-base">{{ tab.icon }}</span>
-                  <span>{{ tab.name }}</span>
-                  <span v-if="tab.count > 0" class="px-2 py-0.5 bg-white/10 rounded-full text-xs">
-                    {{ tab.count }}
-                  </span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
 
         <!-- Dynamic Tab Content -->
         <section class="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
           <!-- Actions Tab -->
-          <div v-if="activeTab === 'actions'">
+          <div v-if="editorState.activeLocationTab === 'actions'">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-white text-lg font-semibold flex items-center">
                 <span class="mr-2">⚡</span>
@@ -120,7 +77,7 @@
           </div>
 
           <!-- Events Tab -->
-          <div v-if="activeTab === 'events'">
+          <div v-if="editorState.activeLocationTab === 'events'">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-white text-lg font-semibold flex items-center">
                 <span class="mr-2">📅</span>
@@ -191,7 +148,7 @@
           </div>
 
           <!-- Images Tab -->
-          <div v-if="activeTab === 'images'">
+          <div v-if="editorState.activeLocationTab === 'images'">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-white text-lg font-semibold flex items-center">
                 <span class="mr-2">🖼️</span>
@@ -213,7 +170,7 @@
           </div>
 
           <!-- Sounds Tab -->
-          <div v-if="activeTab === 'sounds'">
+          <div v-if="editorState.activeLocationTab === 'sounds'">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-white text-lg font-semibold flex items-center">
                 <span class="mr-2">🔊</span>
@@ -235,7 +192,7 @@
           </div>
 
           <!-- Texts Tab -->
-          <div v-if="activeTab === 'texts'">
+          <div v-if="editorState.activeLocationTab === 'texts'">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-white text-lg font-semibold flex items-center">
                 <span class="mr-2">📝</span>
@@ -262,14 +219,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { useEditorState } from '@editor/stores/editorState';
 import projectData from '@generate/project';
 
 const editorState = useEditorState();
 
-// Active tab state
-const activeTab = ref('events');
 
 // Computed properties
 const selectedLocation = computed(() => editorState.selectedLocation || 'global');
@@ -314,45 +269,7 @@ const eventsList = computed(() => {
   }));
 });
 
-// Tabs configuration
-const tabs = computed(() => [
-  {
-    id: 'events',
-    name: 'Events',
-    icon: '📅',
-    count: eventsList.value.length
-  },
-  {
-    id: 'actions',
-    name: 'Actions',
-    icon: '⚡',
-    count: actionsList.value.length
-  },
-  {
-    id: 'images',
-    name: 'Images',
-    icon: '🖼️',
-    count: 0 // TODO: Get from assets
-  },
-  {
-    id: 'sounds',
-    name: 'Sounds',
-    icon: '🔊',
-    count: 0 // TODO: Get from assets
-  },
-  {
-    id: 'texts',
-    name: 'Texts',
-    icon: '📝',
-    count: 0 // TODO: Get from assets
-  }
-]);
 
-// Go back to location manager
-function goBack() {
-  editorState.activeModule = 'locationManager';
-  editorState.selectedLocation = null;
-}
 
 // Action handlers
 function addNewAction() {

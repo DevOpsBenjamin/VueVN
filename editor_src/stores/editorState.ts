@@ -8,6 +8,7 @@ function createEditorState(): EditorState
     currentFile: null,
     activeModule: 'dashboard',
     selectedLocation: null,
+    activeLocationTab: 'events',
     previewVisible: false,
     showEnginePopup: false,
     showGamePopup: false,

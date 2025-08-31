@@ -144,6 +144,7 @@ function addNewLocation() {
 function editLocation(locationId: string) {
   editorState.selectedLocation = locationId;
   editorState.activeModule = 'locationEdit';
+  editorState.activeLocationTab = 'events'; // Start with events tab
 }
 
 // Delete location handler
