@@ -6,8 +6,8 @@ export interface EngineAPI {
   showText: (text: string | Text, from?: string) => Promise<void>;
   // WAIT USER CHOICE  
   showChoices: (choices: Array<Choice | { text: string | Text; branch: string }>) => Promise<void>;
-  // TODO HANDLE INTERNALLY // NOT READY
-  // runCustom: (args: CustomArgs) => Promise<void>;
+  // CUSTOM ACTIONS - Extensible system for custom functionality
+  runCustom: (args: CustomArgs) => Promise<any>;
   // STOP CURRENT EVENT AND JUMP TO NEW ONE
   jump: (eventId: string) => Promise<void>;
   // Foreground layer management (non-waiting)

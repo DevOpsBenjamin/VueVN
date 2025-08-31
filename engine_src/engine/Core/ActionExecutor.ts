@@ -158,8 +158,8 @@ You can chose to ignore future Debug Warning for the current session.
 
   private async handleJumpAction(event: VNEvent, action: Action): Promise<void> {
     console.debug("handleJumpAction");
-    // THIS NOT WAI USER INPUT ITS LIKE A CHOICE EVENT BUT CODE CONDITIONAL
-    // Jump should exit the current event execution and trigger new event
+    // Intra-event jump (no user input): route to a branch within the same event
+    // The action.event_id here carries the branch_id to execute, not an external event id
     const branch_id = action.event_id;     
     if (event.branches?.[branch_id]) {
       await this.simulateEvent(event.branches[branch_id].execute, `${event.name}|jump:${branch_id}`);
