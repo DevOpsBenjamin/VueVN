@@ -60,7 +60,7 @@ export default class EventManager
     }
     
     this.refreshCache(gameState, this.globalCache);
-    console.log('Cache updated:', this.eventCache);
+    console.debug('Cache updated:', this.eventCache);
   }
   
   refreshCache(gameState: GameState, cache: EventCache): void {

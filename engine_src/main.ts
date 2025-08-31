@@ -22,6 +22,6 @@ const gameState = useGameState();
 // Create temporary gameRoot - will be replaced when Game.vue mounts
 const tempGameRoot = document.createElement('div');
 const engine = new Engine(gameState, engineState, tempGameRoot);
-console.log(`Init engine at location: ${engine.gameState.location_id}`);
+console.debug(`Init engine at location: ${engine.gameState.location_id}`);
 
 app.mount("#app");

@@ -59,6 +59,13 @@ class Engine {
       this.navigationManager
     );
 
+    // Ensure event caches are initialized at startup
+    try {
+      this.eventManager.resetEvents(this.gameState);
+    } catch (e) {
+      console.warn('[Engine] Failed to pre-initialize events cache:', e);
+    }
+
     // Initialize window reference
     if (typeof window !== 'undefined') {
       const w = window as any;
