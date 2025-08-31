@@ -18,53 +18,63 @@
       <table class="w-full">
         <thead class="bg-white/5">
           <tr>
-            <th class="px-4 py-3 text-left text-white font-medium text-sm">Event Name</th>
-            <th class="px-4 py-3 text-center text-white font-medium text-sm">Status</th>
-            <th class="px-4 py-3 text-center text-white font-medium text-sm">Locked</th>
-            <th class="px-4 py-3 text-center text-white font-medium text-sm w-8"></th>
-            <th class="px-4 py-3 text-center text-white font-medium text-sm">Condition</th>
-            <th class="px-4 py-3 text-center text-white font-medium text-sm w-32">Manage</th>
+            <th class="px-4 py-3 text-left text-white font-medium text-sm">Name</th>
+            <th class="px-4 py-3 text-left text-white font-medium text-sm">Locked</th>
+            <th class="px-4 py-3 text-left text-white font-medium text-sm">Unlocked</th>
+            <th class="px-4 py-3 text-left text-white font-medium text-sm">Condition</th>
+            <th class="px-4 py-3 text-left text-white font-medium text-sm w-40">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-white/5">
-          <tr v-for="event in eventsList" :key="event.id" class="hover:bg-white/5 transition-colors">
+          <tr v-for="event in eventsList" :key="event.id" class="hover:bg-white/5 transition-colors align-top">
             <td class="px-4 py-3">
-              <div class="text-white font-medium text-sm">{{ event.name }}</div>
-              <div class="text-white/70 text-xs">{{ event.id }}</div>
+              <div class="text-white font-medium text-sm">{{ event.displayPath }}</div>
+              <div class="text-white/60 text-xs">{{ event.id }}</div>
             </td>
-            <td class="px-4 py-3 text-center">
-              <span :class="event.unlocked ? 'text-green-400' : 'text-gray-400'" class="text-xs font-medium">
-                {{ event.unlocked ? 'Unlocked' : 'Locked' }}
-              </span>
+            <td class="px-4 py-3 text-left">
+              <div class="text-xs text-white whitespace-pre-wrap break-words">
+                <span class="mr-2">{{ event.lockedResult ? '✅' : '❌' }}</span>
+                |
+                <span class="ml-2 opacity-80">{{ event.lockedText }}</span>
+              </div>
             </td>
-            <td class="px-4 py-3 text-center">
-              <span :class="event.locked ? 'text-red-400' : 'text-green-400'" class="text-lg">
-                {{ event.locked ? '🔒' : '🔓' }}
-              </span>
+            <td class="px-4 py-3 text-left">
+              <div class="text-xs text-white whitespace-pre-wrap break-words">
+                <span class="mr-2">{{ event.unlockedResult ? '✅' : '❌' }}</span>
+                |
+                <span class="ml-2 opacity-80">{{ event.unlockedText }}</span>
+              </div>
             </td>
-            <td class="px-2 py-3 text-center">
-              <span class="text-lg" v-if="event.conditions">
-                {{ evaluateCondition(event.conditions) ? '✅' : '❌' }}
-              </span>
+            <td class="px-4 py-3 text-left">
+              <div class="text-xs text-white whitespace-pre-wrap break-words">
+                <span class="mr-2">{{ event.conditionResult ? '✅' : '❌' }}</span>
+                |
+                <span class="ml-2 opacity-80">{{ event.conditionText }}</span>
+              </div>
             </td>
-            <td class="px-4 py-3 text-center">
-              <span class="text-white/70 text-xs">
-                {{ event.conditions || 'None' }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-center">
-              <button
-                @click="editEvent(event.id)"
-                class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
-              >
-                <span>✏️</span>
-                <span>Edit</span>
-              </button>
+            <td class="px-4 py-3 text-left">
+              <div class="flex items-center gap-2">
+                <button
+                  @click="openInEditor(event.filePath)"
+                  class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
+                >
+                  <span>✏️</span>
+                  <span>Edit</span>
+                </button>
+                <button
+                  disabled
+                  class="inline-flex items-center space-x-1 px-2 py-1 bg-white/10 rounded border border-white/10 text-white/40 text-xs cursor-not-allowed"
+                  title="Delete (coming soon)"
+                >
+                  <span>🗑️</span>
+                  <span>Delete</span>
+                </button>
+              </div>
             </td>
           </tr>
           <tr v-if="eventsList.length === 0">
-            <td colspan="6" class="px-4 py-8 text-center text-white/70 text-sm">
-              <div class="flex flex-col items-center space-y-2">
+            <td colspan="5" class="px-4 py-8 text-left text-white/70 text-sm">
+              <div class="flex flex-col space-y-2">
                 <span class="text-2xl opacity-50">📅</span>
                 <span>No events configured yet</span>
               </div>
@@ -79,7 +89,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useEditorState } from '@editor/stores/editorState';
-import { useGameState } from '@engine/stores/gameState';
+import { gameState as useGameState } from '@generate/stores';
 import projectData from '@generate/project';
 import { GameState } from '@generate/types';
 
@@ -100,15 +110,35 @@ const currentLocationData = computed(() => {
 
 // Events list with metadata
 const eventsList = computed(() => {
-  if (!currentLocationData.value?.events) return [];
-  
-  return Object.entries(currentLocationData.value.events).map(([id, eventData]) => ({
-    id,
-    name: eventData.name || id.charAt(0).toUpperCase() + id.slice(1),
-    unlocked: true, // TODO: Get from game state
-    locked: false, // TODO: Get from event config
-    conditions: eventData.conditions || null
-  }));
+  if (!currentLocationData.value?.events) return [] as Array<any>;
+
+  return Object.entries(currentLocationData.value.events).map(([id, eventData]) => {
+    const relPath = currentLocationData.value?.eventsPaths?.[id] ?? id;
+    const pathPrefix = isGlobal.value
+      ? `@project/global/events/`
+      : `@project/locations/${selectedLocation.value}/events/`;
+    const path = pathPrefix + relPath;
+    const filePath = (isGlobal.value
+      ? `global/events/${relPath}`
+      : `locations/${selectedLocation.value}/events/${relPath}`) + '.ts';
+
+    const lockedResult = safeEval(eventData.locked, gameState.$state);
+    const unlockedResult = safeEval(eventData.unlocked, gameState.$state);
+    const conditionResult = safeEval(eventData.conditions, gameState.$state);
+
+    return {
+      id,
+      path,
+      displayPath: relPath,
+      filePath,
+      lockedResult,
+      unlockedResult,
+      conditionResult,
+      lockedText: fnText(eventData.locked),
+      unlockedText: fnText(eventData.unlocked),
+      conditionText: fnText(eventData.conditions),
+    };
+  });
 });
 
 // Event handlers
@@ -117,28 +147,24 @@ function addNewEvent() {
   console.log('Add new event to:', selectedLocation.value);
 }
 
-function editEvent(eventId: string) {
-  // TODO: Implement edit event functionality
-  console.log('Edit event:', eventId, 'in location:', selectedLocation.value);
+function openInEditor(filePath: string) {
+  editorState.openFile(filePath);
 }
 
-// Condition evaluation function
-function evaluateCondition(condition_func: (state: GameState) => boolean): boolean {
-  if (condition_func(gameState.$state) == true) {
-    return true;
-  }
-  return false;
-  /*
-  if (!conditionStr || conditionStr.trim() === '') return true;
-  
+function safeEval(fn: (state: GameState) => boolean, state: GameState): boolean {
   try {
-    // Create a function that takes gameState as parameter and evaluates the condition
-    const conditionFunction = new Function('gameState', `return ${conditionStr}`);
-    const result = conditionFunction(gameState);
-    console.log('Event condition evaluation:', conditionStr, '→', result, 'GameState:', gameState);
-    return Boolean(result);
-  } catch (error) {
-    console.warn('Failed to evaluate event condition:', conditionStr, error);
-    */
+    return !!fn?.(state);
+  } catch {
+    return false;
+  }
+}
+
+function fnText(fn: Function | undefined): string {
+  try {
+    const s = fn?.toString() ?? 'None';
+    return s.replace(/\s+/g, ' ').trim();
+  } catch {
+    return 'None';
+  }
 }
 </script>

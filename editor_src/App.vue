@@ -27,6 +27,7 @@
     <!-- State Popups -->
     <EngineStatePopup v-if="editorState.showEnginePopup" />
     <GameStatePopup v-if="editorState.showGamePopup" />
+    <FileEditorPopup v-if="editorState.showFilePopup" />
   </div>
 </template>
 
@@ -39,6 +40,7 @@ import LocationEditView from '@editor/components/Location/LocationEditView.vue';
 import LocalizationManager from '@editor/components/Localization/LocalizationManager.vue';
 import EngineStatePopup from '@editor/components/Popup/EngineStatePopup.vue';
 import GameStatePopup from '@editor/components/Popup/GameStatePopup.vue';
+import FileEditorPopup from '@editor/components/Popup/FileEditorPopup.vue';
 import FloatingGame from "@editor/components/Popup/FloatingGame.vue";
 import { useEditorState } from '@editor/stores/editorState';
 
@@ -98,4 +100,3 @@ button, .transition-all {
   -webkit-backdrop-filter: blur(4px);
 }
 </style>
-

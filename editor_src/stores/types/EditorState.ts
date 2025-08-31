@@ -7,4 +7,7 @@ export interface EditorState {
   previewVisible: boolean;
   showEnginePopup: boolean;
   showGamePopup: boolean;
+  // File editor popup
+  showFilePopup: boolean;
+  fileToEdit: string | null; // path relative to project root
 }

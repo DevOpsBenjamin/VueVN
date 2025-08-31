@@ -75,9 +75,15 @@ if (process.argv.includes('--watch')) {
   });
 
   watcher.on('all', (event: string, filePath: string) => {
-    console.log(`🔄 File ${event}: ${filePath}`);
-    generate_files();
-    console.log(`✅ Done`);
+    console.log(`👀 File ${event}: ${filePath}`);
+    // Only fully regenerate on structural changes (adds/removes)
+    if (['add', 'addDir', 'unlink', 'unlinkDir'].includes(event)) {
+      generate_files();
+      console.log(`✅ Regenerated (structural change)`);
+      return;
+    }
+    // Skip full regenerate on simple content changes to avoid dev UI blink
+    console.log('⏭️  Skipped full regeneration (content change)');
   });
 
   watcher.on('error', (error: Error) => {
