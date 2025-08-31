@@ -20,6 +20,7 @@ class Engine {
   // #region DEFINITION
   gameState: GameStateStore;
   engineState: EngineStateStore;
+  running: boolean;
 
   // Managers
   historyManager: HistoryManager;
@@ -41,6 +42,7 @@ class Engine {
     this.gameState = gameState;
     this.engineState = engineState;
     this.gameRoot = gameRoot;
+    this.running = false;
 
     // Initialize managers (order matters for dependencies)
     this.historyManager = new HistoryManager();
@@ -71,6 +73,10 @@ class Engine {
 
   setRootHTML(root: HTMLElement): void {
     this.gameRoot = root;
+    // Recreate input manager on new root; clean up previous listeners
+    if (this.inputManager) {
+      try { this.inputManager.destroy(); } catch {}
+    }
     this.inputManager = new InputManager(
       this.engineState,
       this.gameState,
@@ -103,6 +109,11 @@ class Engine {
   // #region LOOP ENGINE
   // Main engine loop
   async run(): Promise<void> {
+    if (this.running) {
+      console.warn('[Engine] run() called while already running; ignoring');
+      return;
+    }
+    this.running = true;
     while (true) {
       try {
         console.debug("rejectWaiters");

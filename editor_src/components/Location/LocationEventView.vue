@@ -28,7 +28,10 @@
         <tbody class="divide-y divide-white/5">
           <tr v-for="event in eventsList" :key="event.id" class="hover:bg-white/5 transition-colors align-top">
             <td class="px-4 py-3">
-              <div class="text-white font-medium text-sm">{{ event.displayPath }}</div>
+              <div class="text-white font-medium text-sm flex items-center gap-2">
+                <span>{{ event.availableNow ? '✅' : '❌' }}</span>
+                <span>{{ event.displayPath }}</span>
+              </div>
               <div class="text-white/60 text-xs">{{ event.id }}</div>
             </td>
             <td class="px-4 py-3 text-left">
@@ -131,6 +134,7 @@ const eventsList = computed(() => {
       path,
       displayPath: relPath,
       filePath,
+      availableNow: unlockedResult && conditionResult && !lockedResult,
       lockedResult,
       unlockedResult,
       conditionResult,
