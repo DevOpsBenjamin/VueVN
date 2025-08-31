@@ -27,6 +27,18 @@
             <div class="text-2xl text-orange-400 font-bold mb-1">{{ globalStats.eventCount }}</div>
             <div class="text-white/70 text-sm">Global Events</div>
           </div>
+          <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
+            <div class="text-2xl text-cyan-400 font-bold mb-1">{{ textStats.keys }}</div>
+            <div class="text-white/70 text-sm">Text Keys</div>
+          </div>
+          <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
+            <div class="text-2xl text-red-400 font-bold mb-1">{{ textStats.missing }}</div>
+            <div class="text-white/70 text-sm">Missing Translations</div>
+          </div>
+          <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
+            <div class="text-2xl text-teal-400 font-bold mb-1">{{ langsUpper.length }}</div>
+            <div class="text-white/70 text-sm">Languages</div>
+          </div>
         </div>
 
         <!-- Most Active Locations -->
@@ -48,6 +60,7 @@
             </div>
           </div>
         </div>
+
       </section>
       </div>
     </div>
@@ -58,6 +71,7 @@
 import { computed } from 'vue';
 import { useEditorState } from '@editor/stores/editorState';
 import projectData from '@generate/project';
+import texts from '@generate/texts';
 
 const editorState = useEditorState();
 
@@ -94,5 +108,69 @@ const topLocations = computed(() => {
     .filter(location => location.totalActivity > 0)
     .sort((a, b) => b.totalActivity - a.totalActivity)
     .slice(0, 3);
+});
+
+// Text statistics (all locations + global)
+function countTexts(): { keys: number; missing: number } {
+  let keys = 0;
+  let missing = 0;
+
+  const countModule = (mod: any) => {
+    if (!mod) return;
+    for (const k of Object.keys(mod)) {
+      if (k === '__path') continue;
+      const entry = mod[k];
+      if (!entry || typeof entry !== 'object') continue;
+      keys += 1;
+      for (const lang of Object.keys(entry)) {
+        if (lang === '__key') continue;
+        const v = entry[lang];
+        if (!(typeof v === 'string' && v.trim().length > 0)) missing += 1;
+      }
+    }
+  };
+
+  // Locations
+  const locs = (texts as any).locations || {};
+  for (const loc of Object.keys(locs)) {
+    const scopes = locs[loc] || {};
+    for (const scope of Object.keys(scopes)) {
+      countModule(scopes[scope]);
+    }
+  }
+  // Global
+  const globalScopes = (texts as any).global || {};
+  for (const scope of Object.keys(globalScopes)) {
+    countModule(globalScopes[scope]);
+  }
+
+  return { keys, missing };
+}
+
+const textStats = computed(() => countTexts());
+
+// Language list (unique across all scopes)
+const langsUpper = computed(() => {
+  const set = new Set<string>();
+  const addFromModule = (mod: any) => {
+    if (!mod) return;
+    for (const k of Object.keys(mod)) {
+      if (k === '__path') continue;
+      const entry = mod[k];
+      if (!entry || typeof entry !== 'object') continue;
+      for (const lang of Object.keys(entry)) {
+        if (lang === '__key') continue;
+        set.add(lang.toUpperCase());
+      }
+    }
+  };
+  const locs = (texts as any).locations || {};
+  for (const loc of Object.keys(locs)) {
+    const scopes = locs[loc] || {};
+    for (const scope of Object.keys(scopes)) addFromModule(scopes[scope]);
+  }
+  const globals = (texts as any).global || {};
+  for (const scope of Object.keys(globals)) addFromModule(globals[scope]);
+  return Array.from(set).sort((a,b)=>a.localeCompare(b));
 });
 </script>
