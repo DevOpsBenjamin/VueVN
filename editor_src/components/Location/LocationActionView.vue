@@ -28,9 +28,8 @@
             <td class="px-4 py-3">
               <div class="text-white font-medium text-sm flex items-center gap-2">
                 <span>{{ action.unlockedResult ? '✅' : '❌' }}</span>
-                <span>{{ action.displayPath }}</span>
+                <span>{{ action.displayPath.split('/').pop() || action.displayPath }}</span>
               </div>
-              <div class="text-white/60 text-xs">{{ action.id }}</div>
             </td>
             <td class="px-4 py-3 text-left">
               <div class="text-xs text-white whitespace-pre-wrap break-words">

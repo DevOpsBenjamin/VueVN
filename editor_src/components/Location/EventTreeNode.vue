@@ -20,8 +20,29 @@
           <span>{{ node.name }}/</span>
         </div>
       </td>
-      <td colspan="4" class="px-4 py-2">
-        <div class="text-xs text-white/30">folder</div>
+      <td class="px-4 py-3 text-left">
+        <div class="text-xs text-white whitespace-pre-wrap break-words">
+          <span class="mr-2">🔒</span>
+          |
+          <span class="ml-2 opacity-80">folder</span>
+        </div>
+      </td>
+      <td class="px-4 py-3 text-left">
+        <div class="text-xs text-white whitespace-pre-wrap break-words">
+          <span class="mr-2">✅</span>
+          |
+          <span class="ml-2 opacity-80">folder</span>
+        </div>
+      </td>
+      <td class="px-4 py-3 text-left">
+        <div class="text-xs text-white whitespace-pre-wrap break-words">
+          <span class="mr-2">❌</span>
+          |
+          <span class="ml-2 opacity-80">folder</span>
+        </div>
+      </td>
+      <td class="px-4 py-3 text-left">
+        <div class="text-xs text-white/70 font-medium">{{ getFolderActionBreakdown(node) }}</div>
       </td>
     </tr>
     
@@ -213,5 +234,32 @@ function getFolderStatusBreakdown(folder: TreeNode): string {
   }
   
   return `${locked}🔒 ${available}✅ ${unavailable}❌`;
+}
+
+function getFolderActionBreakdown(folder: TreeNode): string {
+  let unlocked = 0;
+  let locked = 0;
+  
+  function countEvents(node: TreeNode) {
+    if (node.type === 'event') {
+      if (node.event.unlockedResult) {
+        unlocked++;
+      } else {
+        locked++;
+      }
+    } else if (node.children) {
+      for (const child of node.children) {
+        countEvents(child);
+      }
+    }
+  }
+  
+  if (folder.children) {
+    for (const child of folder.children) {
+      countEvents(child);
+    }
+  }
+  
+  return `${unlocked}🔓 ${locked}🔒`;
 }
 </script>

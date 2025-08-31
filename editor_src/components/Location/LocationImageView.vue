@@ -42,11 +42,6 @@
             </div>
             <div v-for="img in images" :key="img.path" class="group relative border border-white/10 rounded overflow-hidden cursor-pointer" @click="select(img)">
               <img :src="toRuntime(img.path)" class="w-full h-24 object-cover">
-              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                <button @click.stop="copy(img.path)" class="px-2 py-0.5 text-xs bg-white/20 rounded">Copy</button>
-                <button @click.stop="rename(img.path)" class="px-2 py-0.5 text-xs bg-white/20 rounded">Rename</button>
-                <button @click.stop="remove(img.path)" class="px-2 py-0.5 text-xs bg-red-500/40 rounded">Delete</button>
-              </div>
             </div>
             <div v-if="images.length===0 && dirs.length===0" class="text-white/60 text-sm">Empty folder. Drop files here to upload.</div>
           </div>
@@ -54,13 +49,33 @@
       </div>
       <div class="col-span-3">
         <div class="p-4 border border-white/10 rounded bg-black/10" v-if="selected">
-          <div class="text-sm font-semibold">Preview</div>
-          <div class="text-xs text-white/60 mb-2">{{ selected.path }}</div>
+          <div class="flex items-center justify-between mb-1">
+            <div class="text-sm font-semibold">Preview</div>
+            <button @click="onDeleteSelected" class="px-2 py-0.5 text-xs bg-red-500/20 hover:bg-red-500/30 rounded border border-red-500/30">Delete</button>
+          </div>
+          <div class="text-xs text-white/60 break-all mb-2">{{ toRuntime(selected.path) }}</div>
           <img :src="toRuntime(selected.path)" class="w-full rounded border border-white/10 mb-3" />
-          <div class="grid grid-cols-2 gap-2 text-sm">
-            <div class="text-white/60">Name</div><div>{{ selected.name }}</div>
-            <div class="text-white/60">Size</div><div>{{ formatSize(selected.size) }}</div>
-            <div class="text-white/60">Modified</div><div>{{ formatDate(selected.modified) }}</div>
+          <div class="grid grid-cols-2 gap-2 text-sm items-center">
+            <div class="text-white/60">Size</div>
+            <div>{{ formatSize(selected.size) }}</div>
+            <div class="text-white/60">Modified</div>
+            <div>{{ formatDate(selected.modified) }}</div>
+            <div class="text-white/60">Name</div>
+            <div>
+              <template v-if="editingName">
+                <input v-model="nameInput" class="bg-white/10 border border-white/20 rounded px-2 py-1 text-sm w-full" />
+                <div class="flex items-center gap-2 mt-2">
+                  <button @click="saveRename" class="px-2 py-0.5 text-xs bg-green-500/30 hover:bg-green-500/40 rounded border border-green-500/40">Save</button>
+                  <button @click="cancelRename" class="px-2 py-0.5 text-xs bg-white/10 hover:bg-white/20 rounded border border-white/20">Cancel</button>
+                </div>
+              </template>
+              <template v-else>
+                <div class="flex items-center justify-between gap-2">
+                  <div class="truncate" :title="selected.name">{{ selected.name }}</div>
+                  <button @click="startRename" class="px-2 py-0.5 text-xs bg-white/10 hover:bg-white/20 rounded border border-white/20">Edit</button>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
         <div v-else class="text-white/60 text-sm p-4 border border-white/10 rounded bg-black/10">Select an image to preview</div>
@@ -82,6 +97,8 @@ const subDir = ref<string>(''); // relative under rootDir
 const loading = ref(false);
 const selected = ref<Asset | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+const editingName = ref(false);
+const nameInput = ref('');
 
 function select(a: Asset) { selected.value = a; }
 
@@ -152,6 +169,11 @@ async function remove(path: string) {
   const res = await fetch(`/api/delete?path=${encodeURIComponent(path)}`, { method: 'DELETE' });
   if (res.ok) await refresh();
 }
+async function onDeleteSelected() {
+  if (!selected.value) return;
+  await remove(selected.value.path);
+  selected.value = null;
+}
 async function rename(oldPath: string) {
   const base = oldPath.split('/');
   const current = base[base.length-1];
@@ -163,6 +185,29 @@ async function rename(oldPath: string) {
     body: JSON.stringify({ oldPath, newPath })
   });
   if (res.ok) await refresh();
+}
+function startRename() {
+  if (!selected.value) return;
+  nameInput.value = selected.value.name;
+  editingName.value = true;
+}
+function cancelRename() { editingName.value = false; }
+async function saveRename() {
+  if (!selected.value) return;
+  const baseParts = selected.value.path.split('/');
+  baseParts.pop();
+  const newPath = [...baseParts, nameInput.value].join('/');
+  const res = await fetch('/api/rename', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ oldPath: selected.value.path, newPath })
+  });
+  if (res.ok) {
+    editingName.value = false;
+    await refresh();
+    // reselect the renamed item
+    const found = images.find(x => x.path === newPath);
+    if (found) selected.value = found;
+  }
 }
 async function copy(path: string) {
   try { await navigator.clipboard.writeText(toRuntime(path)); } catch {}
