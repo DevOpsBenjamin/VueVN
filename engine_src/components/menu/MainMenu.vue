@@ -9,27 +9,27 @@
         'opacity-0': engineState.state !== EngineStateEnum.MENU,
       }"
     >
-      <!-- Main menu panel -->
-      <div class="flex flex-col items-center max-w-md w-full px-6">
+      <!-- Main menu panel with responsive height and scroll -->
+      <div class="flex flex-col items-center max-w-md w-full px-6 max-h-[calc(100%-4rem)] overflow-y-auto">
         <!-- Title section -->
-        <div class="mb-12 text-center">
-          <h1 class="text-5xl font-bold text-white mb-4 tracking-wider">
+        <div class="mb-6 lg:mb-8 text-center shrink-0">
+          <h1 class="text-2xl lg:text-3xl font-bold text-white mb-2 tracking-wider">
             VueVN
           </h1>
           <div
-            class="w-32 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded mx-auto mb-2"
+            class="w-20 lg:w-24 h-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded mx-auto mb-2"
           ></div>
-          <p class="text-white/60 text-sm font-mono uppercase tracking-widest">
+          <p class="text-white/60 text-xs font-mono uppercase tracking-widest">
             Visual Novel Engine
           </p>
         </div>
 
         <!-- Menu buttons -->
-        <div class="flex flex-col gap-4 w-full">
+        <div class="flex flex-col gap-3 lg:gap-4 w-full flex-1 min-h-0">
           <!-- New Game -->
           <button
             @click.stop.prevent="newGame"
-            class="group relative overflow-hidden rounded-xl px-8 py-4 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(34,197,94,0.3)]"
+            class="group relative overflow-hidden rounded-xl px-4 lg:px-6 py-2 lg:py-3 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-base lg:text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(34,197,94,0.3)]"
           >
             <div
               class="absolute inset-0 bg-gradient-to-r from-green-600/20 to-emerald-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
@@ -47,7 +47,7 @@
           <button
             v-if="engineState.initialized"
             @click.stop.prevent="continueGame"
-            class="group relative overflow-hidden rounded-xl px-8 py-4 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]"
+            class="group relative overflow-hidden rounded-xl px-4 lg:px-6 py-2 lg:py-3 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-base lg:text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]"
           >
             <div
               class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
@@ -65,7 +65,7 @@
           <button
             v-if="engineState.initialized"
             @click.stop.prevent="saveGame"
-            class="group relative overflow-hidden rounded-xl px-8 py-4 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(168,85,247,0.3)]"
+            class="group relative overflow-hidden rounded-xl px-4 lg:px-6 py-2 lg:py-3 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-base lg:text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(168,85,247,0.3)]"
           >
             <div
               class="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-violet-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
@@ -82,7 +82,7 @@
           <!-- Load Game -->
           <button
             @click.stop.prevent="loadGame"
-            class="group relative overflow-hidden rounded-xl px-8 py-4 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(245,158,11,0.3)]"
+            class="group relative overflow-hidden rounded-xl px-4 lg:px-6 py-2 lg:py-3 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-base lg:text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(245,158,11,0.3)]"
           >
             <div
               class="absolute inset-0 bg-gradient-to-r from-yellow-600/20 to-orange-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
@@ -99,7 +99,7 @@
           <!-- Settings -->
           <button
             @click.stop.prevent="openSettings"
-            class="group relative overflow-hidden rounded-xl px-8 py-4 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(107,114,128,0.3)]"
+            class="group relative overflow-hidden rounded-xl px-4 lg:px-6 py-2 lg:py-3 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-base lg:text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(107,114,128,0.3)]"
           >
             <div
               class="absolute inset-0 bg-gradient-to-r from-gray-600/20 to-slate-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
@@ -115,7 +115,7 @@
         </div>
 
         <!-- Footer info -->
-        <div class="mt-12 text-center">
+        <div class="mt-4 lg:mt-6 text-center shrink-0">
           <p class="text-white/40 text-xs font-mono">
             Press ESC anytime to return to menu
           </p>

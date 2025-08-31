@@ -17,7 +17,7 @@
       }"
     >
       <!-- Main panel with glass morphism -->
-      <div class="bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl">
+      <div class="bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl w-[calc(100%-2rem)] h-[calc(100%-2rem)] flex flex-col shadow-2xl">
         <!-- Header with gradient -->
         <div class="p-6 pb-4 text-center border-b border-white/10">
           <h2 class="text-2xl font-bold text-white mb-2 tracking-wide">
@@ -27,17 +27,17 @@
         </div>
 
         <!-- Save slots grid -->
-        <div class="flex-1 overflow-y-auto p-6">
-          <div class="grid grid-cols-4 gap-4 w-full">
+        <div class="flex-1 overflow-y-auto p-4 min-h-0">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full auto-rows-max">
             <div
               v-for="slot in visibleSlots"
               :key="slot"
               class="group relative overflow-hidden rounded-lg bg-black/20 backdrop-blur-sm border border-white/10 hover:border-white/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.2)]"
             >
               <!-- Slot content -->
-              <div class="p-4 flex flex-col h-full min-h-[180px]">
+              <div class="p-3 flex flex-col h-full min-h-[160px]">
                 <!-- Slot header -->
-                <div class="mb-3">
+                <div class="mb-2">
                   <div class="flex items-center justify-between mb-1">
                     <span class="text-white/60 text-[10px] font-mono uppercase tracking-wider">Slot {{ slot }}</span>
                     <div v-if="saves[slot]" class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
@@ -48,15 +48,15 @@
                 </div>
 
                 <!-- Timestamp -->
-                <div class="mb-3 flex-grow">
+                <div class="mb-0 flex-grow">
                   <span v-if="saves[slot]" class="text-white/40 text-[10px] font-mono leading-tight">
                     {{ formatDate(saves[slot].timestamp) }}
                   </span>
-                  <span v-else class="text-white/20 text-[10px] italic">No save data</span>
+                  <span v-else class="p-0 text-white/20 text-[10px] italic">No save data</span>
                 </div>
 
                 <!-- Action section -->
-                <div class="space-y-2 mt-auto">
+                <div class="space-y-1 mt-auto">
                   <template v-if="mode === 'save'">
                     <!-- Save name input -->
                     <input
@@ -95,8 +95,8 @@
         </div>
 
         <!-- Navigation controls -->
-        <div class="p-4 border-t border-white/10 flex items-center justify-center">
-          <div class="flex items-center gap-4">
+        <div class="p-3 border-t border-white/10 flex items-center justify-center">
+          <div class="flex items-center gap-2 flex-wrap justify-center">
             <button
               @click="prevPage"
               :disabled="page === 0"
@@ -122,7 +122,7 @@
           </div>
           
           <!-- Close hint -->
-          <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-white/30 text-xs">
+          <div class="text-white/30 text-xs text-center mt-2">
             Press ESC to close
           </div>
         </div>
