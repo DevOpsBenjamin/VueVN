@@ -19,13 +19,16 @@
       <div class="col-span-9">
         <div class="flex items-center justify-between mb-2 text-sm text-white/70">
           <div class="flex items-center gap-2">
-            <span class="text-white/50">/assets/images</span>
+            <button class="hover:underline text-white/50" @click="cd('')">/{{ rootDir }}</button>
             <template v-for="(crumb, idx) in breadcrumbs" :key="idx">
               <span>/</span>
               <button class="hover:underline" @click="cd(breadcrumbs.slice(0, idx+1).join('/'))">{{ crumb }}</button>
             </template>
           </div>
-          <button @click="mkdir" class="px-2 py-0.5 bg-white/10 hover:bg-white/20 rounded border border-white/10">New Folder</button>
+          <div class="flex items-center gap-2">
+            <button @click="up()" :disabled="!subDir" :class="['px-2 py-0.5 rounded border text-xs', subDir ? 'bg-white/10 hover:bg-white/20 border-white/10' : 'bg-white/5 text-white/40 border-white/5 cursor-not-allowed']">Up</button>
+            <button @click="mkdir" class="px-2 py-0.5 bg-white/10 hover:bg-white/20 rounded border border-white/10">New Folder</button>
+          </div>
         </div>
         <div class="border-2 border-dashed border-white/10 rounded-lg p-4 min-h-[50vh]"
              @dragover.prevent
@@ -33,12 +36,12 @@
           <div v-if="loading" class="text-sm text-white/60">Loading...</div>
           <div v-else class="grid grid-cols-6 gap-3">
             <!-- directories -->
-            <div v-for="d in dirs" :key="d.path" class="border border-white/10 rounded p-2 hover:bg-white/5 cursor-pointer" @dblclick="cd(relFromImages(d.path))">
+            <div v-for="d in dirs" :key="d.path" class="border border-white/10 rounded p-2 hover:bg-white/5 cursor-pointer" @click="cd(relFromImages(d.path))">
               <div class="text-4xl mb-2">📁</div>
               <div class="text-xs text-white/80 truncate" :title="d.name">{{ d.name }}</div>
             </div>
-            <div v-for="img in images" :key="img.path" class="group relative border border-white/10 rounded overflow-hidden">
-              <img :src="'/' + img.path" class="w-full h-24 object-cover" @click="select(img)">
+            <div v-for="img in images" :key="img.path" class="group relative border border-white/10 rounded overflow-hidden cursor-pointer" @click="select(img)">
+              <img :src="toRuntime(img.path)" class="w-full h-24 object-cover">
               <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
                 <button @click.stop="copy(img.path)" class="px-2 py-0.5 text-xs bg-white/20 rounded">Copy</button>
                 <button @click.stop="rename(img.path)" class="px-2 py-0.5 text-xs bg-white/20 rounded">Rename</button>
@@ -53,7 +56,7 @@
         <div class="p-4 border border-white/10 rounded bg-black/10" v-if="selected">
           <div class="text-sm font-semibold">Preview</div>
           <div class="text-xs text-white/60 mb-2">{{ selected.path }}</div>
-          <img :src="'/' + selected.path" class="w-full rounded border border-white/10 mb-3" />
+          <img :src="toRuntime(selected.path)" class="w-full rounded border border-white/10 mb-3" />
           <div class="grid grid-cols-2 gap-2 text-sm">
             <div class="text-white/60">Name</div><div>{{ selected.name }}</div>
             <div class="text-white/60">Size</div><div>{{ formatSize(selected.size) }}</div>
@@ -75,7 +78,7 @@ type Asset = { name: string; path: string; size: number; modified: string };
 const editorState = useEditorState();
 const selectedLocation = computed(() => editorState.selectedLocation || 'global');
 const images = reactive<Asset[]>([]);
-const currentDir = ref<string>(''); // relative under assets/images
+const subDir = ref<string>(''); // relative under rootDir
 const loading = ref(false);
 const selected = ref<Asset | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -85,12 +88,12 @@ function select(a: Asset) { selected.value = a; }
 async function refresh() {
   loading.value = true;
   try {
-    const base = 'assets/images';
-    const path = currentDir.value ? `${base}/${currentDir.value}` : base;
+    const base = rootDir.value;
+    const path = subDir.value ? `${base}/${subDir.value}` : base;
     const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`);
     if (!res.ok) {
       // Auto-create default folder for selected location
-      if (res.status === 404 && currentDir.value) {
+      if (res.status === 404 && subDir.value) {
         await fetch('/api/create', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ path, type: 'directory' })
@@ -138,7 +141,8 @@ async function uploadFiles(files: FileList | File[]) {
   for (const f of Array.from(files)) {
     const form = new FormData();
     form.append('file', f, f.name);
-    if (currentDir.value) form.append('dest', currentDir.value);
+    if (subDir.value) form.append('dest', `${rootDir.value}/${subDir.value}`);
+    else form.append('dest', rootDir.value);
     await fetch('/api/assets/upload', { method: 'POST', body: form });
   }
   await refresh();
@@ -160,28 +164,50 @@ async function rename(oldPath: string) {
   });
   if (res.ok) await refresh();
 }
-async function copy(text: string) { try { await navigator.clipboard.writeText(text); } catch {} }
+async function copy(path: string) {
+  try { await navigator.clipboard.writeText(toRuntime(path)); } catch {}
+}
+
+function toRuntime(pathStr: string): string {
+  const loc = selectedLocation.value;
+  if (pathStr.startsWith(`locations/${loc}/`)) {
+    return `/${pathStr.replace(/^locations\//, '')}`;
+  }
+  if (pathStr.startsWith('global/')) {
+    return `/${pathStr}`;
+  }
+  return '/' + pathStr;
+}
 
 onMounted(refresh);
 
 // Initialize default folder to selected location
-onMounted(() => {
-  if (selectedLocation.value && !currentDir.value) {
-    currentDir.value = selectedLocation.value;
-    refresh();
-  }
-});
+onMounted(() => { refresh(); });
 
 // Navigation helpers
-const breadcrumbs = computed(() => (currentDir.value ? currentDir.value.split('/') : []));
+const rootDir = computed(() => selectedLocation.value === 'global'
+  ? 'global/images'
+  : `locations/${selectedLocation.value}/images`);
+const breadcrumbs = computed(() => (subDir.value ? subDir.value.split('/') : []));
 const dirs = reactive<any[]>([]);
-function relFromImages(p: string): string { return p.replace(/^assets\/images\/?/, ''); }
-function cd(dir: string) { currentDir.value = dir; refresh(); }
+function relFromImages(p: string): string {
+  const base = rootDir.value.replace(/\\/g, '/');
+  const norm = p.replace(/\\/g, '/');
+  return norm.startsWith(base + '/') ? norm.slice(base.length + 1) : norm === base ? '' : norm;
+}
+function cd(dir: string) { subDir.value = dir; refresh(); }
+function up() {
+  if (!subDir.value) return;
+  const parts = subDir.value.split('/');
+  parts.pop();
+  subDir.value = parts.join('/');
+  refresh();
+}
 async function mkdir() {
   const name = prompt('New folder name');
   if (!name) return;
-  const base = 'assets/images';
-  const path = currentDir.value ? `${base}/${currentDir.value}/${name}` : `${base}/${name}`;
+  const base = rootDir.value;
+  const path = subDir.value ? `${base}/${subDir.value}/${name}` : `${base}/${name}`;
   await fetch('/api/create', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path, type: 'directory' })

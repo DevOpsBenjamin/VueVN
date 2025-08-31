@@ -19,7 +19,7 @@
       <div class="col-span-9">
         <div class="flex items-center justify-between mb-2 text-sm text-white/70">
           <div class="flex items-center gap-2">
-            <span class="text-white/50">/assets/sounds</span>
+            <span class="text-white/50">/{{ rootDir }}</span>
             <template v-for="(crumb, idx) in breadcrumbs" :key="idx">
               <span>/</span>
               <button class="hover:underline" @click="cd(breadcrumbs.slice(0, idx+1).join('/'))">{{ crumb }}</button>
@@ -33,12 +33,12 @@
           <div v-if="loading" class="text-sm text-white/60">Loading...</div>
           <div v-else class="space-y-2">
             <div class="grid grid-cols-6 gap-3">
-              <div v-for="d in dirs" :key="d.path" class="border border-white/10 rounded p-2 hover:bg-white/5 cursor-pointer" @dblclick="cd(relFromSounds(d.path))">
+              <div v-for="d in dirs" :key="d.path" class="border border-white/10 rounded p-2 hover:bg-white/5 cursor-pointer" @click="cd(relFromSounds(d.path))">
                 <div class="text-4xl mb-2">📁</div>
                 <div class="text-xs text-white/80 truncate" :title="d.name">{{ d.name }}</div>
               </div>
             </div>
-            <div v-for="snd in sounds" :key="snd.path" class="flex items-center justify-between border border-white/10 rounded px-3 py-2">
+            <div v-for="snd in sounds" :key="snd.path" class="flex items-center justify-between border border-white/10 rounded px-3 py-2 cursor-pointer" @click="select(snd)">
               <div class="flex items-center gap-3">
                 <span>🎵</span>
                 <div>
@@ -47,7 +47,7 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <audio :src="'/' + snd.path" controls class="h-6"></audio>
+                <audio :src="'/proj/' + snd.path" controls class="h-6"></audio>
                 <button @click="copy(snd.path)" class="px-2 py-0.5 text-xs bg-white/20 rounded">Copy</button>
                 <button @click="rename(snd.path)" class="px-2 py-0.5 text-xs bg-white/20 rounded">Rename</button>
                 <button @click="remove(snd.path)" class="px-2 py-0.5 text-xs bg-red-500/40 rounded">Delete</button>
@@ -89,11 +89,11 @@ const fileInput = ref<HTMLInputElement | null>(null);
 async function refresh() {
   loading.value = true;
   try {
-    const base = 'assets/sounds';
-    const path = currentDir.value ? `${base}/${currentDir.value}` : base;
+    const base = rootDir.value;
+    const path = subDir.value ? `${base}/${subDir.value}` : base;
     const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`);
     if (!res.ok) {
-      if (res.status === 404 && currentDir.value) {
+      if (res.status === 404 && subDir.value) {
         await fetch('/api/create', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ path, type: 'directory' })
@@ -143,7 +143,8 @@ async function uploadFiles(files: FileList | File[]) {
   for (const f of Array.from(files)) {
     const form = new FormData();
     form.append('file', f, f.name);
-    if (currentDir.value) form.append('dest', currentDir.value);
+    if (subDir.value) form.append('dest', `${rootDir.value}/${subDir.value}`);
+    else form.append('dest', rootDir.value);
     await fetch('/api/assets/upload', { method: 'POST', body: form });
   }
   await refresh();
@@ -165,26 +166,35 @@ async function rename(oldPath: string) {
   });
   if (res.ok) await refresh();
 }
-async function copy(text: string) { try { await navigator.clipboard.writeText(text); } catch {} }
+async function copy(path: string) {
+  try {
+    let out = path;
+    const loc = selectedLocation.value;
+    if (path.startsWith(`locations/${loc}/`)) {
+      out = `/${path.replace(/^locations\//, '')}`;
+    } else if (path.startsWith('global/')) {
+      out = `/${path}`;
+    }
+    await navigator.clipboard.writeText(out);
+  } catch {}
+}
 
 onMounted(refresh);
-onMounted(() => {
-  if (selectedLocation.value && !currentDir.value) {
-    currentDir.value = selectedLocation.value;
-    refresh();
-  }
-});
+onMounted(() => { refresh(); });
 
-const currentDir = ref<string>('');
+const subDir = ref<string>('');
 const dirs = reactive<any[]>([]);
-const breadcrumbs = computed(() => (currentDir.value ? currentDir.value.split('/') : []));
-function cd(dir: string) { currentDir.value = dir; refresh(); }
-function relFromSounds(p: string): string { return p.replace(/^assets\/sounds\/?/, ''); }
+const rootDir = computed(() => selectedLocation.value === 'global'
+  ? 'global/sounds'
+  : `locations/${selectedLocation.value}/sounds`);
+const breadcrumbs = computed(() => (subDir.value ? subDir.value.split('/') : []));
+function cd(dir: string) { subDir.value = dir; refresh(); }
+function relFromSounds(p: string): string { return p.replace(new RegExp(`^${rootDir.value}\\/?`), ''); }
 async function mkdir() {
   const name = prompt('New folder name');
   if (!name) return;
-  const base = 'assets/sounds';
-  const path = currentDir.value ? `${base}/${currentDir.value}/${name}` : `${base}/${name}`;
+  const base = rootDir.value;
+  const path = subDir.value ? `${base}/${subDir.value}/${name}` : `${base}/${name}`;
   await fetch('/api/create', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path, type: 'directory' })
@@ -196,3 +206,4 @@ async function mkdir() {
 <style scoped>
 .min-h-\[50vh\] { min-height: 50vh; }
 </style>
+function select(a: Asset) { selected.value = a; }

@@ -18,6 +18,7 @@
       <table class="w-full">
         <thead class="bg-white/5">
           <tr>
+            <th class="px-4 py-3 text-left text-white font-medium text-sm w-32">Status</th>
             <th class="px-4 py-3 text-left text-white font-medium text-sm">Name</th>
             <th class="px-4 py-3 text-left text-white font-medium text-sm">Locked</th>
             <th class="px-4 py-3 text-left text-white font-medium text-sm">Unlocked</th>
@@ -26,64 +27,18 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-white/5">
-          <tr v-for="event in eventsList" :key="event.id" class="hover:bg-white/5 transition-colors align-top">
-            <td class="px-4 py-3">
-              <div class="text-white font-medium text-sm flex items-center gap-2">
-                <span>{{ event.lockedResult ? '🔒' : (event.availableNow ? '✅' : '❌') }}</span>
-                <span>{{ event.displayPath }}</span>
-              </div>
-              <div class="text-white/60 text-xs">{{ event.id }}</div>
-            </td>
-            <td class="px-4 py-3 text-left">
-              <div class="text-xs text-white whitespace-pre-wrap break-words">
-                <template v-if="event.lockedResult">
-                  <span class="mr-2">🔒</span>
-                  |
-                  <span class="ml-2 opacity-80">{{ event.lockedText }}</span>
-                </template>
-                <template v-else>
-                  <span class="mr-2">⬜</span>
-                  |
-                  <span class="ml-2 opacity-80">{{ event.lockedText }}</span>
-                </template>
-              </div>
-            </td>
-            <td class="px-4 py-3 text-left">
-              <div class="text-xs text-white whitespace-pre-wrap break-words">
-                <span class="mr-2">{{ event.unlockedResult ? '✅' : '❌' }}</span>
-                |
-                <span class="ml-2 opacity-80">{{ event.unlockedText }}</span>
-              </div>
-            </td>
-            <td class="px-4 py-3 text-left">
-              <div class="text-xs text-white whitespace-pre-wrap break-words">
-                <span class="mr-2">{{ event.conditionResult ? '✅' : '❌' }}</span>
-                |
-                <span class="ml-2 opacity-80">{{ event.conditionText }}</span>
-              </div>
-            </td>
-            <td class="px-4 py-3 text-left">
-              <div class="flex items-center gap-2">
-                <button
-                  @click="openInEditor(event.filePath)"
-                  class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
-                >
-                  <span>✏️</span>
-                  <span>Edit</span>
-                </button>
-                <button
-                  disabled
-                  class="inline-flex items-center space-x-1 px-2 py-1 bg-white/10 rounded border border-white/10 text-white/40 text-xs cursor-not-allowed"
-                  title="Delete (coming soon)"
-                >
-                  <span>🗑️</span>
-                  <span>Delete</span>
-                </button>
-              </div>
-            </td>
-          </tr>
+          <template v-for="(item, index) in eventsTree" :key="item.id">
+            <EventTreeNode
+              :node="item"
+              :depth="0"
+              :is-last="index === eventsTree.length - 1"
+              :parent-branches="[]"
+              @open-editor="openInEditor"
+              @toggle-folder="toggleFolder"
+            />
+          </template>
           <tr v-if="eventsList.length === 0">
-            <td colspan="5" class="px-4 py-8 text-left text-white/70 text-sm">
+            <td colspan="6" class="px-4 py-8 text-left text-white/70 text-sm">
               <div class="flex flex-col space-y-2">
                 <span class="text-2xl opacity-50">📅</span>
                 <span>No events configured yet</span>
@@ -97,14 +52,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useEditorState } from '@editor/stores/editorState';
 import { gameState as useGameState } from '@generate/stores';
 import projectData from '@generate/project';
 import { GameState } from '@generate/types';
+import EventTreeNode from './EventTreeNode.vue';
+
+interface TreeNode {
+  id: string;
+  name: string;
+  type: 'folder' | 'event';
+  isExpanded?: boolean;
+  children?: TreeNode[];
+  event?: any;
+  fullPath?: string;
+}
 
 const editorState = useEditorState();
 const gameState = useGameState();
+const expandedFolders = ref<Set<string>>(new Set());
 
 // Computed properties
 const selectedLocation = computed(() => editorState.selectedLocation || 'global');
@@ -152,14 +119,65 @@ const eventsList = computed(() => {
   });
 });
 
+// Build tree structure from events
+const eventsTree = computed(() => {
+  const root: TreeNode[] = [];
+  const folderMap = new Map<string, TreeNode>();
+
+  eventsList.value.forEach(event => {
+    const pathParts = event.displayPath.split('/');
+    let currentLevel = root;
+    let currentPath = '';
+
+    // Create folder hierarchy
+    for (let i = 0; i < pathParts.length - 1; i++) {
+      const folderName = pathParts[i];
+      currentPath = currentPath ? `${currentPath}/${folderName}` : folderName;
+      
+      let folder = currentLevel.find(item => item.name === folderName && item.type === 'folder');
+      if (!folder) {
+        folder = {
+          id: currentPath,
+          name: folderName,
+          type: 'folder',
+          isExpanded: expandedFolders.value.has(currentPath),
+          children: []
+        };
+        currentLevel.push(folder);
+        folderMap.set(currentPath, folder);
+      }
+      currentLevel = folder.children!;
+    }
+
+    // Add the event
+    const eventName = pathParts[pathParts.length - 1];
+    currentLevel.push({
+      id: event.id,
+      name: eventName,
+      type: 'event',
+      event: event,
+      fullPath: event.displayPath
+    });
+  });
+
+  return root;
+});
+
 // Event handlers
 function addNewEvent() {
-  // TODO: Implement add event functionality
   console.log('Add new event to:', selectedLocation.value);
 }
 
 function openInEditor(filePath: string) {
   editorState.openFile(filePath);
+}
+
+function toggleFolder(folderId: string) {
+  if (expandedFolders.value.has(folderId)) {
+    expandedFolders.value.delete(folderId);
+  } else {
+    expandedFolders.value.add(folderId);
+  }
 }
 
 function safeEval(fn: (state: GameState) => boolean, state: GameState): boolean {

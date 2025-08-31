@@ -16,13 +16,28 @@ export default defineConfig({
     {
       name: 'serve-project-assets',
       configureServer(server) {
-        const assetsPath = path.resolve(
-          __dirname,
-          'projects',
-          currentProject,
-          'assets'
-        );
-        server.middlewares.use('/assets', serveStatic(assetsPath));
+        const projectPath = path.resolve(__dirname, 'projects', currentProject);
+        
+        // Serve global assets directly at /global/*
+        server.middlewares.use('/global', serveStatic(path.join(projectPath, 'global')));
+        // Dynamic location serving: /:locationId/* -> projects/.../locations/:locationId/* if exists
+        server.middlewares.use((req, res, next) => {
+          try {
+            if (!req.url) return next();
+            const url = new URL(req.url, 'http://localhost');
+            const parts = url.pathname.split('/').filter(Boolean);
+            if (parts.length >= 2) {
+              const loc = parts[0];
+              const rest = parts.slice(1).join('/');
+              const tryPath = path.join(projectPath, 'locations', loc, rest);
+              // Only serve if it's a file
+              if (require('fs').existsSync(tryPath) && require('fs').statSync(tryPath).isFile()) {
+                return serveStatic(path.dirname(tryPath))(Object.assign(req, { url: '/' + path.basename(tryPath) }), res, next);
+              }
+            }
+          } catch {}
+          next();
+        });
       },
     },
   ],
