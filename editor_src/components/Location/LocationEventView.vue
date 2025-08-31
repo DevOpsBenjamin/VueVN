@@ -48,6 +48,15 @@
         </tbody>
       </table>
     </div>
+    
+    <!-- Add Event Modal -->
+    <AddEventModal
+      :is-open="showAddModal"
+      :selected-location="selectedLocation"
+      :is-global="isGlobal"
+      @close="showAddModal = false"
+      @create="createEvent"
+    />
   </div>
 </template>
 
@@ -58,6 +67,7 @@ import { gameState as useGameState } from '@generate/stores';
 import projectData from '@generate/project';
 import { GameState } from '@generate/types';
 import EventTreeNode from './EventTreeNode.vue';
+import AddEventModal from './AddEventModal.vue';
 
 interface TreeNode {
   id: string;
@@ -72,6 +82,7 @@ interface TreeNode {
 const editorState = useEditorState();
 const gameState = useGameState();
 const expandedFolders = ref<Set<string>>(new Set());
+const showAddModal = ref(false);
 
 // Computed properties
 const selectedLocation = computed(() => editorState.selectedLocation || 'global');
@@ -163,9 +174,71 @@ const eventsTree = computed(() => {
   return root;
 });
 
-// Event handlers
+// Event handlers  
 function addNewEvent() {
-  console.log('Add new event to:', selectedLocation.value);
+  showAddModal.value = true;
+}
+
+function createEvent(name: string, path: string, fullPath: string) {
+  // Generate empty event template
+  const template = generateEventTemplate(name, path);
+  
+  // Open editor with template content - file will be created when user saves
+  editorState.openFileWithContent(fullPath, template);
+}
+
+function generateEventTemplate(name: string, path: string): string {
+  const eventId = path ? `${path.replace(/\//g, '_')}_${name}` : name;
+  
+  return `import type { VNEvent, GameState, EngineAPI } from '@generate/types';
+
+export default {
+  name: '${name}',
+  foreground: 'default.png', // Base foreground image for this event
+  
+  conditions: (state: GameState) => true, // Runtime conditions for execution
+  unlocked: (state: GameState) => true,   // Unlock conditions (story gates)
+  locked: (state: GameState) => false,    // Permanent removal conditions
+  
+  async execute(engine: EngineAPI, state: GameState) {
+    // Your event logic here
+    await engine.showText('Hello! This is a new event.');
+    
+    // Available API methods:
+    // await engine.showText('Some text', 'Character Name'); // Show text with optional character name
+    // await engine.showChoices([
+    //   { text: 'Option 1', branch: 'option1' },
+    //   { text: 'Option 2', branch: 'option2' }
+    // ]); // Show choices and wait for selection
+    // await engine.jump('other_event_id'); // Jump to another event
+    
+    // Non-waiting foreground management:
+    // engine.setForeground(['image1.png', 'image2.png']); // Set foreground images
+    // engine.addForeground('image.png'); // Add image to foreground
+    // engine.replaceForeground('image.png'); // Replace current foreground
+    
+    // You can access and modify game state:
+    // state.flags.${eventId}_completed = true;
+    
+    // IMPORTANT: Events should ALWAYS finish with an await call!
+    // Code after the last await is NOT executed - the event ends at the last await.
+  },
+  
+  // Optional: Choice branches for this event
+  // branches: {
+  //   option1: {
+  //     async execute(engine: EngineAPI, state: GameState) {
+  //       await engine.showText('You chose option 1');
+  //     }
+  //   },
+  //   option2: {
+  //     async execute(engine: EngineAPI, state: GameState) {
+  //       await engine.showText('You chose option 2');
+  //     }
+  //   }
+  // }
+} satisfies VNEvent;
+`;
 }
 
 function openInEditor(filePath: string) {

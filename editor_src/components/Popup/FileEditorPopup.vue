@@ -83,16 +83,37 @@ function detectLanguage(path: string): string {
 
 async function loadFile(path: string) {
   try {
+    // Check if we have initial content for a new file
+    if (editorState.fileInitialContent) {
+      content.value = editorState.fileInitialContent;
+      if (editorInstance) {
+        editorInstance.setValue(content.value);
+        window.monaco.editor.setModelLanguage(editorInstance.getModel(), detectLanguage(path));
+      }
+      return;
+    }
+    
+    // Load existing file
     const res = await fetch(`/api/file?path=${encodeURIComponent(path)}`);
-    if (!res.ok) throw new Error('Failed to load file');
-    const data = await res.json();
-    content.value = data.content || '';
+    if (!res.ok) {
+      // File doesn't exist, start with empty content
+      content.value = '';
+    } else {
+      const data = await res.json();
+      content.value = data.content || '';
+    }
+    
     if (editorInstance) {
       editorInstance.setValue(content.value);
       window.monaco.editor.setModelLanguage(editorInstance.getModel(), detectLanguage(path));
     }
   } catch (err) {
     console.error('Error loading file', err);
+    // Fallback to empty content
+    content.value = '';
+    if (editorInstance) {
+      editorInstance.setValue('');
+    }
   }
 }
 

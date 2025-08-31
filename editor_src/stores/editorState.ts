@@ -14,6 +14,7 @@ function createEditorState(): EditorState
     showGamePopup: false,
     showFilePopup: false,
     fileToEdit: null,
+    fileInitialContent: null,
   }
 }
 
@@ -28,11 +29,18 @@ export const useEditorState = defineStore('editorState', {
     },
     openFile(file: string): void {
       this.fileToEdit = file;
+      this.fileInitialContent = null;
+      this.showFilePopup = true;
+    },
+    openFileWithContent(file: string, content: string): void {
+      this.fileToEdit = file;
+      this.fileInitialContent = content;
       this.showFilePopup = true;
     },
     closeFile(): void {
       this.showFilePopup = false;
       this.fileToEdit = null;
+      this.fileInitialContent = null;
     }
   } satisfies EditorStateActions,
   persist: true

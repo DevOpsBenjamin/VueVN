@@ -10,4 +10,5 @@ export interface EditorState {
   // File editor popup
   showFilePopup: boolean;
   fileToEdit: string | null; // path relative to project root
+  fileInitialContent: string | null; // initial content for new files
 }

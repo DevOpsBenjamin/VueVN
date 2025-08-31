@@ -1,5 +1,5 @@
-// Project-specific Text interface extending base Text to add French support
+// Project Text: mandatory English with optional per-language entries.
+// Allows arbitrary language codes; engine resolves by current language with fallback to 'en'.
 export interface Text {
-  en: string;
-  fr?: string | null;
+  [lang: string]: string | null;
 }

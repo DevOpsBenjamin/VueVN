@@ -24,16 +24,15 @@ export default class SimulateRunner implements EngineAPI
         if (typeof text === 'string') {
             return text;
         }
-        const typeText:Text = text;
-        // Get current language from settings (default to 'en')
-        const currentLang = this.engineState.settings.language || 'en';
-        
-        // Try current language first, fallback to English
-        if (typeText.fr) {
-            return typeText.fr!;
+        const obj: any = text as any;
+        const lang = (this.engineState.settings.language || 'en').toLowerCase();
+        const val = obj?.[lang];
+        if (typeof val === 'string' && val.trim().length > 0) {
+            return val;
         }
-        
-        return typeText.en;
+        // No fallback: show explicit missing marker for the current language
+        const key = typeof obj?.__key === 'string' ? obj.__key : 'unknown';
+        return `(MISSING TRANSLATION FOR LANG [${lang}] KEY [${key}])`;
     }
 
     async showText(text: string | Text, from?: string): Promise<void> {

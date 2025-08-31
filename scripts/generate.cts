@@ -76,6 +76,16 @@ if (process.argv.includes('--watch')) {
 
   watcher.on('all', (event: string, filePath: string) => {
     console.log(`👀 File ${event}: ${filePath}`);
+    // Text changes: always regenerate i18n (covers add/change/unlink)
+    if (/\/texts\//.test(filePath)) {
+      try {
+        run('generate/generate-i18n.cts');
+        console.log('✅ i18n regenerated');
+      } catch (e) {
+        console.error('❌ i18n regeneration failed');
+      }
+      return;
+    }
     // Only fully regenerate on structural changes (adds/removes)
     if (['add', 'addDir', 'unlink', 'unlinkDir'].includes(event)) {
       generate_files();
