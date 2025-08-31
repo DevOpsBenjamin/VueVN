@@ -1,5 +1,5 @@
 <template>
-  <div class="absolute top-0 left-0 w-full z-10 pointer-events-none p-1" style="height: 10%; font-size: 3cqw;">
+  <div class="absolute top-0 left-0 w-full z-10 pointer-events-none p-1" style="height: 10%; font-size: 2cqw;">
     <div class="w-full h-full pointer-events-auto flex justify-between items-center">
       <div class="bg-black/30 backdrop-blur-sm text-white rounded h-full flex items-center" style="padding: 0 2cqh;">
         {{ formattedDate }}

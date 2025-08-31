@@ -8,18 +8,18 @@
         v-for="action in accessibleActions"
         :key="action.id"
         @click.stop.prevent="executeAction(action.id)"
-        class="group relative overflow-hidden transition-all duration-300 ease-out transform hover:scale-110 hover:-translate-y-2 focus:outline-none border-none rounded-full h-full aspect-square"
+        class="group relative overflow-hidden transition-colors duration-200 ease-out transform hover:scale-110 hover:-translate-y-2 focus:outline-none border-none rounded-full h-full aspect-square"
         :title="action.name"
       >
         <!-- Circle background with glass morphism - green on hover -->
-        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm border border-white/20 rounded-full group-hover:bg-green-600/60 group-focus:bg-green-600/60 group-hover:border-white/40 group-focus:border-white/40 transition-all duration-300"></div>
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm border border-white/20 rounded-full group-hover:bg-green-600/60 group-focus:bg-green-600/60 group-hover:border-white/40 group-focus:border-white/40 transition-colors duration-200"></div>
         
         <!-- Inner glow ring -->
-        <div class="absolute inset-2 rounded-full border border-white/10 group-hover:border-white/30 transition-all duration-300"></div>
+        <div class="absolute inset-2 rounded-full border border-white/10 group-hover:border-white/30 transition-colors duration-200"></div>
         
         <!-- Action name text -->
         <div class="relative w-full h-full flex items-center justify-center">
-          <span class="text-white font-medium text-center leading-none group-hover:text-white transition-colors duration-300 drop-shadow-lg overflow-hidden text-ellipsis whitespace-nowrap max-w-full block" style="font-size: 1.5cqw;">
+          <span class="text-white font-medium text-center leading-none group-hover:text-white transition-colors duration-300 drop-shadow-lg overflow-hidden text-ellipsis whitespace-nowrap max-w-full block" style="font-size: 2.5cqw;">
             {{ action.name }}
           </span>
         </div>

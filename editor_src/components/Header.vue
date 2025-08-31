@@ -77,8 +77,7 @@ const editorState = useEditorState();
 const modules = [
   { key: 'dashboard', label: 'Dashboard', icon: '📊' },
   { key: 'assetManager', label: 'Assets', icon: '🖼️' },
-  { key: 'locationManager', label: 'Locations', icon: '🗺️' },
-  { key: 'localizationManager', label: 'i18n', icon: '🌍' }
+  { key: 'locationManager', label: 'Locations', icon: '🗺️' }
 ];
 
 function togglePreview() {

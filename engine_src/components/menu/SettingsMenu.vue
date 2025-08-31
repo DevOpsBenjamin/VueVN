@@ -12,7 +12,7 @@
           <div class="p-3 pb-2 border-b border-white/10">
             <div class="flex justify-between items-center">
               <div>
-                <h2 class="text-lg font-bold text-white mb-1 tracking-wide">⚙️ Settings</h2>
+                <h2 class="font-bold text-white mb-1 tracking-wide" style="font-size: 2.5cqw;">⚙️ Settings</h2>
                 <div class="w-8 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded"></div>
               </div>
               <button 
