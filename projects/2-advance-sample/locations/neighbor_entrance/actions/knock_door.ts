@@ -1,7 +1,7 @@
-import type { Action } from '@generate/types';
+import type { VNAction } from '@generate/types';
 
 //THIS ACTION CONTRARY TO city/explore HANDLE IT'S EXECUTION RIGHT
-const knock_door: Action = {
+const knock_door: VNAction = {
     id: "knock_door",
     name: "Knock On Door",
     unlocked: () => true,

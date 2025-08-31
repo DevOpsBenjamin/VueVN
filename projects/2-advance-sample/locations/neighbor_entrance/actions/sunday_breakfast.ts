@@ -1,6 +1,6 @@
-import type { Action } from '@generate/types';
+import type { VNAction } from '@generate/types';
 
-const sundayBreakfast: Action = {
+const sundayBreakfast: VNAction = {
   id: 'sunday_breakfast',
   name: "Sunday Breakfast with Sarah",
   unlocked: (state) => {

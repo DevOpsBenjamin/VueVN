@@ -1,10 +1,10 @@
-import type { GameState, Action, LocationActions } from '@generate/types';
+import type { GameState, VNAction, LocationActions } from '@generate/types';
 import projectData from '@generate/project'
 
 export default class ActionManager {
   private allActions: LocationActions = {};
-  private currentActions: Record<string, Action> = {};
-  private unlockedActions: Action[] = [];
+  private currentActions: Record<string, VNAction> = {};
+  private unlockedActions: VNAction[] = [];
   private updateCallback: (() => void) | null = null;
   
   constructor() {
@@ -40,7 +40,7 @@ export default class ActionManager {
     this.updateCallback = callback;
   }
 
-  getAccessibleActions(): Action[] {
+  getAccessibleActions(): VNAction[] {
     return this.unlockedActions;
   }
   

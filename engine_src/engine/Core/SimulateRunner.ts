@@ -1,12 +1,12 @@
 import { VNActionEnum } from "@generate/enums"
 import { EventEndError } from "@generate/engine"
-import type { Text, CustomArgs, EngineAPI, EngineState, GameState, VNAction,  } from "@generate/types"
+import type { Text, CustomArgs, EngineAPI, EngineState, GameState, Action,  } from "@generate/types"
 
 export default class SimulateRunner implements EngineAPI
 {
     gameState: GameState;
     engineState: EngineState;
-    actions: VNAction[];
+    actions: Action[];
     event_id:string;
     event_ended: boolean;
 

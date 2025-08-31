@@ -1,6 +1,6 @@
-import type { Action } from '@generate/types';
+import type { VNAction } from '@generate/types';
 
-const afterWorkWalk: Action = {
+const afterWorkWalk: VNAction = {
   id: 'after_work_walk',
   name: "Wait for Maya After Work",
   unlocked: (state) => {

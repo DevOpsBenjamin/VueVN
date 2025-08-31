@@ -61,3 +61,4 @@ export interface VNEvent {
    */
   branches?: Record<string, Branch>;
 }
+

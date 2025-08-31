@@ -1,6 +1,6 @@
 import { SimulateRunner, HistoryManager, NavigationManager, VNInterruptError, EventEndError, Config, DialogHelper } from '@generate/engine';
 import { VNActionEnum } from '@generate/enums';
-import type { VNAction, EngineState, GameState, VNEvent, EngineAPI } from '@generate/types';
+import type { Action, EngineState, GameState, VNEvent, EngineAPI } from '@generate/types';
 
 export default class ActionExecutor {
   private engineState: EngineState;
@@ -80,7 +80,7 @@ You can chose to ignore future Debug Warning for the current session.
   }
 
   // Restore game and engine state from an action's stored state
-  private restoreStateFromAction(action: VNAction): void {
+  private restoreStateFromAction(action: Action): void {
     console.debug("restoreStateFromAction");
     if (action.gameState && action.engineState) {
       Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
@@ -90,7 +90,7 @@ You can chose to ignore future Debug Warning for the current session.
   }
   
   // Execute a single action - ONLY handle user input, state is already restored
-  private async executeAction(event: VNEvent, action: VNAction): Promise<void> {
+  private async executeAction(event: VNEvent, action: Action): Promise<void> {
     switch (action.type) {
       case VNActionEnum.SHOW_TEXT:
         await this.handleTextAction(event, action);
@@ -117,7 +117,7 @@ You can chose to ignore future Debug Warning for the current session.
     }
   }
 
-  private async handleTextAction(event: VNEvent, action: VNAction): Promise<void> {
+  private async handleTextAction(event: VNEvent, action: Action): Promise<void> {
     try {      
       console.debug("handleTextAction");
       await this.navigationManager.continueManager.wait();
@@ -131,7 +131,7 @@ You can chose to ignore future Debug Warning for the current session.
   }
 
   // Handle choice actions and return chosen choice ID
-  private async handleChoiceAction(event: VNEvent, action: VNAction): Promise<void> {
+  private async handleChoiceAction(event: VNEvent, action: Action): Promise<void> {
     try {           
       console.debug("handleChoiceAction");
       const choiceId = await this.navigationManager.choiceManager.wait();    
@@ -156,7 +156,7 @@ You can chose to ignore future Debug Warning for the current session.
     }    
   }
 
-  private async handleJumpAction(event: VNEvent, action: VNAction): Promise<void> {
+  private async handleJumpAction(event: VNEvent, action: Action): Promise<void> {
     console.debug("handleJumpAction");
     // THIS NOT WAI USER INPUT ITS LIKE A CHOICE EVENT BUT CODE CONDITIONAL
     // Jump should exit the current event execution and trigger new event

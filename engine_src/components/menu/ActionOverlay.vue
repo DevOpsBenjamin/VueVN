@@ -35,10 +35,10 @@
 import { ref, onMounted, computed } from 'vue';
 import { Engine } from "@generate/engine";
 import { gameState as useGameState } from '@generate/stores';
-import type { Action } from '@generate/types';
+import type { VNAction } from '@generate/types';
 
 const gameState = useGameState();
-const accessibleActions = ref<Action[]>([]);
+const accessibleActions = ref<VNAction[]>([]);
 
 // Circle sizes are now handled with responsive CSS classes
 

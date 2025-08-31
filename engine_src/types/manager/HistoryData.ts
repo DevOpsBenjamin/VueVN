@@ -1,7 +1,7 @@
-import type { VNAction, EngineState, GameState } from '@generate/types';
+import type { Action, EngineState, GameState } from '@generate/types';
 
 export interface HistoryData {
-    history: VNAction[];
-    present: VNAction | null;
-    future: VNAction[];
+    history: Action[];
+    present: Action | null;
+    future: Action[];
 }

@@ -1,7 +1,7 @@
-import type { Action } from '@generate/types';
+import type { VNAction } from '@generate/types';
 
 //THIS ACTION WORK ALL TIME CAUSE WE WANT TO USE EVENT TO TALK TO PLAYER
-const explore_shops: Action = {
+const explore_shops: VNAction = {
     id: 'explore_shops',
     name: 'Explore Shops',
     unlocked: () => true,

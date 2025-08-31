@@ -4,7 +4,7 @@ import bedroom from '@generate/locations/bedroom';
 const timingEvent: VNEvent = {
   name: 'Timing Challenge',
   foreground: '/bedroom/images/background/morning.png',
-  conditions: (state) => state.location_id === bedroom.id,
+  conditions: () => true,
   unlocked: (state) => state.flags.introSeen && state.flags.triedSleep,
   locked: (state) => state.flags.timingCompleted,
   

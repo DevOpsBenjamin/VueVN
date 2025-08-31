@@ -98,7 +98,11 @@ export async function generateResourceFile(
       imports = importLines.join('\n');
       resourceListItems = items.join(',\n');
       // Stash path mapping for later footer generation
-      (global as any).__GEN_PATH_ITEMS__ = pathItems;
+      if (resourceType === 'events') {
+        (global as any).__GEN_EVENTS_PATH_ITEMS__ = pathItems;
+      } else if (resourceType === 'actions') {
+        (global as any).__GEN_ACTIONS_PATH_ITEMS__ = pathItems;
+      }
     } else {
       const locationPath = isGlobal ? 'global' : locationName;
       if (verbose) {
@@ -119,11 +123,18 @@ export async function generateResourceFile(
   const locationDisplayName = isGlobal
     ? 'global location'
     : `location: ${locationName}`;
-  // Optional events path footer
-  let eventsPathsFooter = '';
-  const genPathItems: string[] | undefined = (global as any).__GEN_PATH_ITEMS__;
-  if (resourceType === 'events' && genPathItems && genPathItems.length > 0) {
-    eventsPathsFooter = `\n\nexport const eventsPaths: Record<string, string> = {\n${genPathItems.join(',\n')}\n};\n`;
+  // Optional paths footer
+  let extraFooter = '';
+  if (resourceType === 'events') {
+    const items: string[] | undefined = (global as any).__GEN_EVENTS_PATH_ITEMS__;
+    if (items && items.length > 0) {
+      extraFooter += `\n\nexport const eventsPaths: Record<string, string> = {\n${items.join(',\n')}\n};\n`;
+    }
+  } else if (resourceType === 'actions') {
+    const items: string[] | undefined = (global as any).__GEN_ACTIONS_PATH_ITEMS__;
+    if (items && items.length > 0) {
+      extraFooter += `\n\nexport const actionsPaths: Record<string, string> = {\n${items.join(',\n')}\n};\n`;
+    }
   }
 
   const resourceFileContent = `// Generated ${resourceType} for ${locationDisplayName}
@@ -134,7 +145,7 @@ export const ${resourceType}List: Record<string, ${typeName}> = {${
   }};
 
 export default ${resourceType}List;
-${eventsPathsFooter}
+${extraFooter}
 `;
 
   const resourceFilePath = path.join(
@@ -159,7 +170,7 @@ export async function generateActionsFile(
     locationGeneratePath,
     'actions',
     '🎯',
-    'Action',
+    'VNAction',
     isGlobal
   );
 }
@@ -208,13 +219,14 @@ export async function generateLocationIndex(
   const locationIndexContent = `// Generated index for location: ${locationName}
 import type { LocationData } from '@generate/types';
 import info from '@project/locations/${locationName}/info';
-import { actionsList } from './actions';
+import { actionsList, actionsPaths } from './actions';
 import { eventsList, eventsPaths } from './events';
 
 const ${locationName}: LocationData = {
   id: "${locationName}",
   info,
   actions: actionsList,
+  actionsPaths: actionsPaths,
   events: eventsList,
   eventsPaths: eventsPaths,
   accessibles: {}
@@ -235,12 +247,13 @@ export async function generateGlobalIndex(
 ) {
   const globalIndexContent = `// Generated index for global location
 import type { LocationData } from '@generate/types';
-import { actionsList } from './actions';
+import { actionsList, actionsPaths } from './actions';
 import { eventsList, eventsPaths } from './events';
 
 const global: LocationData = {
   id: "global",
   actions: actionsList,
+  actionsPaths: actionsPaths,
   events: eventsList,
   eventsPaths: eventsPaths,
   accessibles: {}

@@ -1,6 +1,6 @@
-import type { Action } from '@generate/types';
+import type { VNAction } from '@generate/types';
 
-const deepConversation: Action = {
+const deepConversation: VNAction = {
   id: 'deep_conversation',
   name: "Deep Talk with Maya",
   unlocked: (state) => {

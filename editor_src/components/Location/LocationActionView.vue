@@ -18,53 +18,47 @@
       <table class="w-full">
         <thead class="bg-white/5">
           <tr>
-            <th class="px-4 py-3 text-left text-white font-medium text-sm">Action Name</th>
-            <th class="px-4 py-3 text-center text-white font-medium text-sm">Status</th>
-            <th class="px-4 py-3 text-center text-white font-medium text-sm">Locked</th>
-            <th class="px-4 py-3 text-center text-white font-medium text-sm w-8"></th>
-            <th class="px-4 py-3 text-center text-white font-medium text-sm">Condition</th>
-            <th class="px-4 py-3 text-center text-white font-medium text-sm w-32">Manage</th>
+            <th class="px-4 py-3 text-left text-white font-medium text-sm">Name</th>
+            <th class="px-4 py-3 text-left text-white font-medium text-sm">Condition</th>
+            <th class="px-4 py-3 text-left text-white font-medium text-sm w-40">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-white/5">
-          <tr v-for="action in actionsList" :key="action.id" class="hover:bg-white/5 transition-colors">
+          <tr v-for="action in actionsList" :key="action.id" class="hover:bg-white/5 transition-colors align-top">
             <td class="px-4 py-3">
-              <div class="text-white font-medium text-sm">{{ action.name }}</div>
-              <div class="text-white/70 text-xs">{{ action.id }}</div>
+              <div class="text-white font-medium text-sm">{{ action.displayPath }}</div>
+              <div class="text-white/60 text-xs">{{ action.id }}</div>
             </td>
-            <td class="px-4 py-3 text-center">
-              <span :class="action.unlocked ? 'text-green-400' : 'text-gray-400'" class="text-xs font-medium">
-                {{ action.unlocked ? 'Unlocked' : 'Locked' }}
-              </span>
+            <td class="px-4 py-3 text-left">
+              <div class="text-xs text-white whitespace-pre-wrap break-words">
+                <span class="mr-2">{{ action.unlockedResult ? '✅' : '❌' }}</span>
+                |
+                <span class="ml-2 opacity-80">{{ action.unlockedText }}</span>
+              </div>
             </td>
-            <td class="px-4 py-3 text-center">
-              <span :class="action.locked ? 'text-red-400' : 'text-green-400'" class="text-lg">
-                {{ action.locked ? '🔒' : '🔓' }}
-              </span>
-            </td>
-            <td class="px-2 py-3 text-center">
-              <span class="text-lg" v-if="action.unlocked_condition">
-                {{ evaluateCondition(action.unlocked_condition) ? '✅' : '❌' }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-center">
-              <span class="text-white/70 text-xs">
-                {{ action.unlocked_condition || 'None' }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-center">
-              <button
-                @click="editAction(action.id)"
-                class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
-              >
-                <span>✏️</span>
-                <span>Edit</span>
-              </button>
+            <td class="px-4 py-3 text-left">
+              <div class="flex items-center gap-2">
+                <button
+                  @click="openInEditor(action.filePath)"
+                  class="inline-flex items-center space-x-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 rounded border border-orange-500/30 text-orange-400 text-xs transition-all duration-200"
+                >
+                  <span>✏️</span>
+                  <span>Edit</span>
+                </button>
+                <button
+                  disabled
+                  class="inline-flex items-center space-x-1 px-2 py-1 bg-white/10 rounded border border-white/10 text-white/40 text-xs cursor-not-allowed"
+                  title="Delete (coming soon)"
+                >
+                  <span>🗑️</span>
+                  <span>Delete</span>
+                </button>
+              </div>
             </td>
           </tr>
           <tr v-if="actionsList.length === 0">
-            <td colspan="6" class="px-4 py-8 text-center text-white/70 text-sm">
-              <div class="flex flex-col items-center space-y-2">
+            <td colspan="3" class="px-4 py-8 text-left text-white/70 text-sm">
+              <div class="flex flex-col space-y-2">
                 <span class="text-2xl opacity-50">⚡</span>
                 <span>No actions configured yet</span>
               </div>
@@ -79,8 +73,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useEditorState } from '@editor/stores/editorState';
-import { useGameState } from '@engine/stores/gameState';
+import { gameState as useGameState } from '@generate/stores';
 import projectData from '@generate/project';
+import type { GameState } from '@generate/types';
 
 const editorState = useEditorState();
 const gameState = useGameState();
@@ -99,15 +94,25 @@ const currentLocationData = computed(() => {
 
 // Actions list with metadata
 const actionsList = computed(() => {
-  if (!currentLocationData.value?.actions) return [];
-  
-  return Object.entries(currentLocationData.value.actions).map(([id, actionData]) => ({
-    id,
-    name: actionData.name || id.charAt(0).toUpperCase() + id.slice(1),
-    unlocked: true, // TODO: Get from game state
-    locked: false, // TODO: Get from action config
-    unlocked_condition: actionData.unlocked || null
-  }));
+  if (!currentLocationData.value?.actions) return [] as Array<any>;
+
+  return Object.entries(currentLocationData.value.actions).map(([id, actionData]) => {
+    const relPath = currentLocationData.value?.actionsPaths?.[id] ?? id;
+    const displayPath = relPath;
+    const filePath = (isGlobal.value
+      ? `global/actions/${relPath}`
+      : `locations/${selectedLocation.value}/actions/${relPath}`) + '.ts';
+
+    const unlockedResult = safeEval(actionData.unlocked, gameState.$state);
+
+    return {
+      id,
+      displayPath,
+      filePath,
+      unlockedResult,
+      unlockedText: fnText(actionData.unlocked),
+    };
+  });
 });
 
 // Action handlers
@@ -116,27 +121,25 @@ function addNewAction() {
   console.log('Add new action to:', selectedLocation.value);
 }
 
-function editAction(actionId: string) {
-  // TODO: Implement edit action functionality
-  console.log('Edit action:', actionId, 'in location:', selectedLocation.value);
+function openInEditor(filePath: string) {
+  editorState.openFile(filePath);
 }
 
 // Condition evaluation function
-function evaluateCondition(conditionStr: string): boolean {
-  return false;
-  /*
-  if (!conditionStr || conditionStr.trim() === '') return true;
-  
+function safeEval(fn: (state: GameState) => boolean, state: GameState): boolean {
   try {
-    // Create a function that takes gameState as parameter and evaluates the condition
-    const conditionFunction = new Function('gameState', `return ${conditionStr}`);
-    const result = conditionFunction(gameState);
-    console.log('Action condition evaluation:', conditionStr, '→', result, 'GameState:', gameState);
-    return Boolean(result);
-  } catch (error) {
-    console.warn('Failed to evaluate action condition:', conditionStr, error);
+    return !!fn?.(state);
+  } catch {
     return false;
   }
-  */
+}
+
+function fnText(fn: Function | undefined): string {
+  try {
+    const s = fn?.toString() ?? 'None';
+    return s.replace(/\s+/g, ' ').trim();
+  } catch {
+    return 'None';
+  }
 }
 </script>
