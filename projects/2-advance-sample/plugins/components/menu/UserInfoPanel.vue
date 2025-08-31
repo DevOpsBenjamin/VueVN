@@ -2,7 +2,7 @@
   <div v-if="gameState.flags.showUserInfo === true"
     @keydown.stop.prevent="onOverlayKey"
     class="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-10 p-2 sm:p-4">
-    <div class="bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl w-full max-w-6xl h-full max-h-[90vh] flex flex-col lg:flex-row shadow-2xl overflow-hidden">
+    <div class="bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl w-full max-w-6xl h-full max-h-[90cqh] flex flex-col lg:flex-row shadow-2xl overflow-hidden">
       <!-- Left Column - Character Selection -->
       <div class="w-full lg:w-1/5 p-3 lg:p-4 border-b lg:border-b-0 lg:border-r border-white/20 overflow-y-auto">
         <h3 class="text-base sm:text-lg font-bold mb-2 lg:mb-3 text-white">Characters</h3>
