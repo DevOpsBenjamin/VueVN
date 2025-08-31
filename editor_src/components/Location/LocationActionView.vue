@@ -26,7 +26,10 @@
         <tbody class="divide-y divide-white/5">
           <tr v-for="action in actionsList" :key="action.id" class="hover:bg-white/5 transition-colors align-top">
             <td class="px-4 py-3">
-              <div class="text-white font-medium text-sm">{{ action.displayPath }}</div>
+              <div class="text-white font-medium text-sm flex items-center gap-2">
+                <span>{{ action.unlockedResult ? '✅' : '❌' }}</span>
+                <span>{{ action.displayPath }}</span>
+              </div>
               <div class="text-white/60 text-xs">{{ action.id }}</div>
             </td>
             <td class="px-4 py-3 text-left">

@@ -29,16 +29,23 @@
           <tr v-for="event in eventsList" :key="event.id" class="hover:bg-white/5 transition-colors align-top">
             <td class="px-4 py-3">
               <div class="text-white font-medium text-sm flex items-center gap-2">
-                <span>{{ event.availableNow ? '✅' : '❌' }}</span>
+                <span>{{ event.lockedResult ? '🔒' : (event.availableNow ? '✅' : '❌') }}</span>
                 <span>{{ event.displayPath }}</span>
               </div>
               <div class="text-white/60 text-xs">{{ event.id }}</div>
             </td>
             <td class="px-4 py-3 text-left">
               <div class="text-xs text-white whitespace-pre-wrap break-words">
-                <span class="mr-2">{{ event.lockedResult ? '✅' : '❌' }}</span>
-                |
-                <span class="ml-2 opacity-80">{{ event.lockedText }}</span>
+                <template v-if="event.lockedResult">
+                  <span class="mr-2">🔒</span>
+                  |
+                  <span class="ml-2 opacity-80">{{ event.lockedText }}</span>
+                </template>
+                <template v-else>
+                  <span class="mr-2">⬜</span>
+                  |
+                  <span class="ml-2 opacity-80">{{ event.lockedText }}</span>
+                </template>
               </div>
             </td>
             <td class="px-4 py-3 text-left">
