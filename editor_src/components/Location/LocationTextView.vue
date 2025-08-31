@@ -33,7 +33,8 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-white/5">
-          <TextTreeNode v-for="n in filteredTree" :key="n.id" :node="n" :langs="langs" :depth="0"
+          <TextTreeNode v-for="(n, index) in filteredTree" :key="n.id" :node="n" :langs="langs" :depth="0"
+            :is-last="index === filteredTree.length - 1" :parent-branches="[]"
             @toggle-folder="toggleFolder" @open-lang="openLangFromNode"/>
           <tr v-if="filteredTree.length===0">
             <td colspan="5" class="px-4 py-8 text-left text-white/70 text-sm">No texts found for this location.</td>
@@ -55,6 +56,7 @@ const editorState = useEditorState();
 const selectedLocation = computed(() => editorState.selectedLocation || 'global');
 
 const showMissingOnly = ref(false);
+const expandedFolders = ref<Set<string>>(new Set());
 
 const langs = computed<string[]>(() => {
   const loc = selectedLocation.value;
@@ -87,10 +89,10 @@ const tree = computed<TextNode[]>(() => {
   const root: Record<string, any> = { id: 'root', name: '', type: 'folder', isExpanded: true, children: [] };
 
   function ensureFolder(parent: any, name: string): any {
-    const id = parent.id + '/' + name;
+    const id = parent.id === 'root' ? name : parent.id + '/' + name;
     let f = (parent.children as any[]).find((c) => c.type === 'folder' && c.name === name);
     if (!f) {
-      f = { id, name, type: 'folder', isExpanded: false, children: [] };
+      f = { id, name, type: 'folder', isExpanded: expandedFolders.value.has(id), children: [] };
       parent.children.push(f);
     }
     return f;
@@ -136,7 +138,10 @@ const filteredTree = computed(() => {
         if (fileMissing(n)) out.push(n);
       } else {
         const kids = filterNodes(n.children || []);
-        if (kids.length > 0) out.push({ ...n, children: kids });
+        if (kids.length > 0) {
+          // Preserve the expanded state when filtering
+          out.push({ ...n, children: kids, isExpanded: expandedFolders.value.has(n.id) });
+        }
       }
     }
     return out;
@@ -145,18 +150,11 @@ const filteredTree = computed(() => {
 });
 
 function toggleFolder(id: string) {
-  // Simple local toggle by walking current tree
-  function walk(nodes: any[]): boolean {
-    for (const n of nodes) {
-      if (n.id === id) {
-        n.isExpanded = !n.isExpanded;
-        return true;
-      }
-      if (n.children && walk(n.children)) return true;
-    }
-    return false;
+  if (expandedFolders.value.has(id)) {
+    expandedFolders.value.delete(id);
+  } else {
+    expandedFolders.value.add(id);
   }
-  walk(tree.value as any);
 }
 
 function openLangFromNode(payload: { path: string; lang: string }) {
