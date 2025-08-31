@@ -28,14 +28,14 @@
 
         <!-- Save slots grid -->
         <div class="flex-1 overflow-y-auto p-4 min-h-0">
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full auto-rows-max">
+          <div class="grid grid-cols-2 lg:grid-cols-4 grid-rows-4 lg:grid-rows-2 gap-4 w-full h-full">
             <div
               v-for="slot in visibleSlots"
               :key="slot"
               class="group relative overflow-hidden rounded-lg bg-black/20 backdrop-blur-sm border border-white/10 hover:border-white/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.2)]"
             >
               <!-- Slot content -->
-              <div class="p-3 flex flex-col h-full min-h-[160px]">
+              <div class="p-3 flex flex-col h-full">
                 <!-- Slot header -->
                 <div class="mb-2">
                   <div class="flex items-center justify-between mb-1">
