@@ -1,15 +1,14 @@
 <template>
   <div
     v-if="accessibleActions.length > 0"
-    class="absolute top-0 left-0 w-full h-full z-10 pointer-events-none flex items-end justify-start p-2 sm:p-3 lg:p-4"
+    class="absolute top-0 left-0 w-full h-full z-10 pointer-events-none flex items-end justify-start p-2"
   >
-    <!-- Action navigation circles -->
-    <div class="flex flex-wrap gap-3 sm:gap-4 lg:gap-6 justify-center items-center pointer-events-auto">
+    <div class="flex gap-2 pointer-events-auto h-[20%] items-center">
       <button
         v-for="action in accessibleActions"
         :key="action.id"
         @click.stop.prevent="executeAction(action.id)"
-        class="action-circle group relative overflow-hidden transition-all duration-300 ease-out transform hover:scale-110 hover:-translate-y-2 focus:outline-none border-none w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24"
+        class="group relative overflow-hidden transition-all duration-300 ease-out transform hover:scale-110 hover:-translate-y-2 focus:outline-none border-none rounded-full h-full aspect-square"
         :title="action.name"
       >
         <!-- Circle background with glass morphism - green on hover -->
@@ -19,8 +18,8 @@
         <div class="absolute inset-2 rounded-full border border-white/10 group-hover:border-white/30 transition-all duration-300"></div>
         
         <!-- Action name text -->
-        <div class="relative w-full h-full flex items-center justify-center p-1 sm:p-1.5 lg:p-2">
-          <span class="text-white font-semibold text-center text-xs sm:text-sm lg:text-base leading-tight group-hover:text-white transition-colors duration-300 drop-shadow-lg">
+        <div class="relative w-full h-full flex items-center justify-center">
+          <span class="text-white font-medium text-center leading-none group-hover:text-white transition-colors duration-300 drop-shadow-lg overflow-hidden text-ellipsis whitespace-nowrap max-w-full block" style="font-size: 1.5cqw;">
             {{ action.name }}
           </span>
         </div>

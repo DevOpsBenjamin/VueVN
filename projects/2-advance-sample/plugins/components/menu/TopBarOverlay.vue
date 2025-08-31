@@ -1,23 +1,26 @@
 <template>
-  <div class="absolute top-0 left-0 w-full z-10 pointer-events-none p-2 sm:p-3 lg:p-4">
-    <div class="w-full flex justify-between items-center pointer-events-auto flex-wrap gap-2">
-      <div class="bg-black/30 backdrop-blur-sm text-white px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 rounded text-xs sm:text-sm lg:text-base">
+  <div class="absolute top-0 left-0 w-full z-10 pointer-events-none p-1" style="height: 10%; font-size: 3cqw;">
+    <div class="w-full h-full pointer-events-auto flex justify-between items-center">
+      <div class="bg-black/30 backdrop-blur-sm text-white rounded h-full flex items-center" style="padding: 0 2cqh;">
         {{ formattedDate }}
       </div>
-      <div class="flex gap-1 sm:gap-2 lg:gap-4">
+      <div class="flex items-center h-full" style="gap: 1cqh;">
         <button
-          class="bg-black/30 backdrop-blur-sm text-white px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 rounded text-xs sm:text-sm lg:text-base min-h-[32px] sm:min-h-[36px] lg:min-h-[40px]"
+          class="bg-black/30 backdrop-blur-sm text-white rounded hover:bg-white/20 transition-colors h-full flex items-center justify-center"
+          style="min-width: 8cqh; padding: 0 1cqh;"
         >
           Inventory
         </button>
         <button
-          class="bg-black/30 backdrop-blur-sm text-white px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 rounded text-xs sm:text-sm lg:text-base min-h-[32px] sm:min-h-[36px] lg:min-h-[40px]"
+          class="bg-black/30 backdrop-blur-sm text-white rounded hover:bg-white/20 transition-colors h-full flex items-center justify-center"
+          style="min-width: 6cqh; padding: 0 1cqh;"
         >
           Phone
         </button>
         <button
           @click.stop.prevent="showUserInfo"
-          class="bg-black/30 backdrop-blur-sm text-white px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 rounded text-xs sm:text-sm lg:text-base min-h-[32px] sm:min-h-[36px] lg:min-h-[40px]"
+          class="bg-black/30 backdrop-blur-sm text-white rounded hover:bg-white/20 transition-colors h-full flex items-center justify-center"
+          style="width: 8cqh; padding: 0 1cqh;"
         >
           👤
         </button>

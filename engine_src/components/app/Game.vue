@@ -32,5 +32,6 @@ onMounted(async () => {
   background-color: #1a1a1a;
   overflow: hidden;
   position: relative; /* Ensure proper positioning context for children */
+  container-type: size;
 }
 </style>
