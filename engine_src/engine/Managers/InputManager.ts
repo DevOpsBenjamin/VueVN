@@ -70,9 +70,7 @@ export default class InputManager {
 
   private handleKeyUp(e: KeyboardEvent): void {
     if (e.key === 'Control') {
-      if (this.skipMode) {
-        this.navigationManager.disableSkipMode();
-      }
+      this.navigationManager.disableSkipMode();
     }
   }
 
