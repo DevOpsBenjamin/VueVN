@@ -1,12 +1,12 @@
-import { HistoryManager, NavigationCancelledError, ActionError, WaitManager } from '@generate/engine';
+import { HistoryManager, VNInterruptError, WaitManager } from '@generate/engine';
 
 export default class NavigationManager {
   private historyManager: HistoryManager;
 
   // Public wait managers - use directly when needed
-  continueManager = new WaitManager<void>('Continue', NavigationCancelledError);
-  choiceManager = new WaitManager<string>('Choice', NavigationCancelledError);
-  actionManager = new WaitManager<void>('Action', ActionError);
+  continueManager = new WaitManager<void>('Continue', VNInterruptError);
+  choiceManager = new WaitManager<string>('Choice', VNInterruptError);
+  actionManager = new WaitManager<void>('Action', VNInterruptError);
 
   constructor(
     historyManager: HistoryManager

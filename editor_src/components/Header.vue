@@ -92,6 +92,10 @@ function setModule(name: string) {
 function resetAll() {
   const pinia = getActivePinia() as any;
   pinia?._s.forEach((store: any) => {
+    if (store.$id === "editorState") {
+      return; // Use return instead of continue in forEach
+    }
+    console.log(`Store name: ${store.$id} cleared`);
     store.$reset();
   });
 }

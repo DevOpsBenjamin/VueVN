@@ -9,7 +9,7 @@ export default class WaitManager<T> {
     this.errorClass = errorClass;
   }
 
-  async wait(): Promise<T> {
+  async wait(): Promise<T> {    
     this.reject(); // Cancel any existing waiter
     return new Promise<T>((resolve, reject) => {
       this.resolveFunction = resolve;

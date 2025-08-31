@@ -1,4 +1,4 @@
-import { SimulateRunner, HistoryManager, NavigationManager, NavigationCancelledError } from '@generate/engine';
+import { SimulateRunner, HistoryManager, NavigationManager, VNInterruptError } from '@generate/engine';
 import { VNActionEnum } from '@generate/enums';
 import type { VNAction, EngineState, GameState, VNEvent, EngineAPI } from '@generate/types';
 
@@ -36,8 +36,9 @@ export default class ActionExecutor {
     console.log("start runEvent");
     console.log(this.historyManager.getFutureLength());
     let action = this.historyManager.getPresent()
+    
     while (action != null) {
-      console.log("loop");
+      console.debug("loop: ",action.type);
       this.restoreStateFromAction(action);      
       await this.executeAction(event, action);
       action = this.historyManager.getPresent()
@@ -92,6 +93,7 @@ export default class ActionExecutor {
       */
 
       default:
+        console.warn("WEIRD NO ACTION");
         break;
     }
   }
@@ -101,7 +103,7 @@ export default class ActionExecutor {
       await this.navigationManager.continueManager.wait();
     }
     catch (error) { 
-      if (!(error instanceof NavigationCancelledError)) {
+      if (!(error instanceof VNInterruptError)) {
         // Si l'erreur n'est PAS une NavigationCancelledError, alors c'est une erreur inattendue
         console.error("handleTextAction Error:", error);
       }
@@ -112,8 +114,7 @@ export default class ActionExecutor {
   // Handle choice actions and return chosen choice ID
   private async handleChoiceAction(event: VNEvent, action: VNAction): Promise<void> {
     try {           
-      const choiceId = await this.navigationManager.choiceManager.wait();
-    
+      const choiceId = await this.navigationManager.choiceManager.wait();    
       // SIMULATE CHOICE
       if (choiceId && event.branches?.[choiceId]) {
         //Choice done we set null for next simulation step
@@ -124,9 +125,9 @@ export default class ActionExecutor {
       }
     }
     catch (error) { 
-      if (!(error instanceof NavigationCancelledError)) {
+      if (!(error instanceof VNInterruptError)) {
         // Si l'erreur n'est PAS une NavigationCancelledError, alors c'est une erreur inattendue
-        console.error("handleTextAction Error:", error);
+        console.error("handleChoiceAction Error:", error);
       }
     }    
   }
