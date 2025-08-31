@@ -42,9 +42,12 @@ export default class ActionExecutor {
       this.restoreStateFromAction(action);      
       await this.executeAction(event, action);
       action = this.historyManager.getPresent()
+      console.error('this.historyManager.getPresent:', action?.engineState);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      console.error('Action new loop:', action?.engineState);
     }
     this.historyManager.resetHistory()
-    console.log("end runEvent");
+    console.debug("end runEvent");
   }
 
   // Generic simulation method that works with both events and branches
@@ -64,9 +67,11 @@ export default class ActionExecutor {
 
   // Restore game and engine state from an action's stored state
   private restoreStateFromAction(action: VNAction): void {
+    console.debug("restoreStateFromAction");
     if (action.gameState && action.engineState) {
       Object.assign(this.gameState, JSON.parse(JSON.stringify(action.gameState)));
       Object.assign(this.engineState, JSON.parse(JSON.stringify(action.engineState)));
+      console.debug("restored");
     }
   }
   
@@ -99,7 +104,8 @@ export default class ActionExecutor {
   }
 
   private async handleTextAction(event: VNEvent, action: VNAction): Promise<void> {
-    try {
+    try {      
+      console.debug("handleTextAction");
       await this.navigationManager.continueManager.wait();
     }
     catch (error) { 
@@ -114,6 +120,7 @@ export default class ActionExecutor {
   // Handle choice actions and return chosen choice ID
   private async handleChoiceAction(event: VNEvent, action: VNAction): Promise<void> {
     try {           
+      console.debug("handleChoiceAction");
       const choiceId = await this.navigationManager.choiceManager.wait();    
       // SIMULATE CHOICE
       if (choiceId && event.branches?.[choiceId]) {
@@ -133,6 +140,7 @@ export default class ActionExecutor {
   }
 
   private async handleJumpAction(event: VNEvent, action: VNAction): Promise<void> {
+    console.debug("handleJumpAction");
     // THIS NOT WAI USER INPUT ITS LIKE A CHOICE EVENT BUT CODE CONDITIONAL
     // Jump should exit the current event execution and trigger new event
     const branch_id = action.event_id;     

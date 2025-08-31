@@ -2,9 +2,9 @@ import { HistoryManager, VNInterruptError, WaitManager } from '@generate/engine'
 
 export default class NavigationManager {
   private historyManager: HistoryManager;
+  public continueManager: WaitManager<void>;
 
   // Public wait managers - use directly when needed
-  continueManager = new WaitManager<void>('Continue', VNInterruptError);
   choiceManager = new WaitManager<string>('Choice', VNInterruptError);
   actionManager = new WaitManager<void>('Action', VNInterruptError);
 
@@ -12,12 +12,16 @@ export default class NavigationManager {
     historyManager: HistoryManager
   ) {
     this.historyManager = historyManager;
+    this.continueManager = new WaitManager<void>
+      ('Continue', 
+        VNInterruptError, 
+        () => this.historyManager.goForward()
+      );
   }
 
   // #region Navigation methode
   async goForward(): Promise<void> {
     if (this.continueManager.hasWaiter()) {
-      this.historyManager.goForward();
       this.continueManager.resolve();
     }
     else if (this.choiceManager.hasWaiter() && this.historyManager.canGoForward()) {
