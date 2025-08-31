@@ -22,7 +22,8 @@ export default class WaitManager<T> {
     });
     
     // If skip mode is active, resolve immediately (this will call the callback)
-    if (this.skipMode) {
+    if (this.skipMode) {      
+      await new Promise((resolve) => setTimeout(resolve, 250));
       this.resolve(undefined as T);
     }
     

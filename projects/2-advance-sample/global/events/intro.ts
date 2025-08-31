@@ -30,6 +30,7 @@ You can either start directly or learn about the framework`;
           { text: 'Start the adventure', branch: 'start_adventure' },
           { text: 'Learn about KeyBinding', branch: 'learn_key' },
         ]);
+        await engine.showText("ERROR FOR ENGINE DEBUG DEMO");
       }
     },
     learn_key: {

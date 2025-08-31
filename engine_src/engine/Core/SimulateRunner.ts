@@ -1,6 +1,6 @@
 import { VNActionEnum } from "@generate/enums"
-import type { CustomArgs, EngineAPI, EngineState, GameState, VNAction } from "@generate/types"
-import type { Text } from "@generate/types"
+import { EventEndError } from "@generate/engine"
+import type { Text, CustomArgs, EngineAPI, EngineState, GameState, VNAction,  } from "@generate/types"
 
 export default class SimulateRunner implements EngineAPI
 {
@@ -8,12 +8,15 @@ export default class SimulateRunner implements EngineAPI
     engineState: EngineState;
     actions: VNAction[];
     event_id:string;
+    event_ended: boolean;
 
     constructor(gameState: GameState, engineState: EngineState, event_id:string) {
         this.gameState = gameState;
         this.engineState = engineState;
         this.actions = [];
         this.event_id = event_id;
+        this.event_ended = false;
+        console.debug('Simulator cto for: ', this.event_id)
     }
 
     // Helper function to resolve Text objects to current language
@@ -34,6 +37,10 @@ export default class SimulateRunner implements EngineAPI
     }
 
     async showText(text: string | Text, from?: string): Promise<void> {
+        if (this.event_ended) {
+            throw new EventEndError(this.event_id)
+        }
+
         // Handle Text objects by extracting the appropriate language text
         const resolvedText = this.resolveText(text);
         
@@ -53,6 +60,9 @@ export default class SimulateRunner implements EngineAPI
     }
 
     async showChoices(choices: Array<any>): Promise<void> {
+        if (this.event_ended) {
+            throw new EventEndError(this.event_id)
+        }
         // Handle Text objects in choices by resolving them to current language
         const resolvedChoices = choices.map(choice => ({
           ...choice,
@@ -70,11 +80,13 @@ export default class SimulateRunner implements EngineAPI
           engineState: JSON.parse(JSON.stringify(this.engineState))
         });
         
-        // Clear choices after capturing - clean state for next action
-        this.engineState.choices = null;
+        this.event_ended = true;
     }
 
     async runCustom(args: CustomArgs): Promise<void> {
+        if (this.event_ended) {
+            throw new EventEndError(this.event_id)
+        }
         this.engineState.currentStep++;
         this.engineState.customArgs = args
         
@@ -86,11 +98,13 @@ export default class SimulateRunner implements EngineAPI
           engineState: JSON.parse(JSON.stringify(this.engineState))
         });
         
-        // Clear custom after capturing - clean state for next action
-        this.engineState.customArgs = null
+        this.event_ended = true;
     }
     
     async jump(eventId: string): Promise<void> {
+        if (this.event_ended) {
+            throw new EventEndError(this.event_id)
+        }
         this.engineState.currentStep++;
 
         // Create action with state snapshot (WITH jump type)
@@ -100,17 +114,28 @@ export default class SimulateRunner implements EngineAPI
           gameState: JSON.parse(JSON.stringify(this.gameState)),
           engineState: JSON.parse(JSON.stringify(this.engineState))
         });
+
+        this.event_ended = true;
     }
 
     setBackground(imagePath: string): void {
+        if (this.event_ended) {
+            throw new EventEndError(this.event_id)
+        }
         this.engineState.background = imagePath;
     }
 
     setForeground(imagePaths: string[]): void {
+        if (this.event_ended) {
+            throw new EventEndError(this.event_id)
+        }
         this.engineState.foreground = [...imagePaths];
     }
 
     addForeground(imagePath: string): void {
+        if (this.event_ended) {
+            throw new EventEndError(this.event_id)
+        }
         if (!this.engineState.foreground) {
             this.engineState.foreground = [];
         }
@@ -118,6 +143,9 @@ export default class SimulateRunner implements EngineAPI
     }
 
     replaceForeground(imagePath: string): void {
+        if (this.event_ended) {
+            throw new EventEndError(this.event_id)
+        }
         if (!this.engineState.foreground || this.engineState.foreground.length === 0) {
             this.engineState.foreground = [imagePath];
         } else {
