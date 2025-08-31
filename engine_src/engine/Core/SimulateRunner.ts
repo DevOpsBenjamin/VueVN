@@ -100,7 +100,8 @@ export default class SimulateRunner implements EngineAPI
         this.event_ended = true;
     }
     
-    async jump(eventId: string): Promise<void> {
+    // Intra-event branch jump: queues a JUMP action with the target branch_id
+    async jump(branchId: string): Promise<void> {
         if (this.event_ended) {
             throw new EventEndError(this.event_id)
         }
@@ -109,7 +110,7 @@ export default class SimulateRunner implements EngineAPI
         // Create action with state snapshot (WITH jump type)
         this.actions.push({
           type: VNActionEnum.JUMP,
-          event_id: eventId,
+          event_id: this.event_id,
           gameState: JSON.parse(JSON.stringify(this.gameState)),
           engineState: JSON.parse(JSON.stringify(this.engineState))
         });
