@@ -81,6 +81,7 @@ import { computed } from 'vue';
 import { useEditorState } from '@editor/stores/editorState';
 import { useGameState } from '@engine/stores/gameState';
 import projectData from '@generate/project';
+import { GameState } from '@generate/types';
 
 const editorState = useEditorState();
 const gameState = useGameState();
@@ -122,7 +123,10 @@ function editEvent(eventId: string) {
 }
 
 // Condition evaluation function
-function evaluateCondition(conditionStr: string): boolean {
+function evaluateCondition(condition_func: (state: GameState) => boolean): boolean {
+  if (condition_func(gameState.$state) == true) {
+    return true;
+  }
   return false;
   /*
   if (!conditionStr || conditionStr.trim() === '') return true;

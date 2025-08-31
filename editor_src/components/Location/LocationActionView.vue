@@ -123,6 +123,8 @@ function editAction(actionId: string) {
 
 // Condition evaluation function
 function evaluateCondition(conditionStr: string): boolean {
+  return false;
+  /*
   if (!conditionStr || conditionStr.trim() === '') return true;
   
   try {
@@ -135,5 +137,6 @@ function evaluateCondition(conditionStr: string): boolean {
     console.warn('Failed to evaluate action condition:', conditionStr, error);
     return false;
   }
+  */
 }
 </script>

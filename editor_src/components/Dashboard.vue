@@ -6,8 +6,8 @@
       <!-- Project Status -->
       <section class="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
         <h2 class="text-white text-lg font-semibold mb-4 flex items-center">
-          <span class="mr-2">📊</span>
-          Project Overview
+          <span class="mr-2">🎮</span>
+          {{ projectData.config.name }}
         </h2>
         
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -26,22 +26,6 @@
           <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
             <div class="text-2xl text-orange-400 font-bold mb-1">{{ globalStats.eventCount }}</div>
             <div class="text-white/70 text-sm">Global Events</div>
-          </div>
-        </div>
-
-        <!-- Project Info -->
-        <div class="bg-white/5 rounded-lg p-4 border border-white/5 mb-4">
-          <h3 class="text-white font-medium mb-2 flex items-center">
-            <span class="mr-2">🎮</span>
-            {{ projectData.config.name }}
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div class="text-white/70">
-              <span class="font-medium text-white">Engine:</span> VueVN v{{ projectData.config.version || '1.0.0' }}
-            </div>
-            <div class="text-white/70">
-              <span class="font-medium text-white">Type:</span> {{ projectData.config.type || 'Visual Novel' }}
-            </div>
           </div>
         </div>
 
