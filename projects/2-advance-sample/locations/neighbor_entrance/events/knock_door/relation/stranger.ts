@@ -1,5 +1,6 @@
 import type { VNEvent } from '@generate/types';
 import { TimeHelper } from '@generate/engine';
+import { RelationLevel } from '@generate/enums';
 
 const knockDoorStranger: VNEvent = {
   name: 'Knock Door - Stranger',
@@ -34,7 +35,7 @@ const knockDoorStranger: VNEvent = {
         // Improve relationship
         state.neighbor.relation = Math.min(state.neighbor.relation + 3, 100);
         if (state.neighbor.relation > 20) {
-          state.neighbor.relationship = 'acquaintance';
+          state.neighbor.relationship = RelationLevel.ACQUAINTANCE;
         }
         
         // Mark daily interaction and advance time

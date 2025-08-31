@@ -1,8 +1,6 @@
 import {
   EngineSave,
   VNInterruptError,
-  EngineErrors,
-  SimulateRunner,
   HistoryManager,
   EventManager,
   InputManager,
@@ -13,10 +11,7 @@ import {
 } from '@generate/engine';
 import { EngineStateEnum } from '@generate/enums';
 import type {
-  GameState,
-  EngineState,
   VNEvent,
-  VNAction,
   GameStateStore,
   EngineStateStore,
 } from '@generate/types';
@@ -25,6 +20,7 @@ class Engine {
   // #region DEFINITION
   gameState: GameStateStore;
   engineState: EngineStateStore;
+  running: boolean;
 
   // Managers
   historyManager: HistoryManager;
@@ -46,6 +42,7 @@ class Engine {
     this.gameState = gameState;
     this.engineState = engineState;
     this.gameRoot = gameRoot;
+    this.running = false;
 
     // Initialize managers (order matters for dependencies)
     this.historyManager = new HistoryManager();
@@ -62,6 +59,13 @@ class Engine {
       this.navigationManager
     );
 
+    // Ensure event caches are initialized at startup
+    try {
+      this.eventManager.resetEvents(this.gameState);
+    } catch (e) {
+      console.warn('[Engine] Failed to pre-initialize events cache:', e);
+    }
+
     // Initialize window reference
     if (typeof window !== 'undefined') {
       const w = window as any;
@@ -76,6 +80,10 @@ class Engine {
 
   setRootHTML(root: HTMLElement): void {
     this.gameRoot = root;
+    // Recreate input manager on new root; clean up previous listeners
+    if (this.inputManager) {
+      try { this.inputManager.destroy(); } catch {}
+    }
     this.inputManager = new InputManager(
       this.engineState,
       this.gameState,
@@ -108,12 +116,22 @@ class Engine {
   // #region LOOP ENGINE
   // Main engine loop
   async run(): Promise<void> {
+    if (this.running) {
+      console.warn('[Engine] run() called while already running; ignoring');
+      return;
+    }
+    this.running = true;
     while (true) {
       try {
+        console.debug("rejectWaiters");
+        this.navigationManager.rejectWaiters();
+        console.debug("updateEventsCache");
+        this.eventManager.updateEventsCache(this.gameState);
+        console.debug("runGameLoop");
         await this.runGameLoop();
       } catch (err) {
         if (err instanceof VNInterruptError) {
-          console.warn('VN event interrupted, returning to menu or resetting.');
+          console.warn('VN CancelAwaiter Go back to base loop');
         } else {
           console.error('Engine error:', err);
           // DEBUG: Wait for dev to read error (will be removed in production)
@@ -128,19 +146,21 @@ class Engine {
 
   async runGameLoop(): Promise<void> {
     while (this.engineState.state === EngineStateEnum.RUNNING) {
-      // Calculate and update all engine info
-      await this.calculateInfo();
-
+      console.debug("GAME LOOP");
       const { immediateEvent, drawableEvents } =
         await this.eventManager.getEvents(this.gameState);
       if (immediateEvent) {
+        console.debug("immediateEvent:", immediateEvent.name);
         await this.handleEvent(immediateEvent);
         //After event we always reset cache cause some variable (flags) can have changed
         this.eventManager.updateEventsCache(this.gameState);
-      } else if (drawableEvents.length > 0) {
-        // Handle drawable events if needed
-        await this.navigationManager.actionManager.wait();
       } else {
+        // Calculate and update all engine info
+        await this.calculateInfo();
+        if (drawableEvents.length > 0) {
+          console.warn("draw: ", drawableEvents);
+        }
+        console.debug("actionManager.wait()");
         // No event to draw no loopUntil either a Action Or a DrawableClick.
         await this.navigationManager.actionManager.wait();
       }
@@ -153,6 +173,7 @@ class Engine {
    * Orchestrates state reset, location handling, and action management.
    */
   private async calculateInfo(): Promise<void> {
+    console.debug("calculateInfo:");
     // Reset state first
     this.cleanState();
 
@@ -173,9 +194,6 @@ class Engine {
     this.engineState.foreground = null;
     this.engineState.dialogue = null;
     this.engineState.choices = null;
-
-    // Clear any other transient state that shouldn't persist between loops
-    // TODO: Add other fields that need cleaning each loop
   }
 
   /**
@@ -184,6 +202,7 @@ class Engine {
    */
   private async handleLocation(): Promise<void> {
     try {
+      console.debug("handleLocation: ", this.gameState.location_id);
       const currentLocation = this.locationManager.findById(
         this.gameState.location_id
       );
@@ -214,6 +233,7 @@ class Engine {
    * This ensures action overlay shows up-to-date available actions.
    */
   private async updateActions(): Promise<void> {
+    console.debug("updateActions");
     // Update ActionManager's internal accessible actions list (now async for location-centric loading)
     await this.actionManager.updateAccessibleActions(this.gameState.$state);
   }

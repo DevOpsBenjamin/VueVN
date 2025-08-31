@@ -1,10 +1,10 @@
-import type { GameState, Action, LocationActions } from '@generate/types';
+import type { GameState, VNAction, LocationActions } from '@generate/types';
 import projectData from '@generate/project'
 
 export default class ActionManager {
   private allActions: LocationActions = {};
-  private currentActions: Record<string, Action> = {};
-  private unlockedActions: Action[] = [];
+  private currentActions: Record<string, VNAction> = {};
+  private unlockedActions: VNAction[] = [];
   private updateCallback: (() => void) | null = null;
   
   constructor() {
@@ -24,13 +24,16 @@ export default class ActionManager {
   }
   
   updateAccessibleActions(gameState: GameState): void {
-    const localActions = this.allActions[gameState.location_id];
-    const globalActions = projectData.global.actions;
-    
-    //Add global Action
-    this.currentActions = { ...globalActions, ...localActions };
-    this.unlockedActions = Object.values(localActions).filter(action => action.unlocked(gameState));
-    
+    const localActions = this.allActions[gameState.location_id] || {};
+    const globalActions = projectData.global.actions || {};
+
+    // Merge global + local for current lookup
+    const merged = { ...globalActions, ...localActions } as Record<string, VNAction>;
+    this.currentActions = merged;
+
+    // Compute unlocked across BOTH global and local
+    this.unlockedActions = Object.values(merged).filter((action) => action.unlocked(gameState));
+
     if (this.updateCallback) {
       this.updateCallback();
     }
@@ -40,7 +43,7 @@ export default class ActionManager {
     this.updateCallback = callback;
   }
 
-  getAccessibleActions(): Action[] {
+  getAccessibleActions(): VNAction[] {
     return this.unlockedActions;
   }
   

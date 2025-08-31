@@ -9,35 +9,35 @@
         'opacity-0': engineState.state !== EngineStateEnum.MENU,
       }"
     >
-      <!-- Main menu panel -->
-      <div class="flex flex-col items-center max-w-md w-full px-6">
+      <!-- Main menu panel with responsive height and scroll -->
+      <div class="flex flex-col items-center w-1/3 px-6 max-h-[calc(100%-4rem)] overflow-y-auto">
         <!-- Title section -->
-        <div class="mb-12 text-center">
-          <h1 class="text-5xl font-bold text-white mb-4 tracking-wider">
+        <div class="mb-6 lg:mb-8 text-center shrink-0">
+          <h1 class="font-bold text-white mb-2 tracking-wider" style="font-size: 4cqw;">
             VueVN
           </h1>
           <div
-            class="w-32 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded mx-auto mb-2"
+            class="w-16 sm:w-20 lg:w-24 h-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded mx-auto mb-2"
           ></div>
-          <p class="text-white/60 text-sm font-mono uppercase tracking-widest">
+          <p class="text-white/60 font-mono uppercase tracking-widest" style="font-size: 1.5cqw;">
             Visual Novel Engine
           </p>
         </div>
 
-        <!-- Menu buttons -->
-        <div class="flex flex-col gap-4 w-full">
+        <!-- Menu buttons with scrollable footer -->
+        <div class="flex flex-col gap-3 lg:gap-4 w-full flex-1 min-h-0">
           <!-- New Game -->
           <button
             @click.stop.prevent="newGame"
-            class="group relative overflow-hidden rounded-xl px-8 py-4 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(34,197,94,0.3)]"
+            class="group relative rounded-xl bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(34,197,94,0.3)] w-full" style="font-size: 2cqw; padding: 1.5cqh 2cqw; min-height: 6cqh;"
           >
             <div
-              class="absolute inset-0 bg-gradient-to-r from-green-600/20 to-emerald-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
+              class="absolute inset-0 bg-gradient-to-r from-green-600/20 to-emerald-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             ></div>
             <div class="relative flex items-center justify-between">
               <span>New Game</span>
               <span
-                class="text-xl opacity-60 group-hover:opacity-100 transition-all duration-300"
+                class="opacity-60 group-hover:opacity-100 transition-opacity duration-200" style="font-size: 2.5cqw;"
                 >🆕</span
               >
             </div>
@@ -47,15 +47,15 @@
           <button
             v-if="engineState.initialized"
             @click.stop.prevent="continueGame"
-            class="group relative overflow-hidden rounded-xl px-8 py-4 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]"
+            class="group relative rounded-xl bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold transition-opacity duration-200 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)] w-full" style="font-size: 2cqw; padding: 1.5cqh 2cqw; min-height: 6cqh;"
           >
             <div
-              class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
+              class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             ></div>
             <div class="relative flex items-center justify-between">
               <span>Continue</span>
               <span
-                class="text-xl opacity-60 group-hover:opacity-100 transition-all duration-300"
+                class="opacity-60 group-hover:opacity-100 transition-opacity duration-200" style="font-size: 2.5cqw;"
                 >▶️</span
               >
             </div>
@@ -65,15 +65,15 @@
           <button
             v-if="engineState.initialized"
             @click.stop.prevent="saveGame"
-            class="group relative overflow-hidden rounded-xl px-8 py-4 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(168,85,247,0.3)]"
+            class="group relative rounded-xl bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold transition-opacity duration-200 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] w-full" style="font-size: 2cqw; padding: 1.5cqh 2cqw; min-height: 6cqh;"
           >
             <div
-              class="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-violet-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
+              class="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-violet-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             ></div>
             <div class="relative flex items-center justify-between">
               <span>Save</span>
               <span
-                class="text-xl opacity-60 group-hover:opacity-100 transition-all duration-300"
+                class="opacity-60 group-hover:opacity-100 transition-opacity duration-200" style="font-size: 2.5cqw;"
                 >💾</span
               >
             </div>
@@ -82,15 +82,15 @@
           <!-- Load Game -->
           <button
             @click.stop.prevent="loadGame"
-            class="group relative overflow-hidden rounded-xl px-8 py-4 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(245,158,11,0.3)]"
+            class="group relative rounded-xl bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold transition-opacity duration-200 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(245,158,11,0.3)] w-full" style="font-size: 2cqw; padding: 1.5cqh 2cqw; min-height: 6cqh;"
           >
             <div
-              class="absolute inset-0 bg-gradient-to-r from-yellow-600/20 to-orange-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
+              class="absolute inset-0 bg-gradient-to-r from-yellow-600/20 to-orange-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             ></div>
             <div class="relative flex items-center justify-between">
               <span>Load</span>
               <span
-                class="text-xl opacity-60 group-hover:opacity-100 transition-all duration-300"
+                class="opacity-60 group-hover:opacity-100 transition-opacity duration-200" style="font-size: 2.5cqw;"
                 >📂</span
               >
             </div>
@@ -99,26 +99,26 @@
           <!-- Settings -->
           <button
             @click.stop.prevent="openSettings"
-            class="group relative overflow-hidden rounded-xl px-8 py-4 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(107,114,128,0.3)]"
+            class="group relative rounded-xl bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white font-semibold transition-opacity duration-200 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(107,114,128,0.3)] w-full" style="font-size: 2cqw; padding: 1.5cqh 2cqw; min-height: 6cqh;"
           >
             <div
-              class="absolute inset-0 bg-gradient-to-r from-gray-600/20 to-slate-600/20 opacity-0 group-hover:opacity-100 transition-all duration-300"
+              class="absolute inset-0 bg-gradient-to-r from-gray-600/20 to-slate-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             ></div>
             <div class="relative flex items-center justify-between">
               <span>Settings</span>
               <span
-                class="text-xl opacity-60 group-hover:opacity-100 transition-all duration-300"
+                class="opacity-60 group-hover:opacity-100 transition-opacity duration-200" style="font-size: 2.5cqw;"
                 >⚙️</span
               >
             </div>
           </button>
-        </div>
-
-        <!-- Footer info -->
-        <div class="mt-12 text-center">
-          <p class="text-white/40 text-xs font-mono">
-            Press ESC anytime to return to menu
-          </p>
+          
+          <!-- Footer info - now inside scrollable area -->
+          <div class="mt-4 lg:mt-6 text-center">
+            <p class="text-white/40 font-mono" style="font-size: 1.2cqw;">
+              Press ESC anytime to return to menu
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -147,7 +147,7 @@ function loadGame() {
 }
 
 function openSettings() {
-  // Implement settings logic
+  engineState.state = EngineStateEnum.SETTING;
 }
 
 function saveGame() {

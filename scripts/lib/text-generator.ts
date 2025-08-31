@@ -1,342 +1,377 @@
-#!/usr/bin/env node
-
-import * as fs from 'fs';
-import * as path from 'path';
-import { getProjectInfo } from './project-manager';
-
-const verbose: boolean = process.env.VUEVN_VERBOSE! == 'true';
+import fs from 'fs';
+import path from 'path';
+import projectsvars from './project-vars'
 
 interface TextFile {
-  path: string;
-  lang: string;
-  content: Record<string, any>;
+  en: string;
+  fr?: string;
 }
 
-interface TextStructure {
-  global: Record<string, Record<string, any>>;
-  locations: Record<string, Record<string, any>>;
-}
-
-export async function generateTextSystem() {
-  const projectInfo = getProjectInfo();
-
-  if (verbose) {
-    console.log(
-      `🌐 Generating i18n system for project: ${projectInfo.projectName}`
-    );
-  }
-
-  // Scan for text files
-  const textFiles = await scanTextFiles(projectInfo.projectPath);
-  const textStructure = buildTextStructure(textFiles);
-  const availableLanguages = getAvailableLanguages(textFiles);
-
-  // Generate text tree
-  const textTreeContent = generateTextTree(textStructure, availableLanguages);
-  await writeTextTree(projectInfo.generatePath, textTreeContent);
-
-  // Generate text provider
-  const textProviderContent = generateTextProvider(availableLanguages);
-  await writeTextProvider(projectInfo.generatePath, textProviderContent);
-
-  if (verbose) {
-    console.log(`✅ i18n system generation complete`);
-    console.log(
-      `📊 Found ${
-        availableLanguages.length
-      } languages: ${availableLanguages.join(', ')}`
-    );
-    console.log(`📁 Found ${textFiles.length} text files`);
-  }
-}
-
-async function scanTextFiles(projectPath: string): Promise<TextFile[]> {
-  const textFiles: TextFile[] = [];
-
-  // Scan global texts
-  const globalTextsPath = path.join(projectPath, 'global', 'texts');
-  if (fs.existsSync(globalTextsPath)) {
-    await scanDirectory(globalTextsPath, 'global', textFiles);
-  }
-
-  // Scan location texts
-  const locationsPath = path.join(projectPath, 'locations');
-  if (fs.existsSync(locationsPath)) {
-    const locations = fs
-      .readdirSync(locationsPath)
-      .filter((item) =>
-        fs.statSync(path.join(locationsPath, item)).isDirectory()
-      );
-
-    for (const location of locations) {
-      const locationTextsPath = path.join(locationsPath, location, 'texts');
-      if (fs.existsSync(locationTextsPath)) {
-        await scanDirectory(
-          locationTextsPath,
-          `locations.${location}`,
-          textFiles
-        );
-      }
-    }
-  }
-
-  return textFiles;
-}
-
-async function scanDirectory(
-  dirPath: string,
-  prefix: string,
-  textFiles: TextFile[]
-) {
-  const items = fs.readdirSync(dirPath);
-
-  for (const item of items) {
-    const itemPath = path.join(dirPath, item);
-    const stat = fs.statSync(itemPath);
-
-    if (stat.isDirectory()) {
-      await scanDirectory(itemPath, `${prefix}.${item}`, textFiles);
-    } else if (item.endsWith('.ts')) {
-      const lang = path.basename(item, '.ts');
-      try {
-        // Dynamic import to get the text content
-        const modulePath = path.resolve(itemPath);
-        delete require.cache[modulePath]; // Clear cache for fresh import
-        const module = require(modulePath);
-        const content = module.default || module;
-
-        textFiles.push({
-          path: prefix,
-          lang,
-          content,
-        });
-      } catch (error) {
-        console.warn(`⚠️  Failed to load text file: ${itemPath}`, error);
-      }
-    }
-  }
-}
-
-function buildTextStructure(textFiles: TextFile[]): TextStructure {
-  const structure: TextStructure = {
-    global: {},
-    locations: {},
+interface LocationTexts {
+  [actionName: string]: {
+    [key: string]: TextFile;
   };
+}
 
-  for (const textFile of textFiles) {
-    const pathParts = textFile.path.split('.');
-    let current: any;
+interface GlobalTexts {
+  [key: string]: TextFile;
+}
 
-    if (pathParts[0] === 'global') {
-      current = structure.global;
-      pathParts.shift(); // Remove 'global'
-    } else if (pathParts[0] === 'locations') {
-      current = structure.locations;
-      pathParts.shift(); // Remove 'locations'
+export function generateTextSystem(projectName?: string) {
+  if (!projectName) {
+    projectName = process.env.VUEVN_PROJECT;
+    if (!projectName) {
+      throw new Error('No project name provided and VUEVN_PROJECT not set');
+    }
+  }
+  const projectPath = projectsvars.projectPath;
+  const generatePath = projectsvars.generatePath;
+  
+  // Ensure generate directories exist
+  fs.mkdirSync(path.join(generatePath, 'texts'), { recursive: true });
+  fs.mkdirSync(path.join(generatePath, 'texts/locations'), { recursive: true });
+  fs.mkdirSync(path.join(generatePath, 'texts/global'), { recursive: true });
+
+  const locationTexts = generateLocationTexts(projectPath, generatePath);
+  const globalTexts = generateGlobalTexts(projectPath, generatePath);
+  
+  generateMainTextIndex(generatePath);
+}
+
+function generateLocationTexts(projectPath: string, generatePath: string): string[] {
+  const locationsPath = path.join(projectPath, 'locations');
+  const locations: string[] = [];
+  
+  if (!fs.existsSync(locationsPath)) {
+    return locations;
+  }
+
+  const locationNames = fs.readdirSync(locationsPath, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
+
+  for (const locationName of locationNames) {
+    const locationTextsPath = path.join(locationsPath, locationName, 'texts');
+
+    if (!fs.existsSync(locationTextsPath)) {
+      continue;
     }
 
-    // Navigate/create the nested structure
-    for (let i = 0; i < pathParts.length; i++) {
-      const part = pathParts[i];
-      if (!current[part]) {
-        current[part] = {};
+    locations.push(locationName);
+
+    // Recursively find all scope directories containing any *.ts language file
+    const scopeDirs: string[] = [];
+    const walk = (dir: string, rel: string) => {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      let hasLang = false;
+      for (const e of entries) {
+        if (e.isFile() && e.name.endsWith('.ts')) hasLang = true;
       }
-      current = current[part];
-    }
-
-    // Set the language content
-    current[textFile.lang] = textFile.content;
-  }
-
-  return structure;
-}
-
-function getAvailableLanguages(textFiles: TextFile[]): string[] {
-  const languages = new Set<string>();
-  textFiles.forEach((file) => languages.add(file.lang));
-  return Array.from(languages).sort();
-}
-
-function generateTextTree(
-  structure: TextStructure,
-  languages: string[]
-): string {
-  // Generate individual language tree files first
-  generateLanguageFiles(structure, languages);
-
-  return `// Generated text tree - i18n system
-// Auto-generated from text files in project
-
-${languages
-  .map((lang) => `import ${lang}Global from './texts/global/${lang}';`)
-  .join('\n')}
-${languages
-  .map((lang) => `import ${lang}Locations from './texts/locations/${lang}';`)
-  .join('\n')}
-
-export type TextTree = {
-  global: Record<string, any>;
-  locations: Record<string, any>;
-};
-
-export const textTree: Record<string, TextTree> = {
-${languages
-  .map(
-    (lang) => `  ${lang}: {
-    global: ${lang}Global,
-    locations: ${lang}Locations
-  }`
-  )
-  .join(',\n')}
-};
-
-export const availableLanguages = [${languages
-    .map((lang) => `'${lang}'`)
-    .join(', ')}];
-`;
-}
-
-function generateLanguageFiles(structure: TextStructure, languages: string[]) {
-  const projectInfo = getProjectInfo();
-
-  for (const lang of languages) {
-    // Generate global language file
-    const globalData = extractLanguageData(structure.global, lang);
-    const globalContent = `// Generated global texts for ${lang}
-export default ${JSON.stringify(globalData, null, 2)};
-`;
-
-    const globalDir = path.join(projectInfo.generatePath, 'texts', 'global');
-    if (!fs.existsSync(globalDir)) {
-      fs.mkdirSync(globalDir, { recursive: true });
-    }
-    fs.writeFileSync(path.join(globalDir, `${lang}.ts`), globalContent, 'utf8');
-
-    // Generate locations language file
-    const locationsData = extractLanguageData(structure.locations, lang);
-    const locationsContent = `// Generated location texts for ${lang}
-export default ${JSON.stringify(locationsData, null, 2)};
-`;
-
-    const locationsDir = path.join(
-      projectInfo.generatePath,
-      'texts',
-      'locations'
-    );
-    if (!fs.existsSync(locationsDir)) {
-      fs.mkdirSync(locationsDir, { recursive: true });
-    }
-    fs.writeFileSync(
-      path.join(locationsDir, `${lang}.ts`),
-      locationsContent,
-      'utf8'
-    );
-  }
-}
-
-function extractLanguageData(structure: any, language: string): any {
-  const result: any = {};
-
-  for (const [key, value] of Object.entries(structure)) {
-    if (value && typeof value === 'object') {
-      if (language in value) {
-        // This level has language data
-        result[key] = value[language];
-      } else {
-        // Recurse deeper
-        const nested = extractLanguageData(value, language);
-        if (Object.keys(nested).length > 0) {
-          result[key] = nested;
-        }
+      if (hasLang) scopeDirs.push(rel);
+      for (const e of entries) {
+        if (e.isDirectory()) walk(path.join(dir, e.name), path.join(rel, e.name));
       }
+    };
+    walk(locationTextsPath, '');
+
+    const scopesForIndex: Array<{ alias: string; importPath: string }> = [];
+    for (const rel of scopeDirs) {
+      const abs = rel ? path.join(locationTextsPath, rel) : locationTextsPath;
+      // Use a sanitized module name for index exports
+      const scopeName = (rel || 'root').replace(/[^a-zA-Z0-9_]/g, '_') || 'root';
+      generateScopeTexts(abs, scopeName, generatePath, locationName, rel || '');
+      const importPath = rel && rel.length > 0 ? `./${rel.replace(/\\/g, '/')}` : './root';
+      scopesForIndex.push({ alias: scopeName, importPath });
     }
+
+    // Generate location texts index (flat index of all scopes)
+    generateLocationTextIndex(generatePath, locationName, scopesForIndex);
   }
 
-  return result;
+  // Generate main locations index
+  generateLocationMainIndex(generatePath, locations);
+  
+  return locations;
 }
 
-function generateTextProvider(languages: string[]): string {
-  return `// Generated text provider - i18n system
-import { engineState as useEngineState } from '@generate/stores';
-import { textTree, availableLanguages, type TextTree } from './textTree';
+function generateActionTexts(actionTextsPath: string, actionName: string, generatePath: string, locationName: string): string[] {
+  const textKeys: string[] = [];
 
-class TextProvider {
-  private engineState = useEngineState();
-  
-  getText(path: string): string {
-    const currentLang = this.engineState.settings.language;
-    const fallbackLang = 'en';
-    
-    // Split path (e.g., 'global.ui.save' or 'locations.bedroom.morning.wake_up')
-    const pathParts = path.split('.');
-    
-    // Try current language first
-    let text = this.getTextFromTree(currentLang, pathParts);
-    
-    // Fallback to English if not found
-    if (text === null && currentLang !== fallbackLang) {
-      text = this.getTextFromTree(fallbackLang, pathParts);
-    }
-    
-    // Return key if no translation found
-    return text || path;
+  if (!fs.existsSync(actionTextsPath)) {
+    return textKeys;
   }
-  
-  private getTextFromTree(language: string, pathParts: string[]): string | null {
-    const langTree: TextTree | undefined = (textTree as any)[language];
-    if (!langTree) return null;
-    
-    let current: any = langTree;
-    
-    for (const part of pathParts) {
-      if (current && typeof current === 'object' && part in current) {
-        current = current[part];
-      } else {
-        return null;
-      }
-    }
-    
-    return typeof current === 'string' ? current : null;
-  }
-  
-  getCurrentLanguage(): string {
-    return this.engineState.settings.language;
-  }
-  
-  setLanguage(language: string): void {
-    if (availableLanguages.includes(language)) {
-      this.engineState.settings.language = language;
-    }
-  }
-  
-  getAvailableLanguages(): string[] {
-    return [...availableLanguages];
-  }
-}
 
-// Global text provider instance
-export const t = new TextProvider();
+  // Discover all language files (e.g., en.ts, fr.ts, de.ts...)
+  const langFiles = fs
+    .readdirSync(actionTextsPath)
+    .filter((f) => f.endsWith('.ts'))
+    .map((f) => ({ file: f, lang: path.basename(f, '.ts') }));
 
-// Helper function for current context
-export function createContextHelper(basePath: string) {
-  return new Proxy({}, {
-    get(target, prop) {
-      if (typeof prop === 'string') {
-        return t.getText(\`\${basePath}.\${prop}\`);
-      }
-      return undefined;
+  if (langFiles.length === 0) {
+    return textKeys;
+  }
+
+  // Parse each language file
+  const langMaps: Record<string, Record<string, string>> = {};
+  for (const { file, lang } of langFiles) {
+    const content = fs.readFileSync(path.join(actionTextsPath, file), 'utf-8');
+    langMaps[lang] = extractExportedTexts(content);
+  }
+
+  // Union of all keys across languages
+  const allKeys = new Set<string>();
+  Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));
+
+  // Order languages: en first if present, then others alphabetically
+  const langs = Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
+
+  const textObjects: string[] = [];
+  for (const key of Array.from(allKeys).sort()) {
+    const lines: string[] = [];
+    lines.push(`    __key: ${JSON.stringify(key)}`);
+    for (const lang of langs) {
+      const val = langMaps[lang][key];
+      lines.push(`    ${lang}: ${val != null ? JSON.stringify(val) : 'null'}`);
     }
-  });
-}
+    textObjects.push(`  ${key}: {\n${lines.join(',\n')}\n  }`);
+    textKeys.push(key);
+  }
+
+  const actionContent = `// Generated text objects for ${locationName}/${actionName}
+import type { Text } from '@generate/types';
+
+export const ${actionName}Texts = {
+${textObjects.join(',\n')}
+} as const;
+
+export default ${actionName}Texts;
 `;
+
+  const locationTextPath = path.join(generatePath, 'texts/locations', locationName);
+  fs.mkdirSync(locationTextPath, { recursive: true });
+  fs.writeFileSync(path.join(locationTextPath, `${actionName}.ts`), actionContent);
+
+  return textKeys;
 }
 
-async function writeTextTree(generatePath: string, content: string) {
-  const filePath = path.join(generatePath, 'textTree.ts');
-  fs.writeFileSync(filePath, content, 'utf8');
+function extractExportedTexts(content: string): Record<string, string> {
+  const texts: Record<string, string> = {};
+  
+  // Match with or without "as const"
+  const defaultExportMatch = content.match(/export\s+default\s+\{([\s\S]*?)\}\s*(?:as\s+const)?\s*;?/m);
+  if (defaultExportMatch) {
+    const objContent = defaultExportMatch[1];
+    // Handle multiline strings and various quote types
+    const propRegex = /(\w+):\s*["'`]([^"'`]*(?:\n[^"'`]*)*?)["'`]/g;
+    let propMatch;
+    
+    while ((propMatch = propRegex.exec(objContent)) !== null) {
+      // Clean up the text content (remove extra whitespace, handle escapes)
+      const cleanText = propMatch[2]
+        .replace(/\\n/g, '\n')
+        .replace(/\\'/g, "'")
+        .replace(/\\"/g, '"')
+        .trim();
+      texts[propMatch[1]] = cleanText;
+    }
+  }
+  
+  return texts;
 }
 
-async function writeTextProvider(generatePath: string, content: string) {
-  const filePath = path.join(generatePath, 'textProvider.ts');
-  fs.writeFileSync(filePath, content, 'utf8');
+function generateLocationTextIndex(generatePath: string, locationName: string, scopes: Array<{ alias: string; importPath: string }>) {
+  const locationDir = path.join(generatePath, 'texts/locations', locationName);
+  fs.mkdirSync(locationDir, { recursive: true });
+
+  const imports = scopes.map((s, i) => 
+    `import texts_${i} from '${s.importPath}';`
+  ).join('\n');
+
+  const exports = scopes.map((s, i) => 
+    `  ${s.alias}: texts_${i}`
+  ).join(',\n');
+
+  const content = `// Generated location texts index for ${locationName}
+${imports}
+
+export const ${locationName}Texts = {
+${exports}
+} as const;
+
+export default ${locationName}Texts;
+`;
+
+  fs.writeFileSync(path.join(locationDir, 'index.ts'), content);
+}
+
+function generateScopeTexts(scopePath: string, scopeName: string, generatePath: string, locationName: string, relPath: string): void {
+  // Discover all language files in scopePath
+  const langFiles = fs
+    .readdirSync(scopePath)
+    .filter((f) => f.endsWith('.ts'))
+    .map((f) => ({ file: f, lang: path.basename(f, '.ts') }));
+  if (langFiles.length === 0) return;
+
+  const langMaps: Record<string, Record<string, string>> = {};
+  for (const { file, lang } of langFiles) {
+    const content = fs.readFileSync(path.join(scopePath, file), 'utf-8');
+    langMaps[lang] = extractExportedTexts(content);
+  }
+  const allKeys = new Set<string>();
+  Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));
+  const langs = Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
+
+  const textObjects: string[] = [];
+  for (const key of Array.from(allKeys).sort()) {
+    const lines: string[] = [];
+    lines.push(`    __key: ${JSON.stringify(key)}`);
+    for (const lang of langs) {
+      const val = langMaps[lang][key];
+      lines.push(`    ${lang}: ${val != null ? JSON.stringify(val) : 'null'}`);
+    }
+    textObjects.push(`  ${key}: {\n${lines.join(',\n')}\n  }`);
+  }
+
+  const moduleContent = `// Generated text objects for ${locationName}/${relPath}
+export const texts = {
+  __path: ${JSON.stringify(relPath)},
+${textObjects.join(',\n')}
+} as const;
+
+export default texts;
+`;
+
+  const baseDir = path.join(generatePath, 'texts/locations', locationName);
+  if (!relPath) {
+    // Root scope: write to root.ts to avoid clashing with location index
+    fs.mkdirSync(baseDir, { recursive: true });
+    fs.writeFileSync(path.join(baseDir, `root.ts`), moduleContent);
+  } else {
+    const outDir = path.join(baseDir, relPath);
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.writeFileSync(path.join(outDir, 'index.ts'), moduleContent);
+  }
+}
+
+function generateLocationMainIndex(generatePath: string, locations: string[]) {
+  const imports = locations.map(location => 
+    `import { ${location}Texts } from './${location}';`
+  ).join('\n');
+
+  const exports = locations.map(location => 
+    `  ${location}: ${location}Texts`
+  ).join(',\n');
+
+  const content = `// Generated location texts main index
+${imports}
+
+export const locationTexts = {
+${exports}
+} as const;
+
+export default locationTexts;
+`;
+
+  fs.writeFileSync(path.join(generatePath, 'texts/locations/index.ts'), content);
+}
+
+function generateGlobalTexts(projectPath: string, generatePath: string): string[] {
+  const globalTextsPath = path.join(projectPath, 'global', 'texts');
+
+  if (!fs.existsSync(globalTextsPath)) {
+    const content = `// Generated global texts (empty)
+export const globalTexts = {} as const;
+
+export default globalTexts;
+`;
+    fs.mkdirSync(path.join(generatePath, 'texts/global'), { recursive: true });
+    fs.writeFileSync(path.join(generatePath, 'texts/global/index.ts'), content);
+    return [];
+  }
+
+  const scopes = fs
+    .readdirSync(globalTextsPath, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name);
+
+  const imports: string[] = [];
+  const exportLines: string[] = [];
+  fs.mkdirSync(path.join(generatePath, 'texts/global'), { recursive: true });
+
+  for (const scope of scopes) {
+    const scopePath = path.join(globalTextsPath, scope);
+    const out = generateGenericScopeTexts(scopePath, scope, path.join(generatePath, 'texts/global'));
+    if (out) {
+      imports.push(`import { ${scope}Texts } from './${scope}';`);
+      exportLines.push(`  ${scope}: ${scope}Texts`);
+    }
+  }
+
+  const indexContent = `// Generated global texts index
+${imports.join('\n')}
+
+export const globalTexts = {
+${exportLines.join(',\n')}
+} as const;
+
+export default globalTexts;
+`;
+  fs.writeFileSync(path.join(generatePath, 'texts/global/index.ts'), indexContent);
+  return scopes;
+}
+
+function generateGenericScopeTexts(scopePath: string, scopeName: string, outDir: string): boolean {
+  if (!fs.existsSync(scopePath)) return false;
+  const langFiles = fs
+    .readdirSync(scopePath)
+    .filter((f) => f.endsWith('.ts'))
+    .map((f) => ({ file: f, lang: path.basename(f, '.ts') }));
+  if (langFiles.length === 0) return false;
+
+  const langMaps: Record<string, Record<string, string>> = {};
+  for (const { file, lang } of langFiles) {
+    const content = fs.readFileSync(path.join(scopePath, file), 'utf-8');
+    langMaps[lang] = extractExportedTexts(content);
+  }
+  const allKeys = new Set<string>();
+  Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));
+  const langs = Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
+
+  const textObjects: string[] = [];
+  for (const key of Array.from(allKeys).sort()) {
+    const lines: string[] = [];
+    lines.push(`    __key: ${JSON.stringify(key)}`);
+    for (const lang of langs) {
+      const val = langMaps[lang][key];
+      lines.push(`    ${lang}: ${val != null ? JSON.stringify(val) : 'null'}`);
+    }
+    textObjects.push(`  ${key}: {\n${lines.join(',\n')}\n  }`);
+  }
+
+  const content = `// Generated global text objects for ${scopeName}
+export const ${scopeName}Texts = {
+${textObjects.join(',\n')}
+} as const;
+
+export default ${scopeName}Texts;
+`;
+  fs.writeFileSync(path.join(outDir, `${scopeName}.ts`), content);
+  return true;
+}
+
+function generateMainTextIndex(generatePath: string) {
+  const content = `// Generated text system v2 main index
+import { globalTexts } from './global';
+import { locationTexts } from './locations';
+
+// Direct import text access - returns Text objects for type safety
+export const texts = {
+  global: globalTexts,
+  locations: locationTexts
+} as const;
+
+export default texts;
+`;
+
+  fs.writeFileSync(path.join(generatePath, 'texts/index.ts'), content);
 }

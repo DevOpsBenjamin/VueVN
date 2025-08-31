@@ -23,7 +23,7 @@
         <Game />
         <!-- Resize handle bottom right -->
         <div
-          class="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize flex items-end justify-end"
+          class="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize flex items-end justify-end z-100"
           @mousedown.prevent="startResize"
         >
           <svg

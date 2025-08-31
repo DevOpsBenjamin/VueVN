@@ -1,4 +1,4 @@
-import type { HistoryData, VNAction } from '@generate/types';
+import type { HistoryData, Action } from '@generate/types';
 
 export default class HistoryManager {
   private data:HistoryData;
@@ -13,7 +13,7 @@ export default class HistoryManager {
     console.debug('HistoryManager initialized');
   }
     
-  setFuture(actions: VNAction[]): void {
+  setFuture(actions: Action[]): void {
     this.data.future = actions;
   }
   
@@ -35,7 +35,7 @@ export default class HistoryManager {
   }
 
   // New methods for ActionExecutor
-  getPresent(): VNAction | null {
+  getPresent(): Action | null {
     return this.data.present || null;
   }
 
@@ -71,7 +71,7 @@ export default class HistoryManager {
     return this.data.future.length;
   }
 
-  getLastHistoryEntry(): VNAction | null {
+  getLastHistoryEntry(): Action | null {
     if (this.data.history.length === 0) return null;
     return this.data.history[this.data.history.length - 1];
   }

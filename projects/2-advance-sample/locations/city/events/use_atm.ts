@@ -1,4 +1,5 @@
 import type { VNEvent } from '@generate/types';
+import { MoneyManager } from '@generate/engine';
 
 const useATM: VNEvent = {
   name: 'Use ATM',
@@ -43,10 +44,9 @@ const useATM: VNEvent = {
     
     withdraw: {
       async execute(engine, state) {
-        if (state.player.bankMoney >= 51) {
-           // Need at least $55 in bank for $50 withdrawal + $1 fee
-          state.player.bankMoney -= 51; // Deduct from bank ($50 + $1 fee)
-          state.player.pocketMoney += 50; // Add to pocket (only the withdrawn amount)
+        const withdrawalSuccess = MoneyManager.withdraw(state, 50, 1);
+        
+        if (withdrawalSuccess) {
           await engine.showText("You withdraw $50 to your pocket. ATM fee: $1", "ATM");
           await engine.showText(`Bank balance: $${state.player.bankMoney}\nPocket money: $${state.player.pocketMoney}`, "ATM");
         } else {

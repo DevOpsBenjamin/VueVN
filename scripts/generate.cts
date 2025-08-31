@@ -1,6 +1,7 @@
 // Main script to generate all index files (components, engine, events)
 // Usage: tsx scripts/generate.cts [--watch] [--verbose]
 import { execSync } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import chokidar from 'chokidar';
 
@@ -31,6 +32,14 @@ function run(script: string): void {
 run('generate/generate-tsconfig.cts');
 
 function generate_files() {
+  // Clean up old generated files before regenerating
+  const generatePath = path.join(process.cwd(), 'src/generate');
+  if (fs.existsSync(generatePath)) {
+    fs.rmSync(generatePath, { recursive: true, force: true });
+    if (verbose) {
+      console.log(`🗑️ Removed old generate folder: ${generatePath}`);
+    }
+  }
   if (verbose) {
     console.log(`📦 Generating files for project: ${currentProject}`);
   }
@@ -66,9 +75,25 @@ if (process.argv.includes('--watch')) {
   });
 
   watcher.on('all', (event: string, filePath: string) => {
-    console.log(`🔄 File ${event}: ${filePath}`);
-    generate_files();
-    console.log(`✅ Done`);
+    console.log(`👀 File ${event}: ${filePath}`);
+    // Text changes: always regenerate i18n (covers add/change/unlink)
+    if (/\/texts\//.test(filePath)) {
+      try {
+        run('generate/generate-i18n.cts');
+        console.log('✅ i18n regenerated');
+      } catch (e) {
+        console.error('❌ i18n regeneration failed');
+      }
+      return;
+    }
+    // Only fully regenerate on structural changes (adds/removes)
+    if (['add', 'addDir', 'unlink', 'unlinkDir'].includes(event)) {
+      generate_files();
+      console.log(`✅ Regenerated (structural change)`);
+      return;
+    }
+    // Skip full regenerate on simple content changes to avoid dev UI blink
+    console.log('⏭️  Skipped full regeneration (content change)');
   });
 
   watcher.on('error', (error: Error) => {

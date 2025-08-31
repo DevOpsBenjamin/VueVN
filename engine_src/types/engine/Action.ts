@@ -1,8 +1,9 @@
-import type { GameState } from '@generate/types';
+import type { EngineState, GameState } from '@generate/types';
+import { VNActionEnum } from '@generate/enums';
 
 export interface Action {
-  id: string;
-  name: string;
-  unlocked: (state: GameState) => boolean; // Conditions for action to be available
-  execute: (state: GameState) => void; // Function to execute the action
+  type: VNActionEnum;
+  event_id: string;
+  gameState: GameState;
+  engineState: EngineState;
 }

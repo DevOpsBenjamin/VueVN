@@ -1,10 +1,10 @@
-import type { LocationData } from '@generate/types';
 import bedroom from '@generate/locations/bedroom';
 import hallway from '@generate/locations/hallway';
 import mother_room from '@generate/locations/mother_room';
 import neighbor_entrance from '@generate/locations/neighbor_entrance';
 import garden from '@generate/locations/garden';
 import city from '@generate/locations/city';
+import cafe from '@generate/locations/cafe';
 import outside from '@generate/locations/outside';
 import { LocationManager } from '@generate/engine';
 
@@ -15,12 +15,13 @@ import { LocationManager } from '@generate/engine';
  *               |
  * [Bedroom]-[Hallway]-[Outside]--[Neighbor Entrance]
  *                         |   \
- *                     [Garden][City]
+ *                     [Garden][City]--[Cafe]
  *
  * Zones
  *  - House: Bedroom, Hallway, Mother Room
  *  - Outside hub: Outside (connects house → neighborhood)
- *  - Neighborhood: Neighbor Entrance, City,  Garden
+ *  - Neighborhood: Neighbor Entrance, City, Garden
+ *  - City hub: City (connects to Cafe)
  *   (garden is in house but for this game we decide from hallway we can't go to garden directly must first get out of house)
  *
  * Edges (bidirectional intent)
@@ -30,6 +31,7 @@ import { LocationManager } from '@generate/engine';
  *  - Outside  <-> Neighbor Entrance
  *  - Outside  <-> Garden
  *  - Outside  <-> City
+ *  - City     <-> Cafe
  *
  * Note: Calls below use star links around the hubs (Hallway, Outside).
  * If LocationManager.link() is one-way, we add the reverse where needed.
@@ -49,7 +51,12 @@ class LocationLinker {
     // SIMPLE
     locationManager.link(neighbor_entrance, [outside]);
     locationManager.link(garden, [outside]);
-    locationManager.link(city, [outside]);
+    
+    //City
+    // HUB
+    locationManager.link(city, [outside, cafe]);
+    // SIMPLE
+    locationManager.link(cafe, [city]);
   }
 }
 

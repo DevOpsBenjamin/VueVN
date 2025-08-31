@@ -8,9 +8,13 @@ function createEditorState(): EditorState
     currentFile: null,
     activeModule: 'dashboard',
     selectedLocation: null,
+    activeLocationTab: 'events',
     previewVisible: false,
     showEnginePopup: false,
     showGamePopup: false,
+    showFilePopup: false,
+    fileToEdit: null,
+    fileInitialContent: null,
   }
 }
 
@@ -22,6 +26,21 @@ export const useEditorState = defineStore('editorState', {
     },
     selectFile(file: string): void {
       this.currentFile = file;
+    },
+    openFile(file: string): void {
+      this.fileToEdit = file;
+      this.fileInitialContent = null;
+      this.showFilePopup = true;
+    },
+    openFileWithContent(file: string, content: string): void {
+      this.fileToEdit = file;
+      this.fileInitialContent = content;
+      this.showFilePopup = true;
+    },
+    closeFile(): void {
+      this.showFilePopup = false;
+      this.fileToEdit = null;
+      this.fileInitialContent = null;
     }
   } satisfies EditorStateActions,
   persist: true

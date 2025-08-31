@@ -43,20 +43,13 @@ export default class InputManager {
     this.gameRoot.removeEventListener('click', this.clickHandler);
   }
 
-  /** Public getter (kept for compatibility) */
-  getSkipMode(): boolean {
-    return this.skipMode;
-  }
-
   // -------------------------
   // Event handlers
   // -------------------------
   private handleKeyDown(e: KeyboardEvent): void {
     // Skip mode (hold Control)
     if (e.key === 'Control') {
-      if (!this.skipMode) {
-        this.skipMode = true;
-      }
+      this.navigationManager.enableSkipMode();
       return;
     }
 
@@ -77,9 +70,7 @@ export default class InputManager {
 
   private handleKeyUp(e: KeyboardEvent): void {
     if (e.key === 'Control') {
-      if (this.skipMode) {
-        this.skipMode = false;
-      }
+      this.navigationManager.disableSkipMode();
     }
   }
 

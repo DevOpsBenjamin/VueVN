@@ -1,7 +1,7 @@
 import { TimeHelper } from '@generate/engine';
-import type { GameState, Action } from '@generate/types';
+import type { GameState, VNAction } from '@generate/types';
 
-const wait: Action = {
+const wait: VNAction = {
     id: "wait",
     name: "Wait 1H",
     unlocked: () => true,

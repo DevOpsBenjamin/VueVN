@@ -1,10 +1,11 @@
 import type { Choice, CustomArgs } from '@generate/types';
+import type { Text } from '@generate/types';
 
 export interface EngineAPI {
   // WAIT USER INPUT
-  showText: (text: string, from?: string) => Promise<void>;
-  // WAIT USER CHOICE
-  showChoices: (choices: Array<Choice>) => Promise<void>;
+  showText: (text: string | Text, from?: string) => Promise<void>;
+  // WAIT USER CHOICE  
+  showChoices: (choices: Array<Choice | { text: string | Text; branch: string }>) => Promise<void>;
   // TODO HANDLE INTERNALLY // NOT READY
   // runCustom: (args: CustomArgs) => Promise<void>;
   // STOP CURRENT EVENT AND JUMP TO NEW ONE

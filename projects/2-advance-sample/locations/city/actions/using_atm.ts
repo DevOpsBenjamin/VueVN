@@ -1,6 +1,6 @@
-import type { Action } from '@generate/types';
+import type { VNAction } from '@generate/types';
 
-const using_atm: Action = {
+const using_atm: VNAction = {
     id: "using_atm",
     name: "Use ATM",
     unlocked: () => true,

@@ -16,13 +16,12 @@ export default defineConfig({
     {
       name: 'serve-project-assets',
       configureServer(server) {
-        const assetsPath = path.resolve(
-          __dirname,
-          'projects',
-          currentProject,
-          'assets'
-        );
-        server.middlewares.use('/assets', serveStatic(assetsPath));
+        const projectPath = path.resolve(__dirname, 'projects', currentProject);
+        
+        // Serve global assets directly at /global/*
+        server.middlewares.use('/global', serveStatic(path.join(projectPath, 'global')));
+        // Serve all location files directly at "/:locationId/*"
+        server.middlewares.use(serveStatic(path.join(projectPath, 'locations')));
       },
     },
   ],

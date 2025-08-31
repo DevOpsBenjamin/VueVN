@@ -1,6 +1,6 @@
-import type { Action } from '@generate/types';
+import type { VNAction } from '@generate/types';
 
-const look_neighbor: Action = {
+const look_neighbor: VNAction = {
     id: "look_neighbor",
     name: "Look at Neighbor",
     unlocked: () => true,

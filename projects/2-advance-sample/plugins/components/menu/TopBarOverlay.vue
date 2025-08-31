@@ -1,23 +1,26 @@
 <template>
-  <div class="absolute top-0 left-0 w-full z-10 pointer-events-none p-4">
-    <div class="w-full flex justify-between items-center pointer-events-auto">
-      <div class="bg-black/30 backdrop-blur-sm text-white px-4 py-2 rounded">
+  <div class="absolute top-0 left-0 w-full z-10 pointer-events-none p-1" style="height: 10%; font-size: 2cqw;">
+    <div class="w-full h-full pointer-events-auto flex justify-between items-center">
+      <div class="bg-black/30 backdrop-blur-sm text-white rounded h-full flex items-center" style="padding: 0 2cqh;">
         {{ formattedDate }}
       </div>
-      <div class="flex gap-4">
+      <div class="flex items-center h-full" style="gap: 1cqh;">
         <button
-          class="bg-black/30 backdrop-blur-sm text-white p-2 rounded"
+          class="bg-black/30 backdrop-blur-sm text-white rounded hover:bg-white/20 transition-colors h-full flex items-center justify-center"
+          style="min-width: 8cqh; padding: 0 1cqh;"
         >
           Inventory
         </button>
         <button
-          class="bg-black/30 backdrop-blur-sm text-white p-2 rounded"
+          class="bg-black/30 backdrop-blur-sm text-white rounded hover:bg-white/20 transition-colors h-full flex items-center justify-center"
+          style="min-width: 6cqh; padding: 0 1cqh;"
         >
           Phone
         </button>
         <button
           @click.stop.prevent="showUserInfo"
-          class="bg-black/30 backdrop-blur-sm text-white p-2 rounded"
+          class="bg-black/30 backdrop-blur-sm text-white rounded hover:bg-white/20 transition-colors h-full flex items-center justify-center"
+          style="width: 8cqh; padding: 0 1cqh;"
         >
           👤
         </button>

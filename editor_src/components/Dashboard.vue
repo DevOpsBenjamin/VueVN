@@ -2,94 +2,65 @@
   <div class="h-full flex flex-col bg-black/10">
     <div class="flex-1 overflow-y-auto">
       <div class="p-6 space-y-6">
-      <!-- Welcome Section -->
-      <section class="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-        <div class="flex items-center space-x-3 mb-4">
-          <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-            <span class="text-white font-bold">🎮</span>
-          </div>
-          <div>
-            <h2 class="text-white text-xl font-semibold">Welcome to VueVN Editor</h2>
-            <p class="text-white/70 text-sm">Create amazing visual novels with TypeScript and Vue</p>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-white/5 rounded-lg p-4 border border-white/5">
-            <h3 class="text-white font-medium mb-2">🗺️ Location-Centric</h3>
-            <p class="text-white/70 text-sm">Organize content by locations for complex sandbox games</p>
-          </div>
-          <div class="bg-white/5 rounded-lg p-4 border border-white/5">
-            <h3 class="text-white font-medium mb-2">🌍 Multilingual</h3>
-            <p class="text-white/70 text-sm">Built-in i18n system with translation workflow tools</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Quick Actions -->
-      <section class="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-        <h2 class="text-white text-lg font-semibold mb-4 flex items-center">
-          <span class="mr-2">⚡</span>
-          Quick Actions
-        </h2>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <button
-            @click="editorState.activeModule = 'assetManager'"
-            class="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-500/20 to-teal-500/20 hover:from-green-500/30 hover:to-teal-500/30 rounded-lg border border-white/10 transition-all duration-200"
-          >
-            <span class="text-2xl">🖼️</span>
-            <div class="text-left">
-              <div class="text-white font-medium text-sm">Manage Assets</div>
-              <div class="text-white/70 text-xs">Images & audio files</div>
-            </div>
-          </button>
-          
-          <button
-            @click="editorState.activeModule = 'locationManager'"
-            class="flex items-center space-x-3 p-4 bg-gradient-to-r from-orange-500/20 to-red-500/20 hover:from-orange-500/30 hover:to-red-500/30 rounded-lg border border-white/10 transition-all duration-200"
-          >
-            <span class="text-2xl">🗺️</span>
-            <div class="text-left">
-              <div class="text-white font-medium text-sm">Edit Locations</div>
-              <div class="text-white/70 text-xs">Game world setup</div>
-            </div>
-          </button>
-          
-          <button
-            @click="editorState.activeModule = 'localizationManager'"
-            class="flex items-center space-x-3 p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 rounded-lg border border-white/10 transition-all duration-200"
-          >
-            <span class="text-2xl">🌍</span>
-            <div class="text-left">
-              <div class="text-white font-medium text-sm">Translations</div>
-              <div class="text-white/70 text-xs">Multilingual support</div>
-            </div>
-          </button>
-        </div>
-      </section>
 
       <!-- Project Status -->
       <section class="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
         <h2 class="text-white text-lg font-semibold mb-4 flex items-center">
-          <span class="mr-2">📊</span>
-          Project Overview
+          <span class="mr-2">🎮</span>
+          {{ projectData.config.name }}
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
-            <div class="text-2xl text-green-400 font-bold mb-1">{{ locationsArray.length }}</div>
+            <div class="text-2xl text-blue-400 font-bold mb-1">{{ locationsArray.length }}</div>
             <div class="text-white/70 text-sm">Locations</div>
           </div>
           <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
-            <div class="text-2xl text-purple-400 font-bold mb-1">0</div>
-            <div class="text-white/70 text-sm">Assets</div>
+            <div class="text-2xl text-green-400 font-bold mb-1">{{ totalEvents }}</div>
+            <div class="text-white/70 text-sm">Events</div>
           </div>
           <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
-            <div class="text-2xl text-orange-400 font-bold mb-1">1</div>
+            <div class="text-2xl text-purple-400 font-bold mb-1">{{ totalActions }}</div>
+            <div class="text-white/70 text-sm">Actions</div>
+          </div>
+          <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
+            <div class="text-2xl text-orange-400 font-bold mb-1">{{ globalStats.eventCount }}</div>
+            <div class="text-white/70 text-sm">Global Events</div>
+          </div>
+          <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
+            <div class="text-2xl text-cyan-400 font-bold mb-1">{{ textStats.keys }}</div>
+            <div class="text-white/70 text-sm">Text Keys</div>
+          </div>
+          <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
+            <div class="text-2xl text-red-400 font-bold mb-1">{{ textStats.missing }}</div>
+            <div class="text-white/70 text-sm">Missing Translations</div>
+          </div>
+          <div class="text-center p-4 bg-white/5 rounded-lg border border-white/5">
+            <div class="text-2xl text-teal-400 font-bold mb-1">{{ langsUpper.length }}</div>
             <div class="text-white/70 text-sm">Languages</div>
           </div>
         </div>
+
+        <!-- Most Active Locations -->
+        <div class="bg-white/5 rounded-lg p-4 border border-white/5" v-if="topLocations.length > 0">
+          <h3 class="text-white font-medium mb-3 flex items-center">
+            <span class="mr-2">🏆</span>
+            Most Active Locations
+          </h3>
+          <div class="space-y-2">
+            <div v-for="location in topLocations" :key="location.id" class="flex items-center justify-between p-2 bg-white/5 rounded">
+              <div class="flex items-center space-x-2">
+                <span class="text-white font-medium text-sm">{{ location.name }}</span>
+                <span class="text-white/50 text-xs">{{ location.id }}</span>
+              </div>
+              <div class="flex items-center space-x-3 text-xs">
+                <span class="text-blue-400">{{ location.eventCount }} events</span>
+                <span class="text-purple-400">{{ location.actionCount }} actions</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </section>
       </div>
     </div>
@@ -97,8 +68,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useEditorState } from '@editor/stores/editorState';
 import projectData from '@generate/project';
+import texts from '@generate/texts';
 
 const editorState = useEditorState();
 
@@ -115,4 +88,89 @@ const locationsArray = Object.entries(projectData.locations).map(([id, locationD
     eventCount: Object.keys(locationData.events).length,
     actionCount: Object.keys(locationData.actions).length
   }));
+
+// Calculate total events and actions across all locations
+const totalEvents = computed(() => {
+  return locationsArray.reduce((sum, location) => sum + location.eventCount, 0) + globalStats.eventCount;
+});
+
+const totalActions = computed(() => {
+  return locationsArray.reduce((sum, location) => sum + location.actionCount, 0) + globalStats.actionCount;
+});
+
+// Get top 3 most active locations (by total events + actions)
+const topLocations = computed(() => {
+  return locationsArray
+    .map(location => ({
+      ...location,
+      totalActivity: location.eventCount + location.actionCount
+    }))
+    .filter(location => location.totalActivity > 0)
+    .sort((a, b) => b.totalActivity - a.totalActivity)
+    .slice(0, 3);
+});
+
+// Text statistics (all locations + global)
+function countTexts(): { keys: number; missing: number } {
+  let keys = 0;
+  let missing = 0;
+
+  const countModule = (mod: any) => {
+    if (!mod) return;
+    for (const k of Object.keys(mod)) {
+      if (k === '__path') continue;
+      const entry = mod[k];
+      if (!entry || typeof entry !== 'object') continue;
+      keys += 1;
+      for (const lang of Object.keys(entry)) {
+        if (lang === '__key') continue;
+        const v = entry[lang];
+        if (!(typeof v === 'string' && v.trim().length > 0)) missing += 1;
+      }
+    }
+  };
+
+  // Locations
+  const locs = (texts as any).locations || {};
+  for (const loc of Object.keys(locs)) {
+    const scopes = locs[loc] || {};
+    for (const scope of Object.keys(scopes)) {
+      countModule(scopes[scope]);
+    }
+  }
+  // Global
+  const globalScopes = (texts as any).global || {};
+  for (const scope of Object.keys(globalScopes)) {
+    countModule(globalScopes[scope]);
+  }
+
+  return { keys, missing };
+}
+
+const textStats = computed(() => countTexts());
+
+// Language list (unique across all scopes)
+const langsUpper = computed(() => {
+  const set = new Set<string>();
+  const addFromModule = (mod: any) => {
+    if (!mod) return;
+    for (const k of Object.keys(mod)) {
+      if (k === '__path') continue;
+      const entry = mod[k];
+      if (!entry || typeof entry !== 'object') continue;
+      for (const lang of Object.keys(entry)) {
+        if (lang === '__key') continue;
+        set.add(lang.toUpperCase());
+      }
+    }
+  };
+  const locs = (texts as any).locations || {};
+  for (const loc of Object.keys(locs)) {
+    const scopes = locs[loc] || {};
+    for (const scope of Object.keys(scopes)) addFromModule(scopes[scope]);
+  }
+  const globals = (texts as any).global || {};
+  for (const scope of Object.keys(globals)) addFromModule(globals[scope]);
+  return Array.from(set).sort((a,b)=>a.localeCompare(b));
+});
 </script>

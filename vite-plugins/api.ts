@@ -225,6 +225,20 @@ const viteApiPlugin = (): Plugin => {
 
               const parts = buffer.toString('binary').split(`--${boundary}`);
 
+              // Optional destination subpath under assets category
+              let destSubpath = '';
+              for (const part of parts) {
+                if (part.includes('name="dest"') && !part.includes('filename=')) {
+                  const contentStart = part.indexOf('\r\n\r\n');
+                  if (contentStart !== -1) {
+                    const contentEnd = part.lastIndexOf('\r\n');
+                    const raw = part.slice(contentStart + 4, contentEnd).trim();
+                    destSubpath = raw.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+                    if (destSubpath.includes('..')) destSubpath = '';
+                  }
+                }
+              }
+
               for (const part of parts) {
                 if (part.includes('filename=')) {
                   const filenameMatch = part.match(/filename="(.+)"/);
@@ -243,7 +257,27 @@ const viteApiPlugin = (): Plugin => {
                     else if (contentType.startsWith('audio/')) subfolder = 'sounds';
                     else if (contentType.startsWith('video/')) subfolder = 'videos';
 
-                    const targetDir = path.join(assetsPath, subfolder);
+                    // Determine target dir: allow explicit project-relative destinations
+                    let targetDir: string;
+                    if (destSubpath) {
+                      if (destSubpath.startsWith('locations/') || destSubpath.startsWith('global/')) {
+                        targetDir = path.join(projectPath, destSubpath);
+                      } else if (destSubpath.startsWith('assets/')) {
+                        targetDir = path.join(projectPath, destSubpath);
+                      } else {
+                        // fallback to assets/<category>/<dest>
+                        targetDir = path.join(assetsPath, subfolder, destSubpath);
+                      }
+                    } else {
+                      // For images, require explicit destination to avoid unintended /assets creation
+                      if (subfolder === 'images') {
+                        return sendJson(res, 'Missing destination for image upload', 400);
+                      }
+                      targetDir = path.join(assetsPath, subfolder);
+                    }
+                    if (!targetDir.startsWith(projectPath)) {
+                      return sendJson(res, 'Invalid destination', 400);
+                    }
                     if (!fs.existsSync(targetDir)) {
                       fs.mkdirSync(targetDir, { recursive: true });
                     }
@@ -251,7 +285,8 @@ const viteApiPlugin = (): Plugin => {
                     const targetPath = path.join(targetDir, filename);
                     fs.writeFileSync(targetPath, content);
 
-                    return sendJson(res, { success: true, path: `assets/${subfolder}/${filename}`, size: content.length, type: contentType });
+                    const rel = path.relative(projectPath, targetPath).replace(/\\/g, '/');
+                    return sendJson(res, { success: true, path: rel, size: content.length, type: contentType });
                   }
                 }
               }

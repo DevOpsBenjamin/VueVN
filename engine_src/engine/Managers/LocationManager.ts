@@ -28,12 +28,12 @@ export default class LocationManager {
     const locations = this.locationDataDico;
     // Validation is optional - some locations may legitimately have no connections
     // This method exists for debugging purposes to ensure LocationLinker was called
-    console.log(`📍 LocationLinker validation: ${Object.keys(locations).length} locations processed`);
+    console.debug(`📍 LocationLinker validation: ${Object.keys(locations).length} locations processed`);
     
     const locationStats = Object.entries(locations).map(([id, data]) => 
       `${id}: ${Object.keys(data.accessibles).length} connections`
     );
-    console.log(`🔗 Location connections: ${locationStats.join(', ')}`);
+    console.debug(`🔗 Location connections: ${locationStats.join(', ')}`);
   }
 
 	findById(location_id: string): Location {

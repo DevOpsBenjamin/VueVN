@@ -19,38 +19,39 @@ export async function generateResourceFile(
     isGlobal ? resourceType : `${locationName}/${resourceType}`
   );
 
-  let resourceFiles: string[] = [];
+  let resourceRelPaths: string[] = [];
   let imports = '';
   let resourceListItems = '';
 
+  // Helper: recursively collect .ts files relative to resourcePath
+  function walk(dir: string, base: string): string[] {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    const results: string[] = [];
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        results.push(...walk(full, base));
+      } else if (entry.isFile() && entry.name.endsWith('.ts')) {
+        const rel = path.relative(base, full).replace(/\\/g, '/');
+        results.push(rel.replace(/\.ts$/, ''));
+      }
+    }
+    return results;
+  }
+
   // Check if resource folder exists and get resource files
   if (fs.existsSync(resourcePath)) {
-    const allFiles = fs.readdirSync(resourcePath);
+    resourceRelPaths = walk(resourcePath, resourcePath);
 
-    // Warn about non-TypeScript files
-    const nonTsFiles = allFiles.filter((file) => !file.endsWith('.ts'));
-    nonTsFiles.forEach((file) => {
-      const locationPath = isGlobal ? 'global' : locationName;
-      if (verbose) {
-        console.warn(
-          `⚠️  Warning: Non-TypeScript file found in ${locationPath}/${resourceType}: ${file} - skipping`
-        );
-      }
-    });
-
-    resourceFiles = allFiles
-      .filter((file) => file.endsWith('.ts'))
-      .map((file) => path.basename(file, '.ts'));
-
-    if (resourceFiles.length > 0) {
+    if (resourceRelPaths.length > 0) {
       // Check for invalid filenames with dashes
-      const invalidFiles = resourceFiles.filter((name) => name.includes('-'));
+      const invalidFiles = resourceRelPaths.filter((rel) => path.basename(rel).includes('-'));
       if (invalidFiles.length > 0) {
         const locationPath = isGlobal ? 'global' : locationName;
         console.error(
           `❌ Error: Invalid filenames with dashes found in ${locationPath}/${resourceType}:`
         );
-        invalidFiles.forEach((file) => console.error(`  - ${file}.ts`));
+        invalidFiles.forEach((rel) => console.error(`  - ${rel}.ts`));
         console.error(
           'Please rename files to use underscores instead of dashes for valid TypeScript identifiers.'
         );
@@ -61,8 +62,8 @@ export async function generateResourceFile(
       if (verbose) {
         console.log(
           `${emoji} Found ${
-            resourceFiles.length
-          } ${resourceType} in ${locationPath}: ${resourceFiles.join(', ')}`
+            resourceRelPaths.length
+          } ${resourceType} in ${locationPath}: ${resourceRelPaths.join(', ')}`
         );
       }
 
@@ -71,17 +72,37 @@ export async function generateResourceFile(
         ? `@project/global/${resourceType}`
         : `@project/locations/${locationName}/${resourceType}`;
 
-      imports = resourceFiles
-        .map(
-          (resourceName) =>
-            `import ${resourceName} from '${importPath}/${resourceName}';`
-        )
-        .join('\n');
+      // Build unique import identifiers and map entries
+      const usedNames = new Set<string>();
+      const items: string[] = [];
+      const pathItems: string[] = [];
+      const importLines: string[] = [];
 
-      // Generate resourceList object
-      resourceListItems = resourceFiles
-        .map((resourceName) => `  "${resourceName}": ${resourceName}`)
-        .join(',\n');
+      for (const rel of resourceRelPaths) {
+        const baseName = path.basename(rel);
+        // propose identifier
+        let ident = baseName.replace(/[^a-zA-Z0-9_]/g, '_');
+        if (/^[0-9]/.test(ident)) ident = '_' + ident;
+        if (usedNames.has(ident)) {
+          // disambiguate with rel path
+          const alt = rel.replace(/[^a-zA-Z0-9_]/g, '_');
+          ident = /^[0-9]/.test(alt) ? '_' + alt : alt;
+        }
+        usedNames.add(ident);
+        importLines.push(`import ${ident} from '${importPath}/${rel}';`);
+        // Use identifier as key to guarantee uniqueness across nested files
+        items.push(`  "${ident}": ${ident}`);
+        pathItems.push(`  "${ident}": "${rel}"`);
+      }
+
+      imports = importLines.join('\n');
+      resourceListItems = items.join(',\n');
+      // Stash path mapping for later footer generation
+      if (resourceType === 'events') {
+        (global as any).__GEN_EVENTS_PATH_ITEMS__ = pathItems;
+      } else if (resourceType === 'actions') {
+        (global as any).__GEN_ACTIONS_PATH_ITEMS__ = pathItems;
+      }
     } else {
       const locationPath = isGlobal ? 'global' : locationName;
       if (verbose) {
@@ -102,6 +123,20 @@ export async function generateResourceFile(
   const locationDisplayName = isGlobal
     ? 'global location'
     : `location: ${locationName}`;
+  // Optional paths footer
+  let extraFooter = '';
+  if (resourceType === 'events') {
+    const items: string[] | undefined = (global as any).__GEN_EVENTS_PATH_ITEMS__;
+    if (items && items.length > 0) {
+      extraFooter += `\n\nexport const eventsPaths: Record<string, string> = {\n${items.join(',\n')}\n};\n`;
+    }
+  } else if (resourceType === 'actions') {
+    const items: string[] | undefined = (global as any).__GEN_ACTIONS_PATH_ITEMS__;
+    if (items && items.length > 0) {
+      extraFooter += `\n\nexport const actionsPaths: Record<string, string> = {\n${items.join(',\n')}\n};\n`;
+    }
+  }
+
   const resourceFileContent = `// Generated ${resourceType} for ${locationDisplayName}
 import type { ${typeName} } from '@generate/types';
 ${imports ? '\n' + imports + '\n' : ''}
@@ -110,6 +145,7 @@ export const ${resourceType}List: Record<string, ${typeName}> = {${
   }};
 
 export default ${resourceType}List;
+${extraFooter}
 `;
 
   const resourceFilePath = path.join(
@@ -134,7 +170,7 @@ export async function generateActionsFile(
     locationGeneratePath,
     'actions',
     '🎯',
-    'Action',
+    'VNAction',
     isGlobal
   );
 }
@@ -183,14 +219,16 @@ export async function generateLocationIndex(
   const locationIndexContent = `// Generated index for location: ${locationName}
 import type { LocationData } from '@generate/types';
 import info from '@project/locations/${locationName}/info';
-import { actionsList } from './actions';
-import { eventsList } from './events';
+import { actionsList, actionsPaths } from './actions';
+import { eventsList, eventsPaths } from './events';
 
 const ${locationName}: LocationData = {
   id: "${locationName}",
   info,
   actions: actionsList,
+  actionsPaths: actionsPaths,
   events: eventsList,
+  eventsPaths: eventsPaths,
   accessibles: {}
 };
 
@@ -209,13 +247,15 @@ export async function generateGlobalIndex(
 ) {
   const globalIndexContent = `// Generated index for global location
 import type { LocationData } from '@generate/types';
-import { actionsList } from './actions';
-import { eventsList } from './events';
+import { actionsList, actionsPaths } from './actions';
+import { eventsList, eventsPaths } from './events';
 
 const global: LocationData = {
   id: "global",
   actions: actionsList,
+  actionsPaths: actionsPaths,
   events: eventsList,
+  eventsPaths: eventsPaths,
   accessibles: {}
 };
 

@@ -1,7 +1,3 @@
-import { NPC } from "@generate/types";
+import { DateableNPC } from "@generate/types";
 
-export interface Neighbor extends NPC{
-  name: string;  
-  relation: number;
-  relationship: string;
-}
+export interface Neighbor extends DateableNPC {}

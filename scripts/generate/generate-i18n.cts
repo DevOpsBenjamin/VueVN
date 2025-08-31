@@ -4,9 +4,10 @@ import { generateTextSystem } from '../lib/text-generator';
 
 async function main() {
   try {
-    await generateTextSystem();
+    generateTextSystem();
+    console.log('✅ Generated i18n system v2 successfully');
   } catch (error) {
-    console.error('❌ Failed to generate i18n system:', error);
+    console.error('❌ Failed to generate i18n system v2:', error);
     process.exit(1);
   }
 }

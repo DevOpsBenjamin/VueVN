@@ -1,6 +1,7 @@
 <template>
   <div ref="gameRoot" class="engine-content">
     <SaveLoadMenu />
+    <SettingsMenu />
     <MainMenu />
     <Loading />
     <Engine />
@@ -9,7 +10,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { SaveLoadMenu, MainMenu, Engine, Loading } from '@generate/components';
+import { SaveLoadMenu, SettingsMenu, MainMenu, Engine, Loading } from '@generate/components';
 import { Engine as EngineCore } from '@generate/engine';
 
 const gameRoot = ref<HTMLElement | null>(null);
@@ -31,5 +32,6 @@ onMounted(async () => {
   background-color: #1a1a1a;
   overflow: hidden;
   position: relative; /* Ensure proper positioning context for children */
+  container-type: size;
 }
 </style>

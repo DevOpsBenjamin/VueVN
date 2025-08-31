@@ -8,17 +8,11 @@
       <!-- Dashboard -->
       <Dashboard v-if="editorState.activeModule === 'dashboard'" />
       
-      <!-- Asset Manager -->
-      <AssetManager v-else-if="editorState.activeModule === 'assetManager'" />
-      
       <!-- Location Manager -->
       <LocationManager v-else-if="editorState.activeModule === 'locationManager'" />
       
       <!-- Location Edit View -->
       <LocationEditView v-else-if="editorState.activeModule === 'locationEdit'" />
-      
-      <!-- Localization Manager -->
-      <LocalizationManager v-else-if="editorState.activeModule === 'localizationManager'" />
     </main>
 
     <!-- Floating Game Preview -->
@@ -27,18 +21,18 @@
     <!-- State Popups -->
     <EngineStatePopup v-if="editorState.showEnginePopup" />
     <GameStatePopup v-if="editorState.showGamePopup" />
+    <FileEditorPopup v-if="editorState.showFilePopup" />
   </div>
 </template>
 
 <script setup lang="ts">
 import Header from '@editor/components/Header.vue';
 import Dashboard from '@editor/components/Dashboard.vue';
-import AssetManager from '@editor/components/Asset/AssetManager.vue';
 import LocationManager from '@editor/components/Location/LocationManager.vue';
 import LocationEditView from '@editor/components/Location/LocationEditView.vue';
-import LocalizationManager from '@editor/components/Localization/LocalizationManager.vue';
 import EngineStatePopup from '@editor/components/Popup/EngineStatePopup.vue';
 import GameStatePopup from '@editor/components/Popup/GameStatePopup.vue';
+import FileEditorPopup from '@editor/components/Popup/FileEditorPopup.vue';
 import FloatingGame from "@editor/components/Popup/FloatingGame.vue";
 import { useEditorState } from '@editor/stores/editorState';
 
@@ -98,4 +92,3 @@ button, .transition-all {
   -webkit-backdrop-filter: blur(4px);
 }
 </style>
-
