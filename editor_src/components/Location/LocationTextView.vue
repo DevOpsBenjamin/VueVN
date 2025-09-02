@@ -8,11 +8,7 @@
       </h2>
     </div>
 
-    <div v-if="selectedLocation === 'global'" class="text-white/70 text-sm p-4 border border-white/10 rounded bg-black/10">
-      Global texts view will be added next.
-    </div>
-
-    <div v-else>
+    <div>
       <div class="flex items-center justify-between mb-2 text-sm text-white/70">
         <div class="flex items-center gap-3">
           <label class="flex items-center gap-2 cursor-pointer">
@@ -50,6 +46,7 @@
 import { computed, ref } from 'vue';
 import { useEditorState } from '@editor/stores/editorState';
 import t from '@generate/texts';
+import projectData from '@generate/project';
 import TextTreeNode from './TextTreeNode.vue';
 
 const editorState = useEditorState();
@@ -59,34 +56,39 @@ const showMissingOnly = ref(false);
 const expandedFolders = ref<Set<string>>(new Set());
 
 const langs = computed<string[]>(() => {
-  const loc = selectedLocation.value;
-  const locTexts = (t as any).locations?.[loc];
-  if (!locTexts) return [];
-  const set = new Set<string>();
-  for (const scope of Object.keys(locTexts)) {
-    const moduleObj = locTexts[scope] || {};
-    for (const key of Object.keys(moduleObj)) {
-      if (key === '__path') continue; // skip metadata
-      const entry = moduleObj[key];
-      if (entry && typeof entry === 'object') {
-        for (const lang of Object.keys(entry)) {
-          if (lang === '__key') continue;
-          set.add(lang);
-        }
-      }
-    }
+  const cfg = projectData.config;
+  const list = (cfg.languages || []).map(l => l.code.toLowerCase());
+  const defaultIdx = cfg.languages ? cfg.languages.findIndex(l => l.default) : -1;
+  if (defaultIdx > -1) {
+    return [list[defaultIdx], ...list.filter((_, i) => i !== defaultIdx)];
   }
-  return Array.from(set).sort((a,b) => a.localeCompare(b));
+  return list;
 });
 
 type TextNode = any;
 
 const tree = computed<TextNode[]>(() => {
+  const root: Record<string, any> = { id: 'root', name: '', type: 'folder', isExpanded: true, children: [] };
+
+  if (selectedLocation.value === 'global') {
+    const globalScopes = (t as any).global || {};
+    for (const scopeName of Object.keys(globalScopes)) {
+      const moduleObj = (globalScopes as any)[scopeName];
+      const node = {
+        id: `file:global/${scopeName}`,
+        name: scopeName,
+        type: 'file',
+        module: moduleObj,
+        path: scopeName,
+      };
+      root.children.push(node);
+    }
+    return root.children;
+  }
+
   const loc = selectedLocation.value;
   const locTexts = (t as any).locations?.[loc];
   if (!locTexts) return [];
-
-  const root: Record<string, any> = { id: 'root', name: '', type: 'folder', isExpanded: true, children: [] };
 
   function ensureFolder(parent: any, name: string): any {
     const id = parent.id === 'root' ? name : parent.id + '/' + name;
@@ -98,7 +100,7 @@ const tree = computed<TextNode[]>(() => {
     return f;
   }
 
-  for (const [scopeName, moduleObj] of Object.entries<any>(locTexts)) {
+  for (const [, moduleObj] of Object.entries<any>(locTexts)) {
     const relPath = moduleObj?.__path || '';
     const parts = relPath ? relPath.split('/') : ['(root)'];
     let parent = root;
@@ -158,6 +160,12 @@ function toggleFolder(id: string) {
 }
 
 function openLangFromNode(payload: { path: string; lang: string }) {
+  if (selectedLocation.value === 'global') {
+    const scope = payload.path;
+    const fp = `global/texts/${scope}/${payload.lang}.ts`;
+    editorState.openFile(fp);
+    return;
+  }
   const loc = selectedLocation.value;
   const sub = payload.path ? `/${payload.path}` : '';
   const fp = `locations/${loc}/texts${sub}/${payload.lang}.ts`;

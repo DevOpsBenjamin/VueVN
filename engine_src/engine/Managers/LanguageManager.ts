@@ -1,14 +1,46 @@
 import type { Text, EngineState, DialogueSimple, DialogueFull, ChoiceSimple, ChoiceFull } from '@generate/types';
+import projectData from '@generate/project';
 import { engineState as useEngineState } from '@generate/stores';
 
 export default class LanguageManager {
   private static instance: LanguageManager | null = null;
   private engineState: EngineState;
+  private cachedLangs: string[] | null = null;
 
   private constructor() {
     // Private constructor for singleton pattern - get pinia store directly
     const engineStore = useEngineState();
     this.engineState = engineStore.$state;
+  }
+
+  // No auto-detection: languages come from project config only
+
+  /**
+   * Optional metadata for common languages: display name + flag.
+   * Unknown codes fall back to uppercase code and a default flag symbol.
+   */
+  getLanguageList(): Array<{ code: string; name: string; flag: string }>{
+    const cfg = projectData.config;
+    const list = this.getLanguageCodes();
+    const byCode = new Map(cfg.languages.map(l => [l.code.toLowerCase(), l] as const));
+    return list.map(code => {
+      const c = byCode.get(code)!;
+      return { code, name: c.name || code.toUpperCase(), flag: c.flag || '🏳️' };
+    });
+  }
+
+  /**
+   * Public: returns just the language codes, default-first, for populating option values.
+   */
+  getLanguageCodes(): string[] {
+    if (this.cachedLangs) return this.cachedLangs;
+    const cfg = projectData.config;
+    const codes = (cfg.languages || []).map(l => l.code.toLowerCase());
+    const defaultIdx = cfg.languages ? cfg.languages.findIndex(l => l.default) : -1;
+    this.cachedLangs = defaultIdx > -1
+      ? [codes[defaultIdx], ...codes.filter((_, i) => i !== defaultIdx)]
+      : codes;
+    return this.cachedLangs;
   }
 
   /**
@@ -35,7 +67,7 @@ export default class LanguageManager {
       return '[INVALID TEXT OBJECT]';
     }
 
-    const currentLang = (this.engineState.settings.language || 'en').toLowerCase();
+    const currentLang = this.getCurrentLanguage();
     const translation = textObj[currentLang];
     
     // Only return translation if it exists and is not empty for the EXACT requested language
@@ -76,7 +108,16 @@ export default class LanguageManager {
    * Gets the currently selected language code
    */
   getCurrentLanguage(): string {
-    return this.engineState.settings.language?.toLowerCase() || 'en';
+    const current = this.engineState.settings.language?.toLowerCase();
+    if (current && current.length > 0) return current;
+
+    const cfg = projectData.config;
+    if (cfg.languages && cfg.languages.length > 0) {
+      const def = cfg.languages.find(l => l.default)?.code || cfg.languages[0].code;
+      return def.toLowerCase();
+    }
+    // If config somehow empty, fallback to 'en'
+    return 'en';
   }
 
   /**

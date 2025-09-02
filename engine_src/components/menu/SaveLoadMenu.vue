@@ -21,7 +21,7 @@
         <!-- Header with gradient -->
         <div class="p-6 pb-4 text-center border-b border-white/10">
           <h2 class="text-2xl font-bold text-white mb-2 tracking-wide">
-            {{ mode === "save" ? "Save Game" : "Load Game" }}
+            {{ mode === 'save' ? tr(ui.save_game) : tr(ui.load_game) }}
           </h2>
           <div class="w-16 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded mx-auto"></div>
         </div>
@@ -39,11 +39,11 @@
                 <!-- Slot header -->
                 <div class="mb-2">
                   <div class="flex items-center justify-between mb-1">
-                    <span class="text-white/60 text-[10px] font-mono uppercase tracking-wider">Slot {{ slot }}</span>
+                    <span class="text-white/60 text-[10px] font-mono uppercase tracking-wider">{{ tr(ui.slot) }} {{ slot }}</span>
                     <div v-if="saves[slot]" class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
                   </div>
                   <h3 class="text-white font-medium text-sm truncate leading-tight">
-                    {{ saves[slot]?.name || `Empty Slot` }}
+                    {{ saves[slot]?.name || tr(ui.empty_slot) }}
                   </h3>
                 </div>
 
@@ -52,7 +52,7 @@
                   <span v-if="saves[slot]" class="text-white/40 text-[10px] font-mono leading-tight">
                     {{ formatDate(saves[slot].timestamp) }}
                   </span>
-                  <span v-else class="p-0 text-white/20 text-[10px] italic">No save data</span>
+                  <span v-else class="p-0 text-white/20 text-[10px] italic">{{ tr(ui.no_save_data) }}</span>
                 </div>
 
                 <!-- Action section -->
@@ -61,7 +61,7 @@
                     <!-- Save name input -->
                     <input
                       v-model="saveNames[slot]"
-                      placeholder="Save name..."
+                      :placeholder="tr(ui.save_name_placeholder)"
                       class="w-full px-3 py-1.5 text-xs rounded-md bg-black/30 border border-white/20 text-white placeholder-white/30 focus:border-blue-400 focus:ring-1 focus:ring-blue-400/20 focus:outline-none transition-all duration-300"
                       @keydown="handleInputKeydown"
                       @keyup.stop
@@ -72,7 +72,7 @@
                       @click="save(slot)"
                       class="w-full px-3 py-2 text-xs bg-gradient-to-r from-green-600/90 to-emerald-600/90 hover:from-green-500/90 hover:to-emerald-500/90 text-white rounded-md font-medium transition-all duration-300 hover:scale-[1.02] border border-green-500/20"
                     >
-                      💾 Save
+                      💾 {{ tr(ui.save) }}
                     </button>
                   </template>
                   <template v-else>
@@ -82,7 +82,7 @@
                       @click="load(slot)"
                       class="w-full px-3 py-2 text-xs bg-gradient-to-r from-blue-600/90 to-purple-600/90 hover:from-blue-500/90 hover:to-purple-500/90 disabled:from-gray-600/30 disabled:to-gray-500/30 text-white rounded-md font-medium transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100 border border-blue-500/20 disabled:border-gray-500/10"
                     >
-                      {{ saves[slot] ? '📂 Load' : 'Empty' }}
+                      {{ saves[slot] ? `📂 ${tr(ui.load)}` : tr(ui.empty) }}
                     </button>
                   </template>
                 </div>
@@ -103,7 +103,7 @@
               class="flex items-center px-4 py-2 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 disabled:border-white/10 text-white rounded-lg text-sm font-medium transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             >
               <span class="mr-1">⬅️</span>
-              Prev
+              {{ tr(ui.prev) }}
             </button>
 
             <!-- Page indicator -->
@@ -116,15 +116,13 @@
               :disabled="(page + 1) * slotsPerPage >= maxSlots"
               class="flex items-center px-4 py-2 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 disabled:border-white/10 text-white rounded-lg text-sm font-medium transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             >
-              Next
+              {{ tr(ui.next) }}
               <span class="ml-1">➡️</span>
             </button>
           </div>
           
           <!-- Close hint -->
-          <div class="text-white/30 text-xs text-center mt-2">
-            Press ESC to close
-          </div>
+          <div class="text-white/30 text-xs text-center mt-2">{{ tr(ui.esc_to_close) }}</div>
         </div>
       </div>
     </div>
@@ -133,6 +131,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import t from '@generate/texts';
+import type { Text } from '@generate/types';
+import LanguageManager from '@engine/engine/Managers/LanguageManager';
 import { engineState as useEngineState } from "@generate/stores";
 import { EngineStateEnum } from '@generate/enums';
 import { Engine } from '@generate/engine';
@@ -220,6 +221,12 @@ const menuBgStyle = {
   backgroundSize: "cover",
   backgroundPosition: "center",
 };
+
+// Typed UI text access + translator
+const ui = t.global.ui;
+function tr(text: string | Text): string {
+  return LanguageManager.getInstance().resolveText(text);
+}
 </script>
 
 <style scoped>

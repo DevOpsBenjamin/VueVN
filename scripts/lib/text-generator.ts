@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import projectsvars from './project-vars'
+import { pathToFileURL } from 'url';
 
 interface TextFile {
   en: string;
@@ -32,13 +33,14 @@ export async function generateTextSystem(projectName?: string) {
   fs.mkdirSync(path.join(generatePath, 'texts/locations'), { recursive: true });
   fs.mkdirSync(path.join(generatePath, 'texts/global'), { recursive: true });
 
-  const locationTexts = await generateLocationTexts(projectPath, generatePath);
-  const globalTexts = await generateGlobalTexts(projectPath, generatePath);
+  const configuredLangs = await getConfiguredLangCodes(projectPath);
+  const locationTexts = await generateLocationTexts(projectPath, generatePath, configuredLangs);
+  const globalTexts = await generateGlobalTexts(projectPath, generatePath, configuredLangs);
   
   generateMainTextIndex(generatePath);
 }
 
-async function generateLocationTexts(projectPath: string, generatePath: string): Promise<string[]> {
+async function generateLocationTexts(projectPath: string, generatePath: string, configuredLangs: string[]): Promise<string[]> {
   const locationsPath = path.join(projectPath, 'locations');
   const locations: string[] = [];
   
@@ -79,7 +81,7 @@ async function generateLocationTexts(projectPath: string, generatePath: string):
       const abs = rel ? path.join(locationTextsPath, rel) : locationTextsPath;
       // Use a sanitized module name for index exports
       const scopeName = (rel || 'root').replace(/[^a-zA-Z0-9_]/g, '_') || 'root';
-      await generateScopeTexts(abs, scopeName, generatePath, locationName, rel || '');
+      await generateScopeTexts(abs, scopeName, generatePath, locationName, rel || '', configuredLangs);
       const importPath = rel && rel.length > 0 ? `./${rel.replace(/\\/g, '/')}` : './root';
       scopesForIndex.push({ alias: scopeName, importPath });
     }
@@ -94,7 +96,7 @@ async function generateLocationTexts(projectPath: string, generatePath: string):
   return locations;
 }
 
-async function generateActionTexts(actionTextsPath: string, actionName: string, generatePath: string, locationName: string): Promise<string[]> {
+async function generateActionTexts(actionTextsPath: string, actionName: string, generatePath: string, locationName: string, configuredLangs: string[]): Promise<string[]> {
   const textKeys: string[] = [];
 
   if (!fs.existsSync(actionTextsPath)) {
@@ -122,15 +124,15 @@ async function generateActionTexts(actionTextsPath: string, actionName: string, 
   const allKeys = new Set<string>();
   Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));
 
-  // Order languages: en first if present, then others alphabetically
-  const langs = Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
+  // Use configured languages order (default-first). Files may be missing; we'll output nulls.
+  const langs = configuredLangs.length > 0 ? configuredLangs : Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
 
   const textObjects: string[] = [];
   for (const key of Array.from(allKeys).sort()) {
     const lines: string[] = [];
     lines.push(`    __key: ${JSON.stringify(key)}`);
     for (const lang of langs) {
-      const val = langMaps[lang][key];
+      const val = (langMaps[lang] || {})[key];
       lines.push(`    ${lang}: ${val != null ? JSON.stringify(val) : 'null'}`);
     }
     textObjects.push(`  ${key}: {\n${lines.join(',\n')}\n  }`);
@@ -285,7 +287,7 @@ export default ${locationName}Texts;
   fs.writeFileSync(path.join(locationDir, 'index.ts'), content);
 }
 
-async function generateScopeTexts(scopePath: string, _scopeName: string, generatePath: string, locationName: string, relPath: string): Promise<void> {
+async function generateScopeTexts(scopePath: string, _scopeName: string, generatePath: string, locationName: string, relPath: string, configuredLangs: string[]): Promise<void> {
   // Discover all language files in scopePath
   const langFiles = fs
     .readdirSync(scopePath)
@@ -300,14 +302,14 @@ async function generateScopeTexts(scopePath: string, _scopeName: string, generat
   }
   const allKeys = new Set<string>();
   Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));
-  const langs = Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
+  const langs = configuredLangs.length > 0 ? configuredLangs : Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
 
   const textObjects: string[] = [];
   for (const key of Array.from(allKeys).sort()) {
     const lines: string[] = [];
     lines.push(`    __key: ${JSON.stringify(key)}`);
     for (const lang of langs) {
-      const val = langMaps[lang][key];
+      const val = (langMaps[lang] || {})[key];
       lines.push(`    ${lang}: ${val != null ? JSON.stringify(val) : 'null'}`);
     }
     textObjects.push(`  ${key}: {\n${lines.join(',\n')}\n  }`);
@@ -356,7 +358,7 @@ export default locationTexts;
   fs.writeFileSync(path.join(generatePath, 'texts/locations/index.ts'), content);
 }
 
-async function generateGlobalTexts(projectPath: string, generatePath: string): Promise<string[]> {
+async function generateGlobalTexts(projectPath: string, generatePath: string, configuredLangs: string[]): Promise<string[]> {
   const globalTextsPath = path.join(projectPath, 'global', 'texts');
 
   if (!fs.existsSync(globalTextsPath)) {
@@ -381,7 +383,7 @@ export default globalTexts;
 
   for (const scope of scopes) {
     const scopePath = path.join(globalTextsPath, scope);
-    const out = await generateGenericScopeTexts(scopePath, scope, path.join(generatePath, 'texts/global'));
+    const out = await generateGenericScopeTexts(scopePath, scope, path.join(generatePath, 'texts/global'), configuredLangs);
     if (out) {
       imports.push(`import { ${scope}Texts } from './${scope}';`);
       exportLines.push(`  ${scope}: ${scope}Texts`);
@@ -401,7 +403,7 @@ export default globalTexts;
   return scopes;
 }
 
-async function generateGenericScopeTexts(scopePath: string, scopeName: string, outDir: string): Promise<boolean> {
+async function generateGenericScopeTexts(scopePath: string, scopeName: string, outDir: string, configuredLangs: string[]): Promise<boolean> {
   if (!fs.existsSync(scopePath)) return false;
   const langFiles = fs
     .readdirSync(scopePath)
@@ -416,14 +418,14 @@ async function generateGenericScopeTexts(scopePath: string, scopeName: string, o
   }
   const allKeys = new Set<string>();
   Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));
-  const langs = Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
+  const langs = configuredLangs.length > 0 ? configuredLangs : Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
 
   const textObjects: string[] = [];
   for (const key of Array.from(allKeys).sort()) {
     const lines: string[] = [];
     lines.push(`    __key: ${JSON.stringify(key)}`);
     for (const lang of langs) {
-      const val = langMaps[lang][key];
+      const val = (langMaps[lang] || {})[key];
       lines.push(`    ${lang}: ${val != null ? JSON.stringify(val) : 'null'}`);
     }
     textObjects.push(`  ${key}: {\n${lines.join(',\n')}\n  }`);
@@ -455,4 +457,22 @@ export default texts;
 `;
 
   fs.writeFileSync(path.join(generatePath, 'texts/index.ts'), content);
+}
+
+async function getConfiguredLangCodes(projectPath: string): Promise<string[]> {
+  try {
+    const mod = await import(pathToFileURL(path.join(projectPath, 'config.ts')).href);
+    const cfg = (typeof mod.default === 'function') ? mod.default() : mod.default;
+    const list = (cfg.languages || []).map((l: any) => String(l.code || '').toLowerCase()).filter(Boolean);
+    const defaultIdx = (cfg.languages || []).findIndex((l: any) => l.default);
+    if (defaultIdx > -1 && defaultIdx < list.length) {
+      return [list[defaultIdx], ...list.filter((_, i) => i !== defaultIdx)];
+    }
+    return list;
+  } catch (e) {
+    if (projectsvars.verbose) {
+      console.warn('Could not load project config languages; falling back to detected languages.', e);
+    }
+    return [];
+  }
 }

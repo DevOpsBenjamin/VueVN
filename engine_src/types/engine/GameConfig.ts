@@ -1,4 +1,6 @@
+import type { LanguageOption } from './LanguageOption';
+
 export interface GameConfig {
   name: string;
-  defaultLanguage?: string;
+  languages: LanguageOption[];
 }
