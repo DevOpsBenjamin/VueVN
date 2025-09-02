@@ -11,16 +11,15 @@
         <div class="character-zone flex-shrink-0 px-6 pt-4 pb-2">
           <template
             v-if="
-              engineState.dialogue &&
-              engineState.dialogue.from &&
-              engineState.dialogue.from !== 'engine'
+              resolvedDialogue.from &&
+              resolvedDialogue.from !== 'engine'
             "
           >
             <!-- Character name badge -->
             <div class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-600/90 to-purple-600/90 border border-white/20 shadow-lg">
               <div class="w-3 h-3 rounded-full bg-white/80 mr-2 animate-pulse"></div>
               <span class="font-semibold text-white text-sm tracking-wide uppercase">
-                {{ engineState.dialogue.from }}
+                {{ resolvedDialogue.from }}
               </span>
             </div>
           </template>
@@ -30,7 +29,7 @@
         <div class="text-zone flex-grow px-6 py-2 overflow-y-auto max-h-[120px]">
           <div 
             class="text-white text-lg leading-relaxed font-medium whitespace-pre-line"
-            v-html="formattedDialogueText"
+            v-html="resolvedDialogue.text"
           />
         </div>
 
@@ -54,12 +53,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { engineState as useEngineState } from '@generate/stores';
+import LanguageManager from '@engine/engine/Managers/LanguageManager';
 
 const engineState = useEngineState();
 
-// Convert \n to <br> tags for proper line breaks
-const formattedDialogueText = computed(() => {
-  if (!engineState.dialogue?.text) return '';
-  return engineState.dialogue.text.replace(/\n/g, '<br>');
+// Dynamically resolve dialogue for both text and from properties
+const resolvedDialogue = computed(() => {
+  if (!engineState.dialogue) return { text: '', from: undefined };
+  
+  // Use the new typed helper method for dialogue objects
+  return LanguageManager.getInstance().resolveDialogue(engineState.dialogue);
 });
+
 </script>

@@ -1,11 +1,11 @@
-import type { Dialogue, Choice, CustomArgs, Settings } from '@generate/types';
+import type { DialogueSimple, DialogueFull, ChoiceSimple, ChoiceFull, CustomArgs, Settings } from '@generate/types';
 
 export interface EngineState {
   initialized: boolean;
   background: string | null;
   foreground: string[] | null;
-  dialogue: Dialogue | null;
-  choices: Array<Choice> | null;
+  dialogue: DialogueSimple | DialogueFull | null;
+  choices: Array<ChoiceSimple | ChoiceFull> | null;
   customArgs: CustomArgs | null;
   jumpEvent: string | null;
   state: string;

@@ -11,7 +11,7 @@ const intro: VNEvent = {
   locked: (state) => state.flags.introSeen, // Locks only after "start adventure"
   
   async execute(engine, state) {
-    await engine.showText(event_text.welcome);
+    await engine.showText({ text: event_text.welcome });
     await engine.showChoices([
       { text: event_text.start_adventure, branch: 'start_adventure' },
       { text: event_text.learn_more, branch: 'learn_more' },
@@ -21,9 +21,9 @@ const intro: VNEvent = {
   branches: {
     learn_more: {
       async execute(engine, _) {        
-        await engine.showText(event_text.powerful_engine );
-        await engine.showText(event_text.supports_features);
-        await engine.showText(event_text.read_or_start);
+        await engine.showText({ text: event_text.powerful_engine });
+        await engine.showText({ text: event_text.supports_features });
+        await engine.showText({ text: event_text.read_or_start });
         await engine.showChoices([
           { text: event_text.start_adventure, branch: 'start_adventure' },
           { text: event_text.learn_keybinding, branch: 'learn_key' },
@@ -35,18 +35,18 @@ const intro: VNEvent = {
     },
     learn_key: {
       async execute(engine, _) {       
-        await engine.showText(event_text.keybinding, 'System');
-        await engine.showText(event_text.go_back, 'System'); 
-        await engine.showText(event_text.test_info, 'System');
-        await engine.showText(event_text.skip_info, 'System');
-        await engine.showText(event_text.demo_end, 'System');
+        await engine.showText({ text: event_text.keybinding, from: 'System' });
+        await engine.showText({ text: event_text.go_back, from: 'System' }); 
+        await engine.showText({ text: event_text.test_info, from: 'System' });
+        await engine.showText({ text: event_text.skip_info, from: 'System' });
+        await engine.showText({ text: event_text.demo_end, from: 'System' });
         // The event will end and game loop continue as event condition is still true it will pop again in next game loop.
       }
     },    
     start_adventure: {
       async execute(engine, state) {    
         state.flags.introSeen = true; // Lock the intro
-        await engine.showText(event_text.start);
+        await engine.showText({ text: event_text.start });
       }
     }
   }

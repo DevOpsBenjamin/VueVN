@@ -28,7 +28,7 @@
             <!-- Choice text -->
             <div class="relative pl-12 pr-4 py-1">
               <span class="text-white font-medium text-lg leading-relaxed group-hover:text-white transition-colors duration-300">
-                {{ choice.text }}
+                {{ resolveChoiceText(choice) }}
               </span>
             </div>
             
@@ -54,8 +54,13 @@
 import { onMounted, onUnmounted } from 'vue';
 import { Engine } from "@generate/engine";
 import { engineState as useEngineState } from "@generate/stores";
-
+import LanguageManager from '@engine/engine/Managers/LanguageManager';
 const engineState = useEngineState();
+
+// Resolve choice text dynamically for real-time language switching with variables
+function resolveChoiceText(choice: any): string {
+  return LanguageManager.getInstance().resolveChoice(choice).text;
+}
 
 function select(id: string): void {
   const engine = Engine.getInstance();
