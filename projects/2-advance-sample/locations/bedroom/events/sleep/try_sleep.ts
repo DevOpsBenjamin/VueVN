@@ -1,5 +1,8 @@
 import type { VNEvent } from '@generate/types';
 import { TimeHelper } from '@generate/engine';
+import t from '@generate/texts';
+// This make text acces simpler in file
+const event_text = t.locations.bedroom.sleep;
 
 const try_sleep: VNEvent = {
   name: 'Go to Sleep',
@@ -15,9 +18,10 @@ const try_sleep: VNEvent = {
     state.player.daily = {};
     state.player.energy = 100;
     TimeHelper.sleep(state.gameTime);
-    await engine.showText("You lie down on your comfortable bed and close your eyes.");
+    await engine.showText({ text: event_text.sleep });
     await engine.showText("...");
-    await engine.showText("You wake up feeling refreshed and ready for a new day!");    
+    await engine.showText("...");
+    await engine.showText({ text: event_text.wake_up});    
   }
 };
 

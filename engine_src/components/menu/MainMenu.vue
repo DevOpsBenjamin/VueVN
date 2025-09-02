@@ -35,7 +35,7 @@
               class="absolute inset-0 bg-gradient-to-r from-green-600/20 to-emerald-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             ></div>
             <div class="relative flex items-center justify-between">
-              <span>New Game</span>
+              <span>{{ tr(ui.new_game) }}</span>
               <span
                 class="opacity-60 group-hover:opacity-100 transition-opacity duration-200" style="font-size: 2.5cqw;"
                 >🆕</span
@@ -53,7 +53,7 @@
               class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             ></div>
             <div class="relative flex items-center justify-between">
-              <span>Continue</span>
+              <span>{{ tr(ui.continue) }}</span>
               <span
                 class="opacity-60 group-hover:opacity-100 transition-opacity duration-200" style="font-size: 2.5cqw;"
                 >▶️</span
@@ -71,7 +71,7 @@
               class="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-violet-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             ></div>
             <div class="relative flex items-center justify-between">
-              <span>Save</span>
+              <span>{{ tr(ui.save) }}</span>
               <span
                 class="opacity-60 group-hover:opacity-100 transition-opacity duration-200" style="font-size: 2.5cqw;"
                 >💾</span
@@ -88,7 +88,7 @@
               class="absolute inset-0 bg-gradient-to-r from-yellow-600/20 to-orange-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             ></div>
             <div class="relative flex items-center justify-between">
-              <span>Load</span>
+              <span>{{ tr(ui.load) }}</span>
               <span
                 class="opacity-60 group-hover:opacity-100 transition-opacity duration-200" style="font-size: 2.5cqw;"
                 >📂</span
@@ -105,7 +105,7 @@
               class="absolute inset-0 bg-gradient-to-r from-gray-600/20 to-slate-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             ></div>
             <div class="relative flex items-center justify-between">
-              <span>Settings</span>
+              <span>{{ tr(ui.settings) }}</span>
               <span
                 class="opacity-60 group-hover:opacity-100 transition-opacity duration-200" style="font-size: 2.5cqw;"
                 >⚙️</span
@@ -115,9 +115,7 @@
           
           <!-- Footer info - now inside scrollable area -->
           <div class="mt-4 lg:mt-6 text-center">
-            <p class="text-white/40 font-mono" style="font-size: 1.2cqw;">
-              Press ESC anytime to return to menu
-            </p>
+            <p class="text-white/40 font-mono" style="font-size: 1.2cqw;">{{ tr(ui.press_esc) }}</p>
           </div>
         </div>
       </div>
@@ -129,6 +127,9 @@
 import { engineState as useEngineState } from '@generate/stores';
 import { EngineStateEnum } from '@generate/enums';
 import { Engine } from '@generate/engine';
+import t from '@generate/texts';
+import type { Text } from '@generate/types';
+import LanguageManager from '@engine/engine/Managers/LanguageManager';
 const engineState = useEngineState();
 
 function newGame() {
@@ -159,6 +160,12 @@ const menuBgStyle = {
   backgroundSize: 'cover',
   backgroundPosition: 'center',
 };
+
+// Strongly-typed usage: keep typed ui and translate on demand
+const ui = t.global.ui;
+function tr(text: string | Text): string {
+  return LanguageManager.getInstance().resolveText(text);
+}
 </script>
 
 <style>
