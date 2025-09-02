@@ -49,6 +49,8 @@ import t from '@generate/texts';
 import projectData from '@generate/project';
 import TextTreeNode from './TextTreeNode.vue';
 
+type TextsType = typeof t;
+
 const editorState = useEditorState();
 const selectedLocation = computed(() => editorState.selectedLocation || 'global');
 
@@ -71,9 +73,9 @@ const tree = computed<TextNode[]>(() => {
   const root: Record<string, any> = { id: 'root', name: '', type: 'folder', isExpanded: true, children: [] };
 
   if (selectedLocation.value === 'global') {
-    const globalScopes = (t as any).global || {};
+    const globalScopes = t.global || {};
     for (const scopeName of Object.keys(globalScopes)) {
-      const moduleObj = (globalScopes as any)[scopeName];
+      const moduleObj = globalScopes[scopeName as keyof typeof globalScopes];
       const node = {
         id: `file:global/${scopeName}`,
         name: scopeName,
@@ -87,7 +89,7 @@ const tree = computed<TextNode[]>(() => {
   }
 
   const loc = selectedLocation.value;
-  const locTexts = (t as any).locations?.[loc];
+  const locTexts = t.locations?.[loc as keyof typeof t.locations];
   if (!locTexts) return [];
 
   function ensureFolder(parent: any, name: string): any {
@@ -163,13 +165,48 @@ function openLangFromNode(payload: { path: string; lang: string }) {
   if (selectedLocation.value === 'global') {
     const scope = payload.path;
     const fp = `global/texts/${scope}/${payload.lang}.ts`;
-    editorState.openFile(fp);
+    
+    // Check if file exists by looking at the current texts structure
+    const globalTexts = t.global?.[scope as keyof typeof t.global];
+    const keys = globalTexts ? Object.keys(globalTexts).filter(k => k !== '__path') : [];
+    const hasTranslation = keys.some(key => {
+      const entry = globalTexts[key];
+      return entry?.[payload.lang] && typeof entry[payload.lang] === 'string' && entry[payload.lang].trim().length > 0;
+    });
+    
+    if (!hasTranslation && keys.length > 0) {
+      // Generate template with empty translations
+      const template = keys.map(key => `  ${key}: ""`).join(',\n');
+      const content = `export default {\n${template}\n} as const;`;
+      editorState.openFileWithContent(fp, content);
+    } else {
+      editorState.openFile(fp);
+    }
     return;
   }
+  
   const loc = selectedLocation.value;
   const sub = payload.path ? `/${payload.path}` : '';
   const fp = `locations/${loc}/texts${sub}/${payload.lang}.ts`;
-  editorState.openFile(fp);
+  
+  // Check if file exists by looking at the current texts structure
+  const locationTexts = t.locations?.[loc as keyof typeof t.locations];
+  const scopeName = payload.path ? payload.path.replace(/\//g, '_') : 'root';
+  const scopeTexts = locationTexts?.[scopeName];
+  const keys = scopeTexts ? Object.keys(scopeTexts).filter(k => k !== '__path') : [];
+  const hasTranslation = keys.some(key => {
+    const entry = scopeTexts[key];
+    return entry?.[payload.lang] && typeof entry[payload.lang] === 'string' && entry[payload.lang].trim().length > 0;
+  });
+  
+  if (!hasTranslation && keys.length > 0) {
+    // Generate template with empty translations
+    const template = keys.map(key => `  ${key}: ""`).join(',\n');
+    const content = `export default {\n${template}\n} as const;`;
+    editorState.openFileWithContent(fp, content);
+  } else {
+    editorState.openFile(fp);
+  }
 }
 
 function openLang(scope: string, lang: string) {}

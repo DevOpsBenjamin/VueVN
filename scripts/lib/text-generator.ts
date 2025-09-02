@@ -57,7 +57,7 @@ async function getConfiguredLanguages(projectPath: string): Promise<string[]> {
     const defaultIdx = (config.languages || []).findIndex((l: any) => l.default);
     if (defaultIdx > -1) {
       const defaultLang = languages[defaultIdx];
-      return [defaultLang, ...languages.filter(lang => lang !== defaultLang)];
+      return [defaultLang, ...languages.filter((lang: string) => lang !== defaultLang)];
     }
     
     return languages;
@@ -278,8 +278,13 @@ function generateScopeFile(generatePath: string, scope: TextScope, languages: st
     textObjects.push(`  ${entry.key}: {\n${lines.join(',\n')}\n  }`);
   }
 
-  const content = `// Generated texts for ${scope.path}
+  // Extract relative path for __path metadata
+  const [, , ...pathParts] = scope.path.split('/');
+  const relativePath = pathParts.join('/');
+
+  const content = `// Generated text objects for ${scope.path}
 export const texts = {
+  __path: ${JSON.stringify(relativePath)},
 ${textObjects.join(',\n')}
 } as const;
 
@@ -332,11 +337,12 @@ function generateLocationIndexes(generatePath: string, locationScopes: TextScope
     const imports: string[] = [];
     const exports: string[] = [];
 
-    for (const scope of scopes) {
+    for (let i = 0; i < scopes.length; i++) {
+      const scope = scopes[i];
       const [, , ...rest] = scope.path.split('/');
       const scopePath = rest.join('/');
-      const scopeName = rest.join('_') || 'root';
-      const importName = `${scopeName}Texts`;
+      const scopeName = rest.length > 0 ? rest.join('_') : 'root';
+      const importName = `texts_${i}`;
       
       imports.push(`import ${importName} from './${scopePath}';`);
       exports.push(`  ${scopeName}: ${importName}`);

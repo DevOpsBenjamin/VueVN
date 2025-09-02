@@ -56,6 +56,7 @@
               <div class="flex items-center space-x-3 text-xs">
                 <span class="text-blue-400">{{ location.eventCount }} events</span>
                 <span class="text-purple-400">{{ location.actionCount }} actions</span>
+                <span class="text-cyan-400">{{ location.textCount }} texts</span>
               </div>
             </div>
           </div>
@@ -82,12 +83,27 @@ const globalStats = {
 };
 
 // Convert locations record to array with stats and icons
-const locationsArray = Object.entries(projectData.locations).map(([id, locationData]) => ({
+const locationsArray = Object.entries(projectData.locations).map(([id, locationData]) => {
+  // Count text keys for this location
+  let textCount = 0;
+  const locationTexts = texts.locations?.[id as keyof typeof texts.locations];
+  if (locationTexts) {
+    for (const scopeName of Object.keys(locationTexts)) {
+      const scope = locationTexts[scopeName];
+      if (scope) {
+        textCount += Object.keys(scope).filter(k => k !== '__path').length;
+      }
+    }
+  }
+
+  return {
     id,
     name: locationData.info!.name,
     eventCount: Object.keys(locationData.events).length,
-    actionCount: Object.keys(locationData.actions).length
-  }));
+    actionCount: Object.keys(locationData.actions).length,
+    textCount
+  };
+});
 
 // Calculate total events and actions across all locations
 const totalEvents = computed(() => {
@@ -131,7 +147,7 @@ function countTexts(): { keys: number; missing: number } {
   };
 
   // Locations
-  const locs = (texts as any).locations || {};
+  const locs = texts.locations || {};
   for (const loc of Object.keys(locs)) {
     const scopes = locs[loc] || {};
     for (const scope of Object.keys(scopes)) {
@@ -139,7 +155,7 @@ function countTexts(): { keys: number; missing: number } {
     }
   }
   // Global
-  const globalScopes = (texts as any).global || {};
+  const globalScopes = texts.global || {};
   for (const scope of Object.keys(globalScopes)) {
     countModule(globalScopes[scope]);
   }
@@ -164,12 +180,12 @@ const langsUpper = computed(() => {
       }
     }
   };
-  const locs = (texts as any).locations || {};
+  const locs = texts.locations || {};
   for (const loc of Object.keys(locs)) {
     const scopes = locs[loc] || {};
     for (const scope of Object.keys(scopes)) addFromModule(scopes[scope]);
   }
-  const globals = (texts as any).global || {};
+  const globals = texts.global || {};
   for (const scope of Object.keys(globals)) addFromModule(globals[scope]);
   return Array.from(set).sort((a,b)=>a.localeCompare(b));
 });
