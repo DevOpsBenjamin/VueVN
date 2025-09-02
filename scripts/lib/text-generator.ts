@@ -17,7 +17,7 @@ interface GlobalTexts {
   [key: string]: TextFile;
 }
 
-export function generateTextSystem(projectName?: string) {
+export async function generateTextSystem(projectName?: string) {
   if (!projectName) {
     projectName = process.env.VUEVN_PROJECT;
     if (!projectName) {
@@ -32,13 +32,13 @@ export function generateTextSystem(projectName?: string) {
   fs.mkdirSync(path.join(generatePath, 'texts/locations'), { recursive: true });
   fs.mkdirSync(path.join(generatePath, 'texts/global'), { recursive: true });
 
-  const locationTexts = generateLocationTexts(projectPath, generatePath);
-  const globalTexts = generateGlobalTexts(projectPath, generatePath);
+  const locationTexts = await generateLocationTexts(projectPath, generatePath);
+  const globalTexts = await generateGlobalTexts(projectPath, generatePath);
   
   generateMainTextIndex(generatePath);
 }
 
-function generateLocationTexts(projectPath: string, generatePath: string): string[] {
+async function generateLocationTexts(projectPath: string, generatePath: string): Promise<string[]> {
   const locationsPath = path.join(projectPath, 'locations');
   const locations: string[] = [];
   
@@ -79,7 +79,7 @@ function generateLocationTexts(projectPath: string, generatePath: string): strin
       const abs = rel ? path.join(locationTextsPath, rel) : locationTextsPath;
       // Use a sanitized module name for index exports
       const scopeName = (rel || 'root').replace(/[^a-zA-Z0-9_]/g, '_') || 'root';
-      generateScopeTexts(abs, scopeName, generatePath, locationName, rel || '');
+      await generateScopeTexts(abs, scopeName, generatePath, locationName, rel || '');
       const importPath = rel && rel.length > 0 ? `./${rel.replace(/\\/g, '/')}` : './root';
       scopesForIndex.push({ alias: scopeName, importPath });
     }
@@ -94,7 +94,7 @@ function generateLocationTexts(projectPath: string, generatePath: string): strin
   return locations;
 }
 
-function generateActionTexts(actionTextsPath: string, actionName: string, generatePath: string, locationName: string): string[] {
+async function generateActionTexts(actionTextsPath: string, actionName: string, generatePath: string, locationName: string): Promise<string[]> {
   const textKeys: string[] = [];
 
   if (!fs.existsSync(actionTextsPath)) {
@@ -114,8 +114,8 @@ function generateActionTexts(actionTextsPath: string, actionName: string, genera
   // Parse each language file
   const langMaps: Record<string, Record<string, string>> = {};
   for (const { file, lang } of langFiles) {
-    const content = fs.readFileSync(path.join(actionTextsPath, file), 'utf-8');
-    langMaps[lang] = extractExportedTexts(content);
+    const filePath = path.join(actionTextsPath, file);
+    langMaps[lang] = await extractExportedTexts(filePath);
   }
 
   // Union of all keys across languages
@@ -154,29 +154,110 @@ export default ${actionName}Texts;
   return textKeys;
 }
 
-function extractExportedTexts(content: string): Record<string, string> {
-  const texts: Record<string, string> = {};
+async function extractExportedTexts(filePath: string): Promise<Record<string, string>> {
+  const ts = await import('typescript');
   
-  // Match with or without "as const"
-  const defaultExportMatch = content.match(/export\s+default\s+\{([\s\S]*?)\}\s*(?:as\s+const)?\s*;?/m);
-  if (defaultExportMatch) {
-    const objContent = defaultExportMatch[1];
-    // Handle multiline strings and various quote types
-    const propRegex = /(\w+):\s*["'`]([^"'`]*(?:\n[^"'`]*)*?)["'`]/g;
-    let propMatch;
-    
-    while ((propMatch = propRegex.exec(objContent)) !== null) {
-      // Clean up the text content (remove extra whitespace, handle escapes)
-      const cleanText = propMatch[2]
-        .replace(/\\n/g, '\n')
-        .replace(/\\'/g, "'")
-        .replace(/\\"/g, '"')
-        .trim();
-      texts[propMatch[1]] = cleanText;
+  // Read and parse the TypeScript file
+  const content = fs.readFileSync(filePath, 'utf-8');
+  
+  // Parse TypeScript source
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    content,
+    ts.ScriptTarget.Latest,
+    true
+  );
+  
+  // Find the default export
+  const texts: Record<string, string> = {};
+  let found = false;
+  
+  function visit(node: any) {
+    // Only handle export default { } as const pattern - require as const
+    if (node.kind === ts.SyntaxKind.ExportAssignment) {
+      let objExpr = node.expression;
+      
+      // Require `export default { ... } as const` pattern
+      if (objExpr && objExpr.kind === ts.SyntaxKind.AsExpression) {
+        // Verify it's actually `as const`
+        if (objExpr.type && objExpr.type.kind === ts.SyntaxKind.TypeReference) {
+          const typeName = objExpr.type.typeName;
+          if (typeName && typeName.kind === ts.SyntaxKind.Identifier && typeName.text === 'const') {
+            objExpr = objExpr.expression;
+          } else {
+            throw new Error(`File ${filePath} must use 'as const' assertion, found different type assertion`);
+          }
+        }
+      } else {
+        // No as const found
+        throw new Error(`File ${filePath} must use 'export default { ... } as const' pattern. Found export without 'as const' assertion.`);
+      }
+      
+      if (objExpr && objExpr.kind === ts.SyntaxKind.ObjectLiteralExpression) {
+        found = true;
+        // Extract properties from the object literal
+        for (const prop of objExpr.properties) {
+          if (prop.kind === ts.SyntaxKind.PropertyAssignment && prop.name && prop.name.kind === ts.SyntaxKind.Identifier) {
+            const key = prop.name.text;
+            const value = extractStringValue(prop.initializer, ts);
+            if (value !== null) {
+              texts[key] = value;
+            } else {
+              throw new Error(`Property '${key}' in ${filePath} must be a string literal or template literal`);
+            }
+          }
+        }
+      }
     }
+    // Also handle variable declarations followed by export default
+    else if (node.kind === ts.SyntaxKind.VariableStatement) {
+      // Check if this is followed by export default
+      for (const decl of node.declarationList.declarations) {
+        if (decl.initializer && decl.initializer.kind === ts.SyntaxKind.ObjectLiteralExpression) {
+          // Look for export default that references this variable
+          // For now, we'll handle the direct case
+        }
+      }
+    }
+    
+    ts.forEachChild(node, visit);
+  }
+  
+  visit(sourceFile);
+  
+  if (!found || Object.keys(texts).length === 0) {
+    throw new Error(`No valid default export object found in ${filePath}`);
   }
   
   return texts;
+}
+
+function extractStringValue(node: any, ts: any): string | null {
+  if (node.kind === ts.SyntaxKind.StringLiteral) {
+    return node.text;
+  }
+  
+  if (node.kind === ts.SyntaxKind.NoSubstitutionTemplateLiteral) {
+    return node.text;
+  }
+  
+  if (node.kind === ts.SyntaxKind.TemplateExpression) {
+    // Handle template expressions - reconstruct the string
+    let result = node.head.text;
+    for (const span of node.templateSpans) {
+      // For now, we only support simple template literals without variables
+      if (span.expression.kind === ts.SyntaxKind.StringLiteral) {
+        result += span.expression.text;
+      } else {
+        // Template has variables - can't statically evaluate
+        return null;
+      }
+      result += span.literal.text;
+    }
+    return result;
+  }
+  
+  return null;
 }
 
 function generateLocationTextIndex(generatePath: string, locationName: string, scopes: Array<{ alias: string; importPath: string }>) {
@@ -204,7 +285,7 @@ export default ${locationName}Texts;
   fs.writeFileSync(path.join(locationDir, 'index.ts'), content);
 }
 
-function generateScopeTexts(scopePath: string, scopeName: string, generatePath: string, locationName: string, relPath: string): void {
+async function generateScopeTexts(scopePath: string, _scopeName: string, generatePath: string, locationName: string, relPath: string): Promise<void> {
   // Discover all language files in scopePath
   const langFiles = fs
     .readdirSync(scopePath)
@@ -214,8 +295,8 @@ function generateScopeTexts(scopePath: string, scopeName: string, generatePath: 
 
   const langMaps: Record<string, Record<string, string>> = {};
   for (const { file, lang } of langFiles) {
-    const content = fs.readFileSync(path.join(scopePath, file), 'utf-8');
-    langMaps[lang] = extractExportedTexts(content);
+    const filePath = path.join(scopePath, file);
+    langMaps[lang] = await extractExportedTexts(filePath);
   }
   const allKeys = new Set<string>();
   Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));
@@ -275,7 +356,7 @@ export default locationTexts;
   fs.writeFileSync(path.join(generatePath, 'texts/locations/index.ts'), content);
 }
 
-function generateGlobalTexts(projectPath: string, generatePath: string): string[] {
+async function generateGlobalTexts(projectPath: string, generatePath: string): Promise<string[]> {
   const globalTextsPath = path.join(projectPath, 'global', 'texts');
 
   if (!fs.existsSync(globalTextsPath)) {
@@ -300,7 +381,7 @@ export default globalTexts;
 
   for (const scope of scopes) {
     const scopePath = path.join(globalTextsPath, scope);
-    const out = generateGenericScopeTexts(scopePath, scope, path.join(generatePath, 'texts/global'));
+    const out = await generateGenericScopeTexts(scopePath, scope, path.join(generatePath, 'texts/global'));
     if (out) {
       imports.push(`import { ${scope}Texts } from './${scope}';`);
       exportLines.push(`  ${scope}: ${scope}Texts`);
@@ -320,7 +401,7 @@ export default globalTexts;
   return scopes;
 }
 
-function generateGenericScopeTexts(scopePath: string, scopeName: string, outDir: string): boolean {
+async function generateGenericScopeTexts(scopePath: string, scopeName: string, outDir: string): Promise<boolean> {
   if (!fs.existsSync(scopePath)) return false;
   const langFiles = fs
     .readdirSync(scopePath)
@@ -330,8 +411,8 @@ function generateGenericScopeTexts(scopePath: string, scopeName: string, outDir:
 
   const langMaps: Record<string, Record<string, string>> = {};
   for (const { file, lang } of langFiles) {
-    const content = fs.readFileSync(path.join(scopePath, file), 'utf-8');
-    langMaps[lang] = extractExportedTexts(content);
+    const filePath = path.join(scopePath, file);
+    langMaps[lang] = await extractExportedTexts(filePath);
   }
   const allKeys = new Set<string>();
   Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));

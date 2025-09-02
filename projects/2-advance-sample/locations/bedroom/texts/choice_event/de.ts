@@ -4,4 +4,4 @@ export default {
   phone_messages: "UN NUDE",
   decide_get_up: "GET_UP",
   go_sleep: "TEST"
-}
+} as const;

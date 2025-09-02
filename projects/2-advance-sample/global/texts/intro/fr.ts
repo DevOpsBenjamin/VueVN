@@ -1,7 +1,9 @@
 export default {
-  welcome: "Bienvenue dans l'échantillon de jeu VueVN !",
+  welcome: `Bienvenue dans l'échantillon avancé de VueVN !
+Ce projet aide les développeurs de jeux à comprendre la structure du jeu.
+Vous pouvez soit commencer directement soit en apprendre plus sur le framework.`,
   help_developers: "Ce projet aide les développeurs de jeux à comprendre la structure du jeu.",
-  start_or_learn: "Vous pouvez soit commencer directement soit en apprendre plus sur le framework",
+  start_or_learn: "Vous pouvez soit commencer directement soit en apprendre plus sur le framework.",
   start_adventure: "Commencer l'aventure",
   learn_more: "En savoir plus sur VueVN",
   powerful_engine: "VueVN est un moteur de visual novel puissant basé sur TypeScript.",

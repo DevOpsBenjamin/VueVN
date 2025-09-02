@@ -1,5 +1,6 @@
 import type { VNEvent } from '@generate/types';
 import { RelationManager, StatManager } from '@generate/engine';
+import t from '@generate/texts';
 
 const rainyDay: VNEvent = {
   name: 'Rainy Day with Sarah',
@@ -13,8 +14,9 @@ const rainyDay: VNEvent = {
     
     const relationshipLevel = state.neighbor.relationship;
     
-    await engine.showText("Heavy rain begins to fall as you approach Sarah's house.");
-    await engine.showText("You can see warm light glowing from her windows, creating a cozy atmosphere against the storm.");
+    const text = (t as any).locations.neighbor_entrance.dating.special.rainy_day;
+    await engine.showText(text.heavy_rain_begins);
+    await engine.showText(text.warm_light_glowing);
     
     if (relationshipLevel === 'stranger' || relationshipLevel === 'acquaintance') {
       await engine.jump('rainy-early-relationship');
@@ -28,87 +30,92 @@ const rainyDay: VNEvent = {
   branches: {
     'rainy-early-relationship': {
       async execute(engine, state) {
-        await engine.showText("You hesitate at Sarah's door, soaked from the sudden downpour.");
-        await engine.showText("Before you can knock, the door opens.");
-        await engine.showText(`"Oh my goodness! You're absolutely drenched! Come in, come in!"`, "Sarah");
+        const text = (t as any).locations.neighbor_entrance.dating.special.rainy_day;
+        await engine.showText(text.early_hesitate);
+        await engine.showText(text.early_before_knock);
+        await engine.showText(text.early_drenched, "Sarah");
         
-        await engine.showText("Sarah pulls you inside without hesitation, her natural kindness overriding any awkwardness.");
+        await engine.showText(text.early_pulls_inside);
         
         RelationManager.addRelation(state.neighbor, 3);
         
         await engine.showChoices([
-          { text: 'I\'m sorry for showing up like this', branch: 'early-apologetic' },
-          { text: 'Thank you for rescuing me', branch: 'early-grateful' },
-          { text: 'I couldn\'t stay away, even in this weather', branch: 'early-romantic-confession' }
+          { text: text.choice_apologetic, branch: 'early-apologetic' },
+          { text: text.choice_grateful, branch: 'early-grateful' },
+          { text: text.choice_early_romantic, branch: 'early-romantic-confession' }
         ]);
       }
     },
     
     'early-grateful': {
       async execute(engine, state) {
-        await engine.showText(`"Nonsense! I couldn't leave you out there in this storm."`, "Sarah");
-        await engine.showText("Sarah disappears and returns with a warm towel and a steaming mug of hot chocolate.");
-        await engine.showText(`"This will warm you right up. I was just making some for myself anyway."`, "Sarah");
+        const text = (t as any).locations.neighbor_entrance.dating.special.rainy_day;
+        await engine.showText(text.early_nonsense, "Sarah");
+        await engine.showText(text.early_returns_towel);
+        await engine.showText(text.early_warm_you_right_up, "Sarah");
         
-        await engine.showText("You spend the afternoon talking by her fireplace, watching the rain through her windows.");
-        await engine.showText("The forced intimacy of the situation brings you closer together naturally.");
+        await engine.showText(text.early_fireplace_talk);
+        await engine.showText(text.early_forced_intimacy);
         
         RelationManager.addRelation(state.neighbor, 5);
         StatManager.addEnergy(state, 15);
         StatManager.addLust(state, 4);
         
         await engine.showChoices([
-          { text: 'This is the most perfect afternoon I\'ve had in ages', branch: 'early-perfect-afternoon' },
-          { text: 'I love how cozy and warm your home feels', branch: 'early-cozy-home' },
-          { text: 'The storm brought me something wonderful - time with you', branch: 'early-storm-wonderful' }
+          { text: text.choice_perfect_afternoon, branch: 'early-perfect-afternoon' },
+          { text: text.choice_cozy_home, branch: 'early-cozy-home' },
+          { text: text.choice_storm_wonderful, branch: 'early-storm-wonderful' }
         ]);
       }
     },
     
     'rainy-friend-level': {
       async execute(engine, state) {
-        await engine.showText("Through the rain-streaked window, you see Sarah watching for you with obvious concern.");
-        await engine.showText("She opens the door before you reach it, immediately wrapping you in a warm towel she had ready.");
-        await engine.showText(`"I was so worried about you being out in this weather! I've been watching the road for you."`, "Sarah");
+        const text = (t as any).locations.neighbor_entrance.dating.special.rainy_day;
+        await engine.showText(text.friend_watch_concern);
+        await engine.showText(text.friend_wrap_towel);
+        await engine.showText(text.friend_worried, "Sarah");
         
         RelationManager.addRelation(state.neighbor, 3);
         StatManager.addLust(state, 5);
         
         await engine.showChoices([
-          { text: 'You were watching for me?', branch: 'friend-watching-for-me' },
-          { text: 'I love how you take care of me', branch: 'friend-love-care' },
-          { text: 'Hold her close to warm yourself', branch: 'friend-hold-close-warmth' }
+          { text: text.friend_watching_for_me, branch: 'friend-watching-for-me' },
+          { text: text.friend_love_care, branch: 'friend-love-care' },
+          { text: text.friend_hold_close, branch: 'friend-hold-close-warmth' }
         ]);
       }
     },
     
     'friend-hold-close-warmth': {
       async execute(engine, state) {
-        await engine.showText("You pull Sarah into a warm embrace, both seeking and offering comfort from the storm.");
-        await engine.showText(`"Mmm, you're so warm,"` + ` you murmur into her hair.`);
-        await engine.showText(`"And you're so cold! Let's get you properly warmed up,"` + ` she says softly.`);
+        const text = (t as any).locations.neighbor_entrance.dating.special.rainy_day;
+        await engine.showText(text.friend_pull_embrace);
+        await engine.showText(text.friend_mmm_warm);
+        await engine.showText(text.friend_get_you_warmed);
         
-        await engine.showText("Sarah leads you to her couch and wraps you both in a large blanket.");
-        await engine.showText("Sitting close together, sharing warmth while the storm rages outside, feels incredibly intimate.");
+        await engine.showText(text.friend_leads_couch);
+        await engine.showText(text.friend_sharing_warmth);
         
         StatManager.addLust(state, 8);
         RelationManager.addRelation(state.neighbor, 4);
         
         await engine.showChoices([
-          { text: 'Kiss her gently while you\'re so close', branch: 'friend-gentle-kiss' },
-          { text: 'This feels so right, being here with you', branch: 'friend-feels-right' },
-          { text: 'I wish this storm would last all night', branch: 'friend-wish-storm-lasted' }
+          { text: text.friend_gentle_kiss, branch: 'friend-gentle-kiss' },
+          { text: text.friend_feels_right, branch: 'friend-feels-right' },
+          { text: text.friend_wish_storm, branch: 'friend-wish-storm-lasted' }
         ]);
       }
     },
     
     'friend-gentle-kiss': {
       async execute(engine, state) {
-        await engine.showText("You lean in and kiss Sarah softly, the intimacy of the moment making it feel natural and right.");
-        await engine.showText("She responds warmly, her hand coming up to cup your cheek.");
-        await engine.showText(`"I've been hoping you'd do that,"` + ` she whispers against your lips.`);
+        const text = (t as any).locations.neighbor_entrance.dating.special.rainy_day;
+        await engine.showText(text.friend_kiss_softly);
+        await engine.showText(text.friend_responds_warmly);
+        await engine.showText(text.friend_hoping_do_that);
         
-        await engine.showText("The kiss deepens as the rain provides a romantic soundtrack to your growing closeness.");
+        await engine.showText(text.friend_kiss_deepens);
         
         StatManager.addLust(state, 12);
         RelationManager.addRelation(state.neighbor, 6);
@@ -124,47 +131,50 @@ const rainyDay: VNEvent = {
     
     'rainy-intimate-level': {
       async execute(engine, state) {
-        await engine.showText("Sarah is already at the door with a robe and towel when you arrive, soaked from the storm.");
-        await engine.showText(`"I knew you'd come to me in this weather. You always do when you need comfort,"` + ` she says lovingly.`);
-        await engine.showText("She immediately begins helping you out of your wet clothes with caring, intimate familiarity.");
+        const text = (t as any).locations.neighbor_entrance.dating.special.rainy_day;
+        await engine.showText(text.intimate_at_door_robe_towel);
+        await engine.showText(text.intimate_knew_you_come);
+        await engine.showText(text.intimate_helps_undress);
         
         RelationManager.addRelation(state.neighbor, 2);
         StatManager.addLust(state, 8);
         
         await engine.showChoices([
-          { text: 'You know me so well', branch: 'intimate-know-me-well' },
-          { text: 'I always want to come home to you', branch: 'intimate-come-home' },
-          { text: 'Let her continue undressing you', branch: 'intimate-let-undress' }
+          { text: text.intimate_know_me_well, branch: 'intimate-know-me-well' },
+          { text: text.intimate_come_home, branch: 'intimate-come-home' },
+          { text: text.intimate_let_undress, branch: 'intimate-let-undress' }
         ]);
       }
     },
     
     'intimate-let-undress': {
       async execute(engine, state) {
-        await engine.showText("Sarah's hands are gentle but sure as she helps you out of your wet clothes.");
-        await engine.showText(`"We need to get you warmed up properly,"` + ` she says with obvious care and desire.`);
-        await engine.showText("Her touch lingers longer than necessary, her eyes dark with wanting.");
+        const text = (t as any).locations.neighbor_entrance.dating.special.rainy_day;
+        await engine.showText(text.intimate_hands_gentle);
+        await engine.showText(text.intimate_need_warmed);
+        await engine.showText(text.intimate_touch_lingers);
         
-        await engine.showText("She wraps the soft robe around you, her hands trailing over your skin as she does.");
+        await engine.showText(text.intimate_wraps_robe);
         
         StatManager.addLust(state, 15);
         
         await engine.showChoices([
-          { text: 'I need you to warm me up', branch: 'intimate-need-warming' },
-          { text: 'The storm outside has nothing on the fire between us', branch: 'intimate-fire-between' },
-          { text: 'Pull her into the shower with you', branch: 'intimate-shower-together' }
+          { text: text.intimate_need_warming, branch: 'intimate-need-warming' },
+          { text: text.intimate_fire_between, branch: 'intimate-fire-between' },
+          { text: text.intimate_shower_together, branch: 'intimate-shower-together' }
         ]);
       }
     },
     
     'intimate-shower-together': {
       async execute(engine, state) {
-        await engine.showText(`"Now that's the best idea I've heard all day,"` + ` Sarah purrs.`);
-        await engine.showText("She leads you to her bathroom where steam is already beginning to fog the mirrors.");
-        await engine.showText("Under the hot water, with the storm raging outside, you lose yourselves in passionate intimacy...");
+        const text = (t as any).locations.neighbor_entrance.dating.special.rainy_day;
+        await engine.showText(text.intimate_best_idea);
+        await engine.showText(text.intimate_leads_bathroom);
+        await engine.showText(text.intimate_under_hot_water);
         
-        await engine.showText("Hours later, wrapped together in warm towels, you listen to the rain still falling softly outside.");
-        await engine.showText(`"Every storm should end like this,"` + ` Sarah sighs contentedly against your chest.`);
+        await engine.showText(text.intimate_hours_later);
+        await engine.showText(text.intimate_every_storm_should_end);
         
         StatManager.addLust(state, 20);
         StatManager.addEnergy(state, 25);

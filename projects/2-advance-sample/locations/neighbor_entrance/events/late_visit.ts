@@ -1,4 +1,5 @@
 import type { VNEvent } from '@generate/types';
+import t from '@generate/texts';
 
 const lateVisit: VNEvent = {
   name: 'Late Visit Attempt',
@@ -8,27 +9,28 @@ const lateVisit: VNEvent = {
   locked: (state) => false,
   
   async execute(engine, state) {
+    const text = (t as any).locations.neighbor_entrance.late_visit;
     const currentRelation = state.neighbor.relation;
     const currentRelationship = state.neighbor.relationship;
     
-    await engine.showText("*knock knock knock*");
+    await engine.showText(text.knock_sound);
       state.player.lust += 2;
     
     if (currentRelationship == 'close_friend') {
-      await engine.showText("The neighbor open in her underwear. Looking at you with an intense stare.");
+      await engine.showText(text.close_friend_open);
       state.player.lust += 1;
       state.neighbor.relation = Math.min(currentRelation + 5, 100);
-      await engine.showText("Hey honey do you need anything?", `${state.neighbor.name}`);    
+      await engine.showText(text.close_friend_hey_honey, `${state.neighbor.name}`);
     }
     else {      
       state.neighbor.relation = Math.max(currentRelation - 1, 0);
-      await engine.showText("The neighbor open you in her night dress, abit annoyed you disturb her so late.");
-      await engine.showText(`It's a bit late for knocking on neighbor door.\nDid you need anything ${state.player.name}?`, `${state.neighbor.name}`);    
+      await engine.showText(text.night_dress_open);
+      await engine.showText(text.night_late_question, `${state.neighbor.name}`);
     }
-    await engine.showText("You blush from what you see");
-    await engine.showText("Sorry to have bother you but i forgot what i wanted", `${state.player.name}`);
-    await engine.showText("Goodnight then", `${state.neighbor.name}`);
-    await engine.showText("She look at you and smile before closing the door. She is clearly aware her look got an effect on you!");
+    await engine.showText(text.blush);
+    await engine.showText(text.sorry_bother, `${state.player.name}`);
+    await engine.showText(text.goodnight, `${state.neighbor.name}`);
+    await engine.showText(text.smile_effect);
   }
 };
 
