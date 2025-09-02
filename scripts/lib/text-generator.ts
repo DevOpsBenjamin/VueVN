@@ -1,21 +1,16 @@
 import fs from 'fs';
 import path from 'path';
-import projectsvars from './project-vars'
+import projectsvars from './project-vars';
 import { pathToFileURL } from 'url';
 
-interface TextFile {
-  en: string;
-  fr?: string;
+interface TextEntry {
+  key: string;
+  translations: Record<string, string | null>;
 }
 
-interface LocationTexts {
-  [actionName: string]: {
-    [key: string]: TextFile;
-  };
-}
-
-interface GlobalTexts {
-  [key: string]: TextFile;
+interface TextScope {
+  path: string;
+  entries: TextEntry[];
 }
 
 export async function generateTextSystem(projectName?: string) {
@@ -25,199 +20,199 @@ export async function generateTextSystem(projectName?: string) {
       throw new Error('No project name provided and VUEVN_PROJECT not set');
     }
   }
+
   const projectPath = projectsvars.projectPath;
   const generatePath = projectsvars.generatePath;
   
-  // Ensure generate directories exist
-  fs.mkdirSync(path.join(generatePath, 'texts'), { recursive: true });
-  fs.mkdirSync(path.join(generatePath, 'texts/locations'), { recursive: true });
-  fs.mkdirSync(path.join(generatePath, 'texts/global'), { recursive: true });
-
-  const configuredLangs = await getConfiguredLangCodes(projectPath);
-  const locationTexts = await generateLocationTexts(projectPath, generatePath, configuredLangs);
-  const globalTexts = await generateGlobalTexts(projectPath, generatePath, configuredLangs);
-  
-  generateMainTextIndex(generatePath);
-}
-
-async function generateLocationTexts(projectPath: string, generatePath: string, configuredLangs: string[]): Promise<string[]> {
-  const locationsPath = path.join(projectPath, 'locations');
-  const locations: string[] = [];
-  
-  if (!fs.existsSync(locationsPath)) {
-    return locations;
+  // Get configured languages (only look for these)
+  const languages = await getConfiguredLanguages(projectPath);
+  if (languages.length === 0) {
+    throw new Error('No languages configured in project config.ts');
   }
 
-  const locationNames = fs.readdirSync(locationsPath, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => dirent.name);
+  console.log(`📝 Generating texts for languages: ${languages.join(', ')}`);
 
-  for (const locationName of locationNames) {
-    const locationTextsPath = path.join(locationsPath, locationName, 'texts');
+  // Create output directories
+  fs.mkdirSync(path.join(generatePath, 'texts'), { recursive: true });
 
+  // Process all text scopes
+  const globalScopes = await processGlobalTexts(projectPath, languages);
+  const locationScopes = await processLocationTexts(projectPath, languages);
+
+  // Generate all output files
+  generateTextFiles(generatePath, globalScopes, locationScopes, languages);
+  
+  console.log('✅ Text generation complete');
+}
+
+async function getConfiguredLanguages(projectPath: string): Promise<string[]> {
+  try {
+    const configUrl = pathToFileURL(path.join(projectPath, 'config.ts')).href;
+    const mod = await import(configUrl);
+    const config = typeof mod.default === 'function' ? mod.default() : mod.default;
+    
+    const languages = (config.languages || []).map((l: any) => l.code?.toLowerCase()).filter((lang: string) => Boolean(lang));
+    
+    // Put default language first
+    const defaultIdx = (config.languages || []).findIndex((l: any) => l.default);
+    if (defaultIdx > -1) {
+      const defaultLang = languages[defaultIdx];
+      return [defaultLang, ...languages.filter(lang => lang !== defaultLang)];
+    }
+    
+    return languages;
+  } catch (error) {
+    throw new Error(`Failed to load project config: ${error}`);
+  }
+}
+
+async function processGlobalTexts(projectPath: string, languages: string[]): Promise<TextScope[]> {
+  const globalTextsPath = path.join(projectPath, 'global', 'texts');
+  if (!fs.existsSync(globalTextsPath)) {
+    return [];
+  }
+
+  const scopes: TextScope[] = [];
+  const scopeDirs = fs.readdirSync(globalTextsPath, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name);
+
+  for (const scopeName of scopeDirs) {
+    const scopePath = path.join(globalTextsPath, scopeName);
+    const scope = await processTextScope(scopePath, `global/${scopeName}`, languages);
+    if (scope.entries.length > 0) {
+      scopes.push(scope);
+    }
+  }
+
+  return scopes;
+}
+
+async function processLocationTexts(projectPath: string, languages: string[]): Promise<TextScope[]> {
+  const locationsPath = path.join(projectPath, 'locations');
+  if (!fs.existsSync(locationsPath)) {
+    return [];
+  }
+
+  const scopes: TextScope[] = [];
+  
+  // Find all locations
+  const locations = fs.readdirSync(locationsPath, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name);
+
+  for (const location of locations) {
+    const locationTextsPath = path.join(locationsPath, location, 'texts');
     if (!fs.existsSync(locationTextsPath)) {
       continue;
     }
 
-    locations.push(locationName);
-
-    // Recursively find all scope directories containing any *.ts language file
-    const scopeDirs: string[] = [];
-    const walk = (dir: string, rel: string) => {
-      const entries = fs.readdirSync(dir, { withFileTypes: true });
-      let hasLang = false;
-      for (const e of entries) {
-        if (e.isFile() && e.name.endsWith('.ts')) hasLang = true;
-      }
-      if (hasLang) scopeDirs.push(rel);
-      for (const e of entries) {
-        if (e.isDirectory()) walk(path.join(dir, e.name), path.join(rel, e.name));
-      }
-    };
-    walk(locationTextsPath, '');
-
-    const scopesForIndex: Array<{ alias: string; importPath: string }> = [];
-    for (const rel of scopeDirs) {
-      const abs = rel ? path.join(locationTextsPath, rel) : locationTextsPath;
-      // Use a sanitized module name for index exports
-      const scopeName = (rel || 'root').replace(/[^a-zA-Z0-9_]/g, '_') || 'root';
-      await generateScopeTexts(abs, scopeName, generatePath, locationName, rel || '', configuredLangs);
-      const importPath = rel && rel.length > 0 ? `./${rel.replace(/\\/g, '/')}` : './root';
-      scopesForIndex.push({ alias: scopeName, importPath });
-    }
-
-    // Generate location texts index (flat index of all scopes)
-    generateLocationTextIndex(generatePath, locationName, scopesForIndex);
+    // Recursively find all text scopes in this location
+    const locationScopes = await findTextScopes(locationTextsPath, `locations/${location}`, languages);
+    scopes.push(...locationScopes);
   }
 
-  // Generate main locations index
-  generateLocationMainIndex(generatePath, locations);
-  
-  return locations;
+  return scopes;
 }
 
-async function generateActionTexts(actionTextsPath: string, actionName: string, generatePath: string, locationName: string, configuredLangs: string[]): Promise<string[]> {
-  const textKeys: string[] = [];
+async function findTextScopes(basePath: string, pathPrefix: string, languages: string[]): Promise<TextScope[]> {
+  const scopes: TextScope[] = [];
+  
+  // Check if current directory has text files
+  const hasTextFiles = languages.some(lang => 
+    fs.existsSync(path.join(basePath, `${lang}.ts`))
+  );
 
-  if (!fs.existsSync(actionTextsPath)) {
-    return textKeys;
+  if (hasTextFiles) {
+    const scope = await processTextScope(basePath, pathPrefix, languages);
+    if (scope.entries.length > 0) {
+      scopes.push(scope);
+    }
   }
 
-  // Discover all language files (e.g., en.ts, fr.ts, de.ts...)
-  const langFiles = fs
-    .readdirSync(actionTextsPath)
-    .filter((f) => f.endsWith('.ts'))
-    .map((f) => ({ file: f, lang: path.basename(f, '.ts') }));
+  // Recursively check subdirectories
+  const subdirs = fs.readdirSync(basePath, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name);
 
-  if (langFiles.length === 0) {
-    return textKeys;
+  for (const subdir of subdirs) {
+    const subdirPath = path.join(basePath, subdir);
+    const subdirScopes = await findTextScopes(subdirPath, `${pathPrefix}/${subdir}`, languages);
+    scopes.push(...subdirScopes);
   }
 
-  // Parse each language file
-  const langMaps: Record<string, Record<string, string>> = {};
-  for (const { file, lang } of langFiles) {
-    const filePath = path.join(actionTextsPath, file);
-    langMaps[lang] = await extractExportedTexts(filePath);
-  }
+  return scopes;
+}
 
-  // Union of all keys across languages
+async function processTextScope(scopePath: string, scopeId: string, languages: string[]): Promise<TextScope> {
+  const entries: TextEntry[] = [];
   const allKeys = new Set<string>();
-  Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));
 
-  // Use configured languages order (default-first). Files may be missing; we'll output nulls.
-  const langs = configuredLangs.length > 0 ? configuredLangs : Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
-
-  const textObjects: string[] = [];
-  for (const key of Array.from(allKeys).sort()) {
-    const lines: string[] = [];
-    lines.push(`    __key: ${JSON.stringify(key)}`);
-    for (const lang of langs) {
-      const val = (langMaps[lang] || {})[key];
-      lines.push(`    ${lang}: ${val != null ? JSON.stringify(val) : 'null'}`);
+  // Load all configured language files
+  const langData: Record<string, Record<string, string>> = {};
+  
+  for (const lang of languages) {
+    const filePath = path.join(scopePath, `${lang}.ts`);
+    if (fs.existsSync(filePath)) {
+      try {
+        langData[lang] = await extractTextsFromFile(filePath);
+        Object.keys(langData[lang]).forEach(key => allKeys.add(key));
+      } catch (error) {
+        throw new Error(`Error processing ${filePath}: ${error}`);
+      }
     }
-    textObjects.push(`  ${key}: {\n${lines.join(',\n')}\n  }`);
-    textKeys.push(key);
   }
 
-  const actionContent = `// Generated text objects for ${locationName}/${actionName}
-import type { Text } from '@generate/types';
+  // Create entries with all translations
+  for (const key of Array.from(allKeys).sort()) {
+    const translations: Record<string, string | null> = {};
+    
+    for (const lang of languages) {
+      translations[lang] = langData[lang]?.[key] || null;
+    }
 
-export const ${actionName}Texts = {
-${textObjects.join(',\n')}
-} as const;
+    entries.push({ key, translations });
+  }
 
-export default ${actionName}Texts;
-`;
-
-  const locationTextPath = path.join(generatePath, 'texts/locations', locationName);
-  fs.mkdirSync(locationTextPath, { recursive: true });
-  fs.writeFileSync(path.join(locationTextPath, `${actionName}.ts`), actionContent);
-
-  return textKeys;
+  return { path: scopeId, entries };
 }
 
-async function extractExportedTexts(filePath: string): Promise<Record<string, string>> {
+async function extractTextsFromFile(filePath: string): Promise<Record<string, string>> {
   const ts = await import('typescript');
-  
-  // Read and parse the TypeScript file
   const content = fs.readFileSync(filePath, 'utf-8');
   
-  // Parse TypeScript source
-  const sourceFile = ts.createSourceFile(
-    filePath,
-    content,
-    ts.ScriptTarget.Latest,
-    true
-  );
-  
-  // Find the default export
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
   const texts: Record<string, string> = {};
   let found = false;
-  
+
   function visit(node: any) {
-    // Only handle export default { } as const pattern - require as const
     if (node.kind === ts.SyntaxKind.ExportAssignment) {
       let objExpr = node.expression;
       
-      // Require `export default { ... } as const` pattern
-      if (objExpr && objExpr.kind === ts.SyntaxKind.AsExpression) {
-        // Verify it's actually `as const`
-        if (objExpr.type && objExpr.type.kind === ts.SyntaxKind.TypeReference) {
-          const typeName = objExpr.type.typeName;
-          if (typeName && typeName.kind === ts.SyntaxKind.Identifier && typeName.text === 'const') {
-            objExpr = objExpr.expression;
-          } else {
-            throw new Error(`File ${filePath} must use 'as const' assertion, found different type assertion`);
-          }
+      // Require 'as const'
+      if (objExpr?.kind === ts.SyntaxKind.AsExpression) {
+        if (objExpr.type?.typeName?.text === 'const') {
+          objExpr = objExpr.expression;
+        } else {
+          throw new Error(`File must use 'as const', found different assertion in ${filePath}`);
         }
       } else {
-        // No as const found
-        throw new Error(`File ${filePath} must use 'export default { ... } as const' pattern. Found export without 'as const' assertion.`);
+        throw new Error(`File must use 'export default { ... } as const' pattern in ${filePath}`);
       }
       
-      if (objExpr && objExpr.kind === ts.SyntaxKind.ObjectLiteralExpression) {
+      if (objExpr?.kind === ts.SyntaxKind.ObjectLiteralExpression) {
         found = true;
-        // Extract properties from the object literal
         for (const prop of objExpr.properties) {
-          if (prop.kind === ts.SyntaxKind.PropertyAssignment && prop.name && prop.name.kind === ts.SyntaxKind.Identifier) {
+          if (prop.kind === ts.SyntaxKind.PropertyAssignment && 
+              prop.name?.kind === ts.SyntaxKind.Identifier) {
             const key = prop.name.text;
             const value = extractStringValue(prop.initializer, ts);
             if (value !== null) {
               texts[key] = value;
             } else {
-              throw new Error(`Property '${key}' in ${filePath} must be a string literal or template literal`);
+              throw new Error(`Property '${key}' must be a string literal in ${filePath}`);
             }
           }
-        }
-      }
-    }
-    // Also handle variable declarations followed by export default
-    else if (node.kind === ts.SyntaxKind.VariableStatement) {
-      // Check if this is followed by export default
-      for (const decl of node.declarationList.declarations) {
-        if (decl.initializer && decl.initializer.kind === ts.SyntaxKind.ObjectLiteralExpression) {
-          // Look for export default that references this variable
-          // For now, we'll handle the direct case
         }
       }
     }
@@ -227,8 +222,8 @@ async function extractExportedTexts(filePath: string): Promise<Record<string, st
   
   visit(sourceFile);
   
-  if (!found || Object.keys(texts).length === 0) {
-    throw new Error(`No valid default export object found in ${filePath}`);
+  if (!found) {
+    throw new Error(`No valid export default object found in ${filePath}`);
   }
   
   return texts;
@@ -238,216 +233,155 @@ function extractStringValue(node: any, ts: any): string | null {
   if (node.kind === ts.SyntaxKind.StringLiteral) {
     return node.text;
   }
-  
   if (node.kind === ts.SyntaxKind.NoSubstitutionTemplateLiteral) {
     return node.text;
   }
-  
   if (node.kind === ts.SyntaxKind.TemplateExpression) {
-    // Handle template expressions - reconstruct the string
+    // Reconstruct template literal
     let result = node.head.text;
     for (const span of node.templateSpans) {
-      // For now, we only support simple template literals without variables
       if (span.expression.kind === ts.SyntaxKind.StringLiteral) {
         result += span.expression.text;
       } else {
-        // Template has variables - can't statically evaluate
-        return null;
+        return null; // Has variables, can't evaluate
       }
       result += span.literal.text;
     }
     return result;
   }
-  
   return null;
 }
 
-function generateLocationTextIndex(generatePath: string, locationName: string, scopes: Array<{ alias: string; importPath: string }>) {
-  const locationDir = path.join(generatePath, 'texts/locations', locationName);
-  fs.mkdirSync(locationDir, { recursive: true });
+function generateTextFiles(generatePath: string, globalScopes: TextScope[], locationScopes: TextScope[], languages: string[]) {
+  // Generate individual scope files
+  for (const scope of [...globalScopes, ...locationScopes]) {
+    generateScopeFile(generatePath, scope, languages);
+  }
 
-  const imports = scopes.map((s, i) => 
-    `import texts_${i} from '${s.importPath}';`
-  ).join('\n');
-
-  const exports = scopes.map((s, i) => 
-    `  ${s.alias}: texts_${i}`
-  ).join(',\n');
-
-  const content = `// Generated location texts index for ${locationName}
-${imports}
-
-export const ${locationName}Texts = {
-${exports}
-} as const;
-
-export default ${locationName}Texts;
-`;
-
-  fs.writeFileSync(path.join(locationDir, 'index.ts'), content);
+  // Generate hierarchical indexes
+  generateGlobalIndex(generatePath, globalScopes);
+  generateLocationIndexes(generatePath, locationScopes);
+  generateMainIndex(generatePath);
 }
 
-async function generateScopeTexts(scopePath: string, _scopeName: string, generatePath: string, locationName: string, relPath: string, configuredLangs: string[]): Promise<void> {
-  // Discover all language files in scopePath
-  const langFiles = fs
-    .readdirSync(scopePath)
-    .filter((f) => f.endsWith('.ts'))
-    .map((f) => ({ file: f, lang: path.basename(f, '.ts') }));
-  if (langFiles.length === 0) return;
-
-  const langMaps: Record<string, Record<string, string>> = {};
-  for (const { file, lang } of langFiles) {
-    const filePath = path.join(scopePath, file);
-    langMaps[lang] = await extractExportedTexts(filePath);
-  }
-  const allKeys = new Set<string>();
-  Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));
-  const langs = configuredLangs.length > 0 ? configuredLangs : Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
-
+function generateScopeFile(generatePath: string, scope: TextScope, languages: string[]) {
   const textObjects: string[] = [];
-  for (const key of Array.from(allKeys).sort()) {
-    const lines: string[] = [];
-    lines.push(`    __key: ${JSON.stringify(key)}`);
-    for (const lang of langs) {
-      const val = (langMaps[lang] || {})[key];
-      lines.push(`    ${lang}: ${val != null ? JSON.stringify(val) : 'null'}`);
+  
+  for (const entry of scope.entries) {
+    const lines = [`    __key: ${JSON.stringify(entry.key)}`];
+    
+    for (const lang of languages) {
+      const value = entry.translations[lang];
+      lines.push(`    ${lang}: ${value !== null ? JSON.stringify(value) : 'null'}`);
     }
-    textObjects.push(`  ${key}: {\n${lines.join(',\n')}\n  }`);
+    
+    textObjects.push(`  ${entry.key}: {\n${lines.join(',\n')}\n  }`);
   }
 
-  const moduleContent = `// Generated text objects for ${locationName}/${relPath}
+  const content = `// Generated texts for ${scope.path}
 export const texts = {
-  __path: ${JSON.stringify(relPath)},
 ${textObjects.join(',\n')}
 } as const;
 
 export default texts;
 `;
 
-  const baseDir = path.join(generatePath, 'texts/locations', locationName);
-  if (!relPath) {
-    // Root scope: write to root.ts to avoid clashing with location index
-    fs.mkdirSync(baseDir, { recursive: true });
-    fs.writeFileSync(path.join(baseDir, `root.ts`), moduleContent);
-  } else {
-    const outDir = path.join(baseDir, relPath);
-    fs.mkdirSync(outDir, { recursive: true });
-    fs.writeFileSync(path.join(outDir, 'index.ts'), moduleContent);
-  }
+  // Use hierarchical path structure instead of flat
+  const outputPath = path.join(generatePath, 'texts', scope.path, 'index.ts');
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, content);
 }
 
-function generateLocationMainIndex(generatePath: string, locations: string[]) {
-  const imports = locations.map(location => 
-    `import { ${location}Texts } from './${location}';`
-  ).join('\n');
+function generateGlobalIndex(generatePath: string, globalScopes: TextScope[]) {
+  const imports: string[] = [];
+  const exports: string[] = [];
 
-  const exports = locations.map(location => 
-    `  ${location}: ${location}Texts`
-  ).join(',\n');
+  for (const scope of globalScopes) {
+    const scopeName = scope.path.replace('global/', '');
+    const importName = `${scopeName}Texts`;
+    imports.push(`import ${importName} from './${scopeName}';`);
+    exports.push(`  ${scopeName}: ${importName}`);
+  }
 
-  const content = `// Generated location texts main index
-${imports}
+  const content = `// Generated global texts index
+${imports.join('\n')}
+
+export const globalTexts = {
+${exports.join(',\n')}
+} as const;
+
+export default globalTexts;
+`;
+
+  const globalDir = path.join(generatePath, 'texts/global');
+  fs.mkdirSync(globalDir, { recursive: true });
+  fs.writeFileSync(path.join(globalDir, 'index.ts'), content);
+}
+
+function generateLocationIndexes(generatePath: string, locationScopes: TextScope[]) {
+  // Group by location
+  const locationGroups: Record<string, TextScope[]> = {};
+  for (const scope of locationScopes) {
+    const [, location] = scope.path.split('/');
+    if (!locationGroups[location]) locationGroups[location] = [];
+    locationGroups[location].push(scope);
+  }
+
+  // Generate index for each location
+  for (const [location, scopes] of Object.entries(locationGroups)) {
+    const imports: string[] = [];
+    const exports: string[] = [];
+
+    for (const scope of scopes) {
+      const [, , ...rest] = scope.path.split('/');
+      const scopePath = rest.join('/');
+      const scopeName = rest.join('_') || 'root';
+      const importName = `${scopeName}Texts`;
+      
+      imports.push(`import ${importName} from './${scopePath}';`);
+      exports.push(`  ${scopeName}: ${importName}`);
+    }
+
+    const content = `// Generated location texts index for ${location}
+${imports.join('\n')}
+
+export const ${location}Texts = {
+${exports.join(',\n')}
+} as const;
+
+export default ${location}Texts;
+`;
+
+    const locationDir = path.join(generatePath, 'texts/locations', location);
+    fs.mkdirSync(locationDir, { recursive: true });
+    fs.writeFileSync(path.join(locationDir, 'index.ts'), content);
+  }
+
+  // Generate main locations index
+  const locationNames = Object.keys(locationGroups);
+  const locationImports = locationNames.map(loc => `import { ${loc}Texts } from './${loc}';`);
+  const locationExports = locationNames.map(loc => `  ${loc}: ${loc}Texts`);
+
+  const locationsContent = `// Generated locations main index
+${locationImports.join('\n')}
 
 export const locationTexts = {
-${exports}
+${locationExports.join(',\n')}
 } as const;
 
 export default locationTexts;
 `;
 
-  fs.writeFileSync(path.join(generatePath, 'texts/locations/index.ts'), content);
+  const locationsDir = path.join(generatePath, 'texts/locations');
+  fs.mkdirSync(locationsDir, { recursive: true });
+  fs.writeFileSync(path.join(locationsDir, 'index.ts'), locationsContent);
 }
 
-async function generateGlobalTexts(projectPath: string, generatePath: string, configuredLangs: string[]): Promise<string[]> {
-  const globalTextsPath = path.join(projectPath, 'global', 'texts');
-
-  if (!fs.existsSync(globalTextsPath)) {
-    const content = `// Generated global texts (empty)
-export const globalTexts = {} as const;
-
-export default globalTexts;
-`;
-    fs.mkdirSync(path.join(generatePath, 'texts/global'), { recursive: true });
-    fs.writeFileSync(path.join(generatePath, 'texts/global/index.ts'), content);
-    return [];
-  }
-
-  const scopes = fs
-    .readdirSync(globalTextsPath, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name);
-
-  const imports: string[] = [];
-  const exportLines: string[] = [];
-  fs.mkdirSync(path.join(generatePath, 'texts/global'), { recursive: true });
-
-  for (const scope of scopes) {
-    const scopePath = path.join(globalTextsPath, scope);
-    const out = await generateGenericScopeTexts(scopePath, scope, path.join(generatePath, 'texts/global'), configuredLangs);
-    if (out) {
-      imports.push(`import { ${scope}Texts } from './${scope}';`);
-      exportLines.push(`  ${scope}: ${scope}Texts`);
-    }
-  }
-
-  const indexContent = `// Generated global texts index
-${imports.join('\n')}
-
-export const globalTexts = {
-${exportLines.join(',\n')}
-} as const;
-
-export default globalTexts;
-`;
-  fs.writeFileSync(path.join(generatePath, 'texts/global/index.ts'), indexContent);
-  return scopes;
-}
-
-async function generateGenericScopeTexts(scopePath: string, scopeName: string, outDir: string, configuredLangs: string[]): Promise<boolean> {
-  if (!fs.existsSync(scopePath)) return false;
-  const langFiles = fs
-    .readdirSync(scopePath)
-    .filter((f) => f.endsWith('.ts'))
-    .map((f) => ({ file: f, lang: path.basename(f, '.ts') }));
-  if (langFiles.length === 0) return false;
-
-  const langMaps: Record<string, Record<string, string>> = {};
-  for (const { file, lang } of langFiles) {
-    const filePath = path.join(scopePath, file);
-    langMaps[lang] = await extractExportedTexts(filePath);
-  }
-  const allKeys = new Set<string>();
-  Object.values(langMaps).forEach((m) => Object.keys(m).forEach((k) => allKeys.add(k)));
-  const langs = configuredLangs.length > 0 ? configuredLangs : Object.keys(langMaps).sort((a, b) => a.localeCompare(b));
-
-  const textObjects: string[] = [];
-  for (const key of Array.from(allKeys).sort()) {
-    const lines: string[] = [];
-    lines.push(`    __key: ${JSON.stringify(key)}`);
-    for (const lang of langs) {
-      const val = (langMaps[lang] || {})[key];
-      lines.push(`    ${lang}: ${val != null ? JSON.stringify(val) : 'null'}`);
-    }
-    textObjects.push(`  ${key}: {\n${lines.join(',\n')}\n  }`);
-  }
-
-  const content = `// Generated global text objects for ${scopeName}
-export const ${scopeName}Texts = {
-${textObjects.join(',\n')}
-} as const;
-
-export default ${scopeName}Texts;
-`;
-  fs.writeFileSync(path.join(outDir, `${scopeName}.ts`), content);
-  return true;
-}
-
-function generateMainTextIndex(generatePath: string) {
-  const content = `// Generated text system v2 main index
+function generateMainIndex(generatePath: string) {
+  const content = `// Generated text system main index
 import { globalTexts } from './global';
 import { locationTexts } from './locations';
 
-// Direct import text access - returns Text objects for type safety
 export const texts = {
   global: globalTexts,
   locations: locationTexts
@@ -457,22 +391,4 @@ export default texts;
 `;
 
   fs.writeFileSync(path.join(generatePath, 'texts/index.ts'), content);
-}
-
-async function getConfiguredLangCodes(projectPath: string): Promise<string[]> {
-  try {
-    const mod = await import(pathToFileURL(path.join(projectPath, 'config.ts')).href);
-    const cfg = (typeof mod.default === 'function') ? mod.default() : mod.default;
-    const list = (cfg.languages || []).map((l: any) => String(l.code || '').toLowerCase()).filter(Boolean);
-    const defaultIdx = (cfg.languages || []).findIndex((l: any) => l.default);
-    if (defaultIdx > -1 && defaultIdx < list.length) {
-      return [list[defaultIdx], ...list.filter((_, i) => i !== defaultIdx)];
-    }
-    return list;
-  } catch (e) {
-    if (projectsvars.verbose) {
-      console.warn('Could not load project config languages; falling back to detected languages.', e);
-    }
-    return [];
-  }
 }
