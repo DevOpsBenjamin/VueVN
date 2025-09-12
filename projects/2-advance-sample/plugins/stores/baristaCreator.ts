@@ -5,6 +5,7 @@ function baristaCreator(): Barista {
   return {
     name: "Maya",
     flags: {},
+    daily: {},
     relation: 0,
     relationship: RelationLevel.STRANGER,
     workSchedule: {

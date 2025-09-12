@@ -1,11 +1,23 @@
 export default {
+  // BASE
+  choice_leave: "Leave",
   closed_now: "The coffee shop is closed right now.",
   approach_counter: "You approach the counter where Maya is working.",
-  stranger_hi: "Hi there! Welcome to our coffee shop. What can I get you today?",
-  stranger_smiles: "Maya smiles politely but doesn't seem to recognize you.",
+
+  // ALREADY
+  already_back_again: "Back again so soon? I like that!",
+  already_talked_today: "You've already had a meaningful conversation with Maya today.",
+
+
+  // CHOICE
+  choice_order_another: "Order another coffee ($3)",
   choice_order: "Order coffee ($3)",
+  choice_order_now: "Order coffee now ($3)",
   choice_browse: "Just looking around",
   choice_start_conversation: "Try to start a conversation",
+  choice_ask_history: "Ask how long she's worked here",
+
+  //
   acquaintance_hey_regular: "Oh hey! You're becoming a regular here. The usual?",
   acquaintance_remembers: "Maya remembers you from previous visits.",
   choice_chat_work: "Chat about her work",
@@ -23,22 +35,10 @@ export default {
   choice_surprise_order: "Ask her to surprise you",
   choice_weekend_plans: "Chat about weekend plans",
   choice_flirt_playful: "Flirt playfully",
-  already_back_again: "Back again so soon? I like that!",
-  already_talked_today: "You've already had a meaningful conversation with Maya today.",
-  choice_order_another: "Order another coffee ($3)",
   choice_just_wanted: "Just wanted to see you",
-  choice_leave: "Leave",
   start_intro_maya: "I'm Maya, by the way. I don't think we've been properly introduced.",
   start_tell_name: "You tell her your name is %PLAYER_NAME%.",
   start_nice_meet: "Nice to meet you, %PLAYER_NAME%!",
-  start_seems_friendly: "Maya seems friendly and approachable.",
-  choice_order_now: "Order coffee now ($3)",
-  choice_ask_history: "Ask how long she's worked here",
-  order_here_your_coffee: "Here's your coffee! That'll be $3.",
-  order_excellent_energy: "The coffee is excellent and gives you energy.",
-  order_energy_money: "Energy +15 | Money: $%MONEY%",
-  order_short_money_maya: "Oh, looks like you're a bit short. No worries, maybe next time!",
-  order_not_enough_money: "You don't have enough money for coffee.",
   flirt_light_line: "You always know how to make a girl smile.",
   flirt_light_blush: "Maya blushes slightly and tucks her hair behind her ear.",
   flirt_working: "Your charm is working on Maya.",
@@ -46,10 +46,6 @@ export default {
   bold_flirt_line2: "Maya leans closer across the counter.",
   bold_flirt_offwork: "I get off work at 7... just saying.",
   bold_flirt_interest: "Maya is clearly interested in you.",
-  just_browsing_take_time: "Take your time! Let me know if you need anything.",
-  just_browsing_back_to_work: "Maya goes back to her work behind the counter.",
-  ask_work_history_answer: "I've been working here for about two years now. I love the coffee culture and meeting new people!",
-  ask_work_history_enthusiasm: "Maya's enthusiasm is infectious.",
   choice_that_sounds_great: "That sounds great!",
   just_wanted_sweet: "That's so sweet! You always know how to make my day better.",
   leave_come_back: "Come back soon!",

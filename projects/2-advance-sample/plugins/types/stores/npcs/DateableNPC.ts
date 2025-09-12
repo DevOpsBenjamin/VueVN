@@ -5,4 +5,5 @@ export interface DateableNPC extends NPC {
   name: string;
   relation: number;
   relationship: RelationLevel;
+  daily: Record<string, boolean>;
 }

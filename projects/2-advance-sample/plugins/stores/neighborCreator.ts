@@ -6,6 +6,7 @@ function neighborCreator(): Neighbor {
   return {
     name: "Sarah",
     flags: {},
+    daily: {},
     relation: 5,
     relationship: RelationLevel.STRANGER
   }
