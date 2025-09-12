@@ -8,10 +8,10 @@ export default class ActionExecutor {
   private historyManager: HistoryManager;
   private navigationManager: NavigationManager;
   private customLogicCache: Record<string, any> = {};
-  
+
   constructor(
-    engineState: EngineState, 
-    gameState: GameState, 
+    engineState: EngineState,
+    gameState: GameState,
     historyManager: HistoryManager,
     navigationManager: NavigationManager
   ) {
@@ -24,22 +24,22 @@ export default class ActionExecutor {
   async executeEvent(event: VNEvent): Promise<void> {
     console.log("executeEvent :");
     console.log(event);
-    
+
     // Initialize foreground array with event's base image
     this.engineState.foreground = [event.foreground];
-    
+
     await this.simulateEvent(event.execute, event.name);
     await this.runEvent(event);
   }
-  
-  async runEvent(event: VNEvent): Promise<void>{
+
+  async runEvent(event: VNEvent): Promise<void> {
     console.log("start runEvent");
     console.log(this.historyManager.getFutureLength());
     let action = this.historyManager.getPresent()
-    
+
     while (action != null) {
-      console.debug("loop: ",action.type);
-      this.restoreStateFromAction(action);      
+      console.debug("loop: ", action.type);
+      this.restoreStateFromAction(action);
       await this.executeAction(event, action);
       action = this.historyManager.getPresent()
     }
@@ -50,12 +50,12 @@ export default class ActionExecutor {
   // Generic simulation method that works with both events and branches
   private async simulateEvent(executeFunction: (engine: EngineAPI, state: GameState) => Promise<void>, name: string): Promise<void> {
     const gameStateCopy = JSON.parse(JSON.stringify(this.gameState));
-    const engineStateCopy = JSON.parse(JSON.stringify(this.engineState));    
+    const engineStateCopy = JSON.parse(JSON.stringify(this.engineState));
     const simulator = new SimulateRunner(gameStateCopy, engineStateCopy, name);
-    
+
     try {
       await executeFunction(simulator, gameStateCopy);
-    } catch (err) {      
+    } catch (err) {
       if (err instanceof EventEndError) {
         if (Config.debugMode) {
           await DialogHelper.showConfirmDialog(
@@ -65,7 +65,7 @@ In location:${this.gameState.location_id}
 You can chose to ignore future Debug Warning for the current session.
 `,
             [
-              { text: 'OK', action: () => {}, primary: true },
+              { text: 'OK', action: () => { }, primary: true },
               { text: 'Ignore Future Errors', action: () => { Config.debugMode = false; } }
             ]
           );
@@ -88,7 +88,7 @@ You can chose to ignore future Debug Warning for the current session.
       console.debug("restored");
     }
   }
-  
+
   // Execute a single action - ONLY handle user input, state is already restored
   private async executeAction(event: VNEvent, action: Action): Promise<void> {
     switch (action.type) {
@@ -118,11 +118,11 @@ You can chose to ignore future Debug Warning for the current session.
   }
 
   private async handleTextAction(event: VNEvent, action: Action): Promise<void> {
-    try {      
+    try {
       console.debug("handleTextAction");
       await this.navigationManager.continueManager.wait();
     }
-    catch (error) { 
+    catch (error) {
       if (!(error instanceof VNInterruptError)) {
         // Si l'erreur n'est PAS une NavigationCancelledError, alors c'est une erreur inattendue
         console.error("handleTextAction Error:", error);
@@ -132,9 +132,9 @@ You can chose to ignore future Debug Warning for the current session.
 
   // Handle choice actions and return chosen choice ID
   private async handleChoiceAction(event: VNEvent, action: Action): Promise<void> {
-    try {           
+    try {
       console.debug("handleChoiceAction");
-      const choiceId = await this.navigationManager.choiceManager.wait();    
+      const choiceId = await this.navigationManager.choiceManager.wait();
       // SIMULATE CHOICE
       if (choiceId && event.branches?.[choiceId]) {
         /*
@@ -148,19 +148,20 @@ You can chose to ignore future Debug Warning for the current session.
         console.error('A choice have been made not in exepected list: ', choiceId);
       }
     }
-    catch (error) { 
+    catch (error) {
       if (!(error instanceof VNInterruptError)) {
         // Si l'erreur n'est PAS une NavigationCancelledError, alors c'est une erreur inattendue
         console.error("handleChoiceAction Error:", error);
       }
-    }    
+    }
   }
 
   private async handleJumpAction(event: VNEvent, action: Action): Promise<void> {
-    console.debug("handleJumpAction");
+    console.debug("handleJumpAction", action.event_id);
     // THIS NOT WAI USER INPUT ITS LIKE A CHOICE EVENT BUT CODE CONDITIONAL
     // Jump should exit the current event execution and trigger new event
-    const branch_id = action.event_id;     
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    const branch_id = action.event_id;
     if (event.branches?.[branch_id]) {
       await this.simulateEvent(event.branches[branch_id].execute, `${event.name}|jump:${branch_id}`);
     }

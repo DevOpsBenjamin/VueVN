@@ -4,6 +4,9 @@ function getConfig(): GameConfig
 {
     return {
         name: "TemplateName",
+        languages: [
+            { code: 'en', name: 'English', flag: '🇺🇸', default: true },
+        ],
     }
 }
 

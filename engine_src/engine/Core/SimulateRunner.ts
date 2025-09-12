@@ -19,34 +19,27 @@ export default class SimulateRunner implements EngineAPI
         console.debug('Simulator cto for: ', this.event_id)
     }
 
-    // Helper function to resolve Text objects to current language
-    private resolveText(text: string | Text): string {
-        if (typeof text === 'string') {
-            return text;
-        }
-        const obj: any = text as any;
-        const lang = (this.engineState.settings.language || 'en').toLowerCase();
-        const val = obj?.[lang];
-        if (typeof val === 'string' && val.trim().length > 0) {
-            return val;
-        }
-        // No fallback: show explicit missing marker for the current language
-        const key = typeof obj?.__key === 'string' ? obj.__key : 'unknown';
-        return `(MISSING TRANSLATION FOR LANG [${lang}] KEY [${key}])`;
-    }
 
-    async showText(text: string | Text, from?: string): Promise<void> {
+    // Clean two-signature approach
+    async showText(text: string, from?: string): Promise<void>;
+    async showText(options: { text: Text, from?: string, variables?: Record<string, any> }): Promise<void>;
+    
+    // Single implementation - normalize to dialogue object
+    async showText(textOrOptions: string | { text: Text, from?: string, variables?: Record<string, any> }, from?: string): Promise<void> {
         if (this.event_ended) {
             throw new EventEndError(this.event_id)
         }
 
-        // Handle Text objects by extracting the appropriate language text
-        const resolvedText = this.resolveText(text);
+        // Always normalize to dialogue object format
+        if (typeof textOrOptions === 'string') {
+            this.engineState.dialogue = { text: textOrOptions, from: from };
+        } else {
+            this.engineState.dialogue = textOrOptions;
+        }
         
-        this.engineState.dialogue = { text: resolvedText, from: from };
         this.engineState.currentStep++;
         
-        // Create action with complete state snapshot (WITH dialogue type)
+        // Create action with complete state snapshot
         this.actions.push({
           type: VNActionEnum.SHOW_TEXT,
           event_id: this.event_id,
@@ -62,16 +55,16 @@ export default class SimulateRunner implements EngineAPI
         if (this.event_ended) {
             throw new EventEndError(this.event_id)
         }
-        // Handle Text objects in choices by resolving them to current language
-        const resolvedChoices = choices.map(choice => ({
+        // Store original Text objects (not resolved) for dynamic language switching
+        const choicesWithOriginalText = choices.map(choice => ({
           ...choice,
-          text: this.resolveText(choice.text)
+          text: choice.text // Keep original Text objects
         }));
         
-        this.engineState.choices = resolvedChoices;
+        this.engineState.choices = choicesWithOriginalText;
         this.engineState.currentStep++;
         
-        // Create action with state snapshot (WITH choices type)
+        // Create action with state snapshot (WITH original Text objects)
         this.actions.push({
           type: VNActionEnum.SHOW_CHOICES,
           event_id: this.event_id,

@@ -4,7 +4,11 @@ function getConfig(): GameConfig
 {
     return {
         name: "Advance Sample",
-        defaultLanguage: "en",
+        languages: [
+            { code: 'en', name: 'English', flag: '🇺🇸', default: true },
+            { code: 'fr', name: 'Français', flag: '🇫🇷' },
+            { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+        ],
     }
 }
 

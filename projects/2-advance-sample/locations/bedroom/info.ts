@@ -2,7 +2,7 @@ import type { Location } from '@generate/types';
 
 const info: Location = {
   name: "Bedroom",
-  baseBackground: "/bedroom/images/background/morning.png",
+  baseBackground: "/bedroom/images/background/day.png",
   timeBackgrounds: [
     {
       check: (state) => state.gameTime.hour > 20 || state.gameTime.hour < 5,

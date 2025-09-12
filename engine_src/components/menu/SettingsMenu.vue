@@ -12,7 +12,7 @@
           <div class="p-3 pb-2 border-b border-white/10">
             <div class="flex justify-between items-center">
               <div>
-                <h2 class="font-bold text-white mb-1 tracking-wide" style="font-size: 2.5cqw;">⚙️ Settings</h2>
+                <h2 class="font-bold text-white mb-1 tracking-wide" style="font-size: 2.5cqw;">⚙️ {{ tr(ui.settings) }}</h2>
                 <div class="w-8 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded"></div>
               </div>
               <button 
@@ -27,12 +27,12 @@
           <!-- Navigation/Categories (optional for future) -->
           <div class="flex-1 p-2">
             <div class="space-y-1 text-white/60 text-xs">
-              <div class="font-medium text-white/80">Categories:</div>
+              <div class="font-medium text-white/80">{{ tr(ui.categories) }}</div>
               <div class="pl-1 space-y-1">
-                <div class="text-white">• Language</div>
-                <div class="text-white">• Audio</div>
-                <div class="text-white">• Text</div>
-                <div class="text-white">• Gameplay</div>
+                <div v-if="langOptionsCount > 1" class="text-white">• {{ tr(ui.language) }}</div>
+                <div class="text-white">• {{ tr(ui.audio) }}</div>
+                <div class="text-white">• {{ tr(ui.text) }}</div>
+                <div class="text-white">• {{ tr(ui.gameplay) }}</div>
               </div>
             </div>
           </div>
@@ -43,16 +43,16 @@
               @click="resetToDefaults" 
               class="w-full px-2 py-1 bg-black/30 backdrop-blur-sm border border-white/20 hover:border-white/40 text-white rounded text-xs font-medium transition-all duration-300 hover:scale-[1.02]"
             >
-              Reset
+              {{ tr(ui.reset) }}
             </button>
             <button 
               @click="closeSettings" 
               class="w-full px-2 py-1 bg-gradient-to-r from-blue-600/90 to-purple-600/90 hover:from-blue-500/90 hover:to-purple-500/90 text-white rounded text-xs font-medium transition-all duration-300 hover:scale-[1.02] border border-blue-500/20"
             >
-              Apply
+              {{ tr(ui.apply) }}
             </button>
             <div class="text-white/30 text-xs text-center mt-1">
-              ESC to close
+              {{ tr(ui.esc_to_close) }}
             </div>
           </div>
         </div>
@@ -82,6 +82,9 @@
 import {LanguageSelector, AudioSettings, TextSettings, GameplaySettings} from '@generate/components'
 import { engineState as useEngineState } from "@generate/stores";
 import { EngineStateEnum } from '@generate/enums';
+import t from '@generate/texts';
+import type { Text } from '@generate/types';
+import LanguageManager from '@engine/engine/Managers/LanguageManager';
 
 const engineState = useEngineState();
 
@@ -103,6 +106,15 @@ function resetToDefaults() {
     autoAdvanceDelay: 3000
   };
 }
+
+// Typed UI texts + translator
+const ui = t.global.ui;
+function tr(text: string | Text): string {
+  return LanguageManager.getInstance().resolveText(text);
+}
+
+// Language options count for conditional UI
+const langOptionsCount = LanguageManager.getInstance().getLanguageCodes().length;
 </script>
 
 <style scoped>
