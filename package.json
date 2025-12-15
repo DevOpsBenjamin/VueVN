@@ -17,7 +17,7 @@
     "type-check": "npx vue-tsc --noEmit"
   },
   "dependencies": {
-    "autoprefixer": "^10.4.21",
+    "autoprefixer": "^10.4.23",
     "lodash": "^4.17.21",
     "monaco-editor": "^0.52.2",
     "pinia": "^3.0.3",
