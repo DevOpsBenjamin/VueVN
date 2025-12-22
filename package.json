@@ -33,7 +33,7 @@
     "chokidar-cli": "^3.0.0",
     "concurrently": "^9.2.1",
     "fs-extra": "^11.3.1",
-    "serve-static": "^2.2.0",
+    "serve-static": "^2.2.1",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
     "vite": "^7.1.4",
